@@ -527,6 +527,8 @@ Changed files: exactly the table above.
 | **14** | String manipulation | Reverse Words in a String | **String Compression / Run-Length Encoding** |
 | **15** | Mixed mastery | Rotate Array | **Trapping Rain Water** |
 
+**As built (Phase 4):** the content owner asked for the standard versions of these problems, with statements, tests and harnesses written here and hard hidden tests only. The day files are **generated**, not hand-written: `scripts/coding-practice/arrays-strings.questions.mjs` holds one typed definition per question (statement, signature, JavaScript reference solution, Python solution, 2 sample tests, 2 seeded hard hidden tests) and `scripts/coding-practice/harness.mjs` builds the starter code and hidden driver for all four languages from the signature. `npm run coding-practice:generate` rewrites `day-01.json` … `day-15.json`; every expected output is computed by the reference solution. Questions whose answer can be returned in any order (3Sum, Group Anagrams) are sorted by the driver before comparison. To change a question, edit the questions file, regenerate, then run `npm run coding-practice:verify`.
+
 **Written during this phase:** starter code and the hidden harness for all four languages, and one reference solution per question. The reference solution exists only so the verify script can prove the four expected outputs and the four harnesses are right before learners see the question; a wrong expected output otherwise fails every correct answer.
 
 **Files**
@@ -560,6 +562,8 @@ Then on a child branch: 15 days and 30 titles on the challenge page; three quest
 ---
 
 ### Phase 5: Fine-tuning and design polish
+
+**As built:** layout toolbar (hide the problem, swap sides, result below or beside the editor, font size 12 to 20 px) with draggable dividers, all remembered in `localStorage` under `abt:code:layout`; Custom input (`customInput` on the Run schema, one Judge0 run with no expected output); `Ctrl/Cmd + Enter` runs; question switch pills in the breadcrumb; the challenge page has a progress header with a Continue button and a day timeline. Outside the module: `library.tsx` exports `LibraryRow` and gains `dsa` artwork so the dashboard card is the same tile as the SE challenge card, and `app-footer.tsx` hides the site footer on `/practice` (the shell footer stays). Not done: correcting compiler line numbers for the hidden import lines, lazy-loading each language pack, and the countdown on the Run cooldown.
 
 Edits only inside files this plan created.
 

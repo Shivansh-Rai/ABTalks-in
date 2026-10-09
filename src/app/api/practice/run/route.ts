@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return reply(400, { ok: false, message: "Invalid request." });
     }
-    const { challenge, day, slot, language, code } = parsed.data;
+    const { challenge, day, slot, language, code, customInput } = parsed.data;
 
     if (!allowHit(`run:${userId}`, PRACTICE_RUN_COOLDOWN_MS)) {
       return reply(429, {
@@ -90,11 +90,22 @@ export async function POST(request: NextRequest) {
       return reply(404, { ok: false, message: "Question not found." });
     }
 
+    // Custom input: one run against what the learner typed, output only.
     const result = await judge({
       language,
       code: source,
-      tests: run.tests.filter((t) => !t.hidden),
+      tests:
+        customInput === undefined
+          ? run.tests.filter((t) => !t.hidden)
+          : [
+              {
+                input: customInput.endsWith("\n") ? customInput : `${customInput}\n`,
+                expectedOutput: "",
+                hidden: false,
+              },
+            ],
       timeLimitSec: run.timeLimitSec,
+      skipCompare: customInput !== undefined,
     });
     if (result.verdict === "unavailable") {
       return reply(503, {

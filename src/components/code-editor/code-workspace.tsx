@@ -2,7 +2,20 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import dynamic from "next/dynamic";
-import { CheckCircle2, Loader2, Play, RotateCcw, Send } from "lucide-react";
+import {
+  AArrowDown,
+  AArrowUp,
+  ArrowLeftRight,
+  CheckCircle2,
+  Columns2,
+  Loader2,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Play,
+  RotateCcw,
+  Rows2,
+  Send,
+} from "lucide-react";
 import type {
   CodeLanguageId,
   TestRunResult,
@@ -40,8 +53,12 @@ export type WorkspaceSubmission = {
 };
 
 type CodeInput = { language: CodeLanguageId; code: string };
+/** `customInput` is set when the learner asked to run against their own input. */
+type RunInput = CodeInput & { customInput?: string };
 
 type CodeWorkspaceProps = {
+  /** Shown on the left of the top bar, usually a breadcrumb. */
+  header?: React.ReactNode;
   /** The problem statement, rendered by the caller (usually on the server). */
   statement: React.ReactNode;
   languages: { id: CodeLanguageId; label: string }[];
@@ -50,13 +67,15 @@ type CodeWorkspaceProps = {
   /** Namespaces the per-language drafts kept in this browser. */
   storageKey: string;
   initialCode?: CodeInput | null;
-  onRun: (input: CodeInput) => Promise<RunOutcome>;
+  onRun: (input: RunInput) => Promise<RunOutcome>;
   /** Omit to hide Submit entirely. */
   onSubmit?: (input: CodeInput) => Promise<SubmitOutcome>;
   /** True when the caller already knows this question is solved. */
   solved?: boolean;
   /** Pass to show the Submissions tab. Omit to hide it. */
   submissions?: WorkspaceSubmission[];
+  /** Pass to offer "Custom input". `example` shows the expected format. */
+  customInput?: { example: string; hint: string };
 };
 
 type MobileTab = "problem" | "code" | "result";
@@ -66,11 +85,13 @@ type RunState =
   | { kind: "running"; action: "run" | "submit" }
   | {
       kind: "done";
-      scope: "sample" | "all";
+      scope: "sample" | "all" | "custom";
       result: TestRunResult | null;
       note: string | null;
     }
   | { kind: "error"; message: string };
+
+// ── Drafts (per question, per language, this browser only) ──────────────────
 
 const DRAFT_SAVE_DELAY_MS = 500;
 
@@ -98,13 +119,104 @@ function subscribeToNothing(): () => void {
   return () => {};
 }
 
+// ── Layout preferences (shared by every workspace in this browser) ──────────
+
+type LayoutPrefs = {
+  showStatement: boolean;
+  /** Statement on the right, editor on the left. */
+  swapped: boolean;
+  /** Where the result panel sits relative to the editor. */
+  resultSide: "bottom" | "right";
+  fontSize: number;
+  /** Statement width, percent of the workspace. */
+  split: number;
+  /** Editor share of the code column, percent. */
+  editorSplit: number;
+};
+
+const DEFAULT_PREFS: LayoutPrefs = {
+  showStatement: true,
+  swapped: false,
+  resultSide: "bottom",
+  fontSize: 14,
+  split: 42,
+  editorSplit: 62,
+};
+const PREFS_KEY = "abt:code:layout";
+const FONT_MIN = 12;
+const FONT_MAX = 20;
+
+const prefsListeners = new Set<() => void>();
+let prefsRaw: string | null = null;
+let prefsValue: LayoutPrefs = DEFAULT_PREFS;
+/** Used when storage is unavailable, so the controls still work this visit. */
+let prefsMemory: string | null = null;
+
+const clamp = (value: number, min: number, max: number) =>
+  Math.min(max, Math.max(min, value));
+
+function parsePrefs(raw: string | null): LayoutPrefs {
+  if (!raw) return DEFAULT_PREFS;
+  try {
+    const p = JSON.parse(raw) as Partial<Record<keyof LayoutPrefs, unknown>>;
+    const num = (v: unknown, fallback: number, min: number, max: number) =>
+      typeof v === "number" && Number.isFinite(v) ? clamp(v, min, max) : fallback;
+    return {
+      showStatement: p.showStatement !== false,
+      swapped: p.swapped === true,
+      resultSide: p.resultSide === "right" ? "right" : "bottom",
+      fontSize: num(p.fontSize, DEFAULT_PREFS.fontSize, FONT_MIN, FONT_MAX),
+      split: num(p.split, DEFAULT_PREFS.split, 25, 65),
+      editorSplit: num(p.editorSplit, DEFAULT_PREFS.editorSplit, 30, 85),
+    };
+  } catch {
+    return DEFAULT_PREFS;
+  }
+}
+
+function getPrefs(): LayoutPrefs {
+  let raw = prefsMemory;
+  try {
+    raw = window.localStorage.getItem(PREFS_KEY) ?? prefsMemory;
+  } catch {
+    // Storage blocked: fall back to this visit's memory.
+  }
+  if (raw !== prefsRaw) {
+    prefsRaw = raw;
+    prefsValue = parsePrefs(raw);
+  }
+  return prefsValue;
+}
+
+function savePrefs(patch: Partial<LayoutPrefs>) {
+  const next = JSON.stringify({ ...getPrefs(), ...patch });
+  prefsMemory = next;
+  try {
+    window.localStorage.setItem(PREFS_KEY, next);
+  } catch {
+    // Kept in memory only.
+  }
+  prefsListeners.forEach((listener) => listener());
+}
+
+function subscribePrefs(listener: () => void): () => void {
+  prefsListeners.add(listener);
+  return () => prefsListeners.delete(listener);
+}
+
+function serverPrefs(): LayoutPrefs {
+  return DEFAULT_PREFS;
+}
+
 /**
- * Statement beside a code editor with Run and a result panel.
+ * Statement beside a code editor with Run, optional Submit and a result panel.
  *
  * Reusable: it has no idea where the question, the tests or the runner live.
- * The caller supplies `onRun`. Drafts stay in this browser and nowhere else.
+ * The caller supplies `onRun` and, if it wants one, `onSubmit`. Drafts and
+ * layout choices stay in this browser and nowhere else.
  */
 export function CodeWorkspace({
+  header,
   statement,
   languages,
   starterCode,
@@ -115,6 +227,7 @@ export function CodeWorkspace({
   onSubmit,
   solved = false,
   submissions,
+  customInput,
 }: CodeWorkspaceProps) {
   const [language, setLanguage] = useState<CodeLanguageId>(
     initialCode?.language ?? defaultLanguage,
@@ -129,7 +242,20 @@ export function CodeWorkspace({
   // Set the moment a Submit is accepted, before the caller's data catches up.
   const [solvedNow, setSolvedNow] = useState(false);
   const isSolved = solved || solvedNow;
+  const [useCustom, setUseCustom] = useState(false);
+  const [customText, setCustomText] = useState("");
+  // A divider being dragged: shown live, saved when the pointer is released.
+  const [drag, setDrag] = useState<{
+    kind: "main" | "inner";
+    value: number;
+  } | null>(null);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const mainRef = useRef<HTMLDivElement>(null);
+  const innerRef = useRef<HTMLDivElement>(null);
+
+  const prefs = useSyncExternalStore(subscribePrefs, getPrefs, serverPrefs);
+  const split = drag?.kind === "main" ? drag.value : prefs.split;
+  const editorSplit = drag?.kind === "inner" ? drag.value : prefs.editorSplit;
 
   const fallbackFor = (lang: CodeLanguageId) =>
     initialCode?.language === lang ? initialCode.code : (starterCode[lang] ?? "");
@@ -173,21 +299,33 @@ export function CodeWorkspace({
     writeDraft(storageKey, language, starter);
   }
 
+  const running = run.kind === "running";
+  const canRun = !running && code.trim().length > 0;
+
   async function runCode() {
-    if (run.kind === "running") return;
+    if (!canRun) return;
+    const custom =
+      customInput && useCustom && customText.trim().length > 0
+        ? customText
+        : undefined;
     setRun({ kind: "running", action: "run" });
     setTab("result");
     setPanel("result");
-    const outcome = await onRun({ language, code });
+    const outcome = await onRun({ language, code, customInput: custom });
     setRun(
       outcome.ok
-        ? { kind: "done", scope: "sample", result: outcome.data, note: null }
+        ? {
+            kind: "done",
+            scope: custom === undefined ? "sample" : "custom",
+            result: outcome.data,
+            note: null,
+          }
         : { kind: "error", message: outcome.message },
     );
   }
 
   async function submitCode() {
-    if (!onSubmit || run.kind === "running") return;
+    if (!onSubmit || !canRun) return;
     setRun({ kind: "running", action: "submit" });
     setTab("result");
     setPanel("result");
@@ -205,10 +343,119 @@ export function CodeWorkspace({
     });
   }
 
-  const running = run.kind === "running";
+  // Ctrl/Cmd + Enter runs. Captured before the editor sees it, so it does not
+  // also insert a blank line.
+  function onKeyDownCapture(e: React.KeyboardEvent) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      e.stopPropagation();
+      void runCode();
+    }
+  }
+
+  function startDrag(e: React.PointerEvent, kind: "main" | "inner") {
+    const box = (kind === "main" ? mainRef : innerRef).current;
+    if (!box) return;
+    e.preventDefault();
+    const rect = box.getBoundingClientRect();
+    const horizontal = kind === "main" || prefs.resultSide === "right";
+    const swapped = prefs.swapped;
+    let latest: number | null = null;
+
+    const move = (ev: PointerEvent) => {
+      let share = horizontal
+        ? (ev.clientX - rect.left) / rect.width
+        : (ev.clientY - rect.top) / rect.height;
+      if (kind === "main" && swapped) share = 1 - share;
+      latest =
+        kind === "main" ? clamp(share * 100, 25, 65) : clamp(share * 100, 30, 85);
+      setDrag({ kind, value: latest });
+    };
+    const up = () => {
+      window.removeEventListener("pointermove", move);
+      if (latest !== null) {
+        savePrefs(kind === "main" ? { split: latest } : { editorSplit: latest });
+      }
+      setDrag(null);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up, { once: true });
+  }
+
+  const sideBySide = prefs.resultSide === "right";
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-3">
+    <div
+      className={cn(
+        "flex min-h-0 flex-1 flex-col gap-3",
+        drag ? "select-none" : "",
+      )}
+      onKeyDownCapture={onKeyDownCapture}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="min-w-0">{header}</div>
+        <div className="flex items-center gap-0.5 rounded-xl border border-[#E0E0E0] bg-white p-1">
+          <span className="hidden items-center gap-0.5 lg:flex">
+            <ToolButton
+              label={prefs.showStatement ? "Hide the problem" : "Show the problem"}
+              pressed={!prefs.showStatement}
+              onClick={() => savePrefs({ showStatement: !prefs.showStatement })}
+            >
+              {prefs.showStatement ? (
+                <PanelLeftClose className="size-4" aria-hidden="true" />
+              ) : (
+                <PanelLeftOpen className="size-4" aria-hidden="true" />
+              )}
+            </ToolButton>
+            <ToolButton
+              label="Swap the problem and the editor"
+              pressed={prefs.swapped}
+              onClick={() => savePrefs({ swapped: !prefs.swapped })}
+            >
+              <ArrowLeftRight className="size-4" aria-hidden="true" />
+            </ToolButton>
+            <ToolButton
+              label={
+                sideBySide
+                  ? "Put the result below the editor"
+                  : "Put the result beside the editor"
+              }
+              pressed={sideBySide}
+              onClick={() =>
+                savePrefs({ resultSide: sideBySide ? "bottom" : "right" })
+              }
+            >
+              {sideBySide ? (
+                <Rows2 className="size-4" aria-hidden="true" />
+              ) : (
+                <Columns2 className="size-4" aria-hidden="true" />
+              )}
+            </ToolButton>
+            <span className="mx-1 h-5 w-px bg-[#E0E0E0]" aria-hidden="true" />
+          </span>
+          <ToolButton
+            label="Smaller text"
+            disabled={prefs.fontSize <= FONT_MIN}
+            onClick={() => savePrefs({ fontSize: prefs.fontSize - 1 })}
+          >
+            <AArrowDown className="size-4" aria-hidden="true" />
+          </ToolButton>
+          <span
+            className="w-10 text-center text-xs font-medium tabular-nums text-[#4B4B4B]"
+            aria-label={`Editor text size ${prefs.fontSize} pixels`}
+          >
+            {prefs.fontSize}px
+          </span>
+          <ToolButton
+            label="Larger text"
+            disabled={prefs.fontSize >= FONT_MAX}
+            onClick={() => savePrefs({ fontSize: prefs.fontSize + 1 })}
+          >
+            <AArrowUp className="size-4" aria-hidden="true" />
+          </ToolButton>
+        </div>
+      </div>
+
       <div
         role="tablist"
         aria-label="Workspace sections"
@@ -239,27 +486,51 @@ export function CodeWorkspace({
         ))}
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <div
+        ref={mainRef}
+        style={
+          {
+            "--ws-split": `${split}%`,
+            "--ws-editor": `${editorSplit}%`,
+          } as React.CSSProperties
+        }
+        className={cn(
+          "flex min-h-0 flex-1 flex-col",
+          prefs.swapped ? "lg:flex-row-reverse" : "lg:flex-row",
+        )}
+      >
         <section
           aria-label="Problem"
           className={cn(
-            "min-h-0 overflow-y-auto rounded-2xl border border-[#E0E0E0] bg-white p-5",
-            tab === "problem" ? "block" : "hidden lg:block",
+            "min-h-0 overflow-y-auto rounded-2xl border border-[#E0E0E0] bg-white p-5 lg:flex-none lg:basis-[var(--ws-split)]",
+            tab === "problem" ? "block" : "hidden",
+            prefs.showStatement ? "lg:block" : "lg:hidden",
           )}
         >
           {statement}
         </section>
 
+        {prefs.showStatement ? (
+          <Divider
+            vertical
+            label="Resize the problem and the editor"
+            active={drag?.kind === "main"}
+            onPointerDown={(e) => startDrag(e, "main")}
+          />
+        ) : null}
+
         <div
+          ref={innerRef}
           className={cn(
-            "min-h-0 flex-col gap-4",
+            "min-h-0 min-w-0 flex-1 flex-col",
+            sideBySide ? "lg:flex-row" : "",
             tab === "problem" ? "hidden lg:flex" : "flex",
           )}
         >
           <section
             aria-label="Code"
             className={cn(
-              "min-h-0 flex-[3] flex-col overflow-hidden rounded-2xl border border-[#E0E0E0] bg-white",
+              "min-h-0 min-w-0 flex-col overflow-hidden rounded-2xl border border-[#E0E0E0] bg-white lg:flex-none lg:basis-[var(--ws-editor)]",
               tab === "result" ? "hidden lg:flex" : "flex",
             )}
           >
@@ -292,7 +563,8 @@ export function CodeWorkspace({
               <button
                 type="button"
                 onClick={runCode}
-                disabled={running || code.trim().length === 0}
+                disabled={!canRun}
+                title="Run (Ctrl + Enter)"
                 className="ml-auto inline-flex h-9 items-center gap-1.5 rounded-lg border border-[#E0E0E0] bg-white px-3 text-sm font-semibold text-black transition-colors hover:border-[#03535F] hover:text-[#03535F] disabled:opacity-60"
               >
                 {run.kind === "running" && run.action === "run" ? (
@@ -314,7 +586,7 @@ export function CodeWorkspace({
                 <button
                   type="button"
                   onClick={submitCode}
-                  disabled={running || code.trim().length === 0}
+                  disabled={!canRun}
                   className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-[#03535F] px-3 text-sm font-semibold text-white transition-colors hover:bg-[#076573] disabled:opacity-60"
                 >
                   {run.kind === "running" && run.action === "submit" ? (
@@ -334,19 +606,26 @@ export function CodeWorkspace({
                 onChange={editCode}
                 language={language}
                 readOnly={running}
+                fontSize={prefs.fontSize}
               />
             </div>
           </section>
 
+          <Divider
+            vertical={sideBySide}
+            label="Resize the editor and the result"
+            active={drag?.kind === "inner"}
+            onPointerDown={(e) => startDrag(e, "inner")}
+          />
+
           <section
             aria-label="Result"
-            aria-live="polite"
             className={cn(
-              "min-h-[160px] flex-[2] overflow-y-auto rounded-2xl border border-[#E0E0E0] bg-white p-4",
-              tab === "code" ? "hidden lg:block" : "block",
+              "min-h-[200px] min-w-0 flex-col overflow-hidden rounded-2xl border border-[#E0E0E0] bg-white lg:min-h-0 lg:flex-1",
+              tab === "code" ? "hidden lg:flex" : "flex",
             )}
           >
-            <div className="mb-3 flex gap-1">
+            <div className="flex flex-wrap items-center gap-1 border-b border-[#E0E0E0] px-3 py-2">
               <PanelTab
                 label="Result"
                 active={panel === "result"}
@@ -359,45 +638,150 @@ export function CodeWorkspace({
                   onClick={() => setPanel("submissions")}
                 />
               ) : null}
+              {customInput ? (
+                <label className="ml-auto inline-flex cursor-pointer items-center gap-2 text-sm text-[#4B4B4B]">
+                  <input
+                    type="checkbox"
+                    checked={useCustom}
+                    onChange={(e) => {
+                      setUseCustom(e.target.checked);
+                      setPanel("result");
+                    }}
+                    className="size-4 accent-[#03535F]"
+                  />
+                  Custom input
+                </label>
+              ) : null}
             </div>
 
-            {panel === "submissions" && submissions ? (
-              <SubmissionList submissions={submissions} />
-            ) : (
-              <>
-                {run.kind === "idle" ? (
-                  <p className="text-sm text-[#6B7280]">
-                    Run your code to see the result of the sample tests here.
-                  </p>
-                ) : null}
-                {run.kind === "running" ? (
-                  <p className="flex items-center gap-2 text-sm text-[#4B4B4B]">
-                    <Loader2 className="size-4 animate-spin" aria-hidden="true" />
-                    {run.action === "submit"
-                      ? "Checking your solution against all tests..."
-                      : "Running your code..."}
-                  </p>
-                ) : null}
-                {run.kind === "error" ? (
-                  <p role="alert" className="text-sm text-red-700">
-                    {run.message}
-                  </p>
-                ) : null}
-                {run.kind === "done" ? (
-                  <div className="space-y-3">
-                    {run.note ? (
-                      <p className="text-sm font-medium text-black">{run.note}</p>
-                    ) : null}
-                    {run.result ? (
-                      <TestResults result={run.result} scope={run.scope} />
-                    ) : null}
-                  </div>
-                ) : null}
-              </>
-            )}
+            <div className="min-h-0 flex-1 overflow-y-auto p-4" aria-live="polite">
+              {panel === "submissions" && submissions ? (
+                <SubmissionList submissions={submissions} />
+              ) : (
+                <div className="space-y-3">
+                  {customInput && useCustom ? (
+                    <div>
+                      <label
+                        htmlFor={`${storageKey}-custom`}
+                        className="text-xs font-medium text-[#6B7280]"
+                      >
+                        Your input. {customInput.hint}
+                      </label>
+                      <textarea
+                        id={`${storageKey}-custom`}
+                        value={customText}
+                        onChange={(e) => setCustomText(e.target.value)}
+                        placeholder={customInput.example}
+                        rows={3}
+                        spellCheck={false}
+                        className="mt-1 w-full resize-y rounded-lg border border-[#E0E0E0] bg-white px-3 py-2 font-mono text-xs text-[#111111] placeholder:text-[#A3A3A3] focus-visible:outline-2 focus-visible:outline-[#03535F]"
+                      />
+                    </div>
+                  ) : null}
+                  {run.kind === "idle" ? (
+                    <p className="text-sm text-[#6B7280]">
+                      {customInput && useCustom
+                        ? "Run your code to see its output for this input."
+                        : "Run your code to see the result of the sample tests here."}
+                    </p>
+                  ) : null}
+                  {run.kind === "running" ? (
+                    <p className="flex items-center gap-2 text-sm text-[#4B4B4B]">
+                      <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+                      {run.action === "submit"
+                        ? "Checking your solution against all tests..."
+                        : "Running your code..."}
+                    </p>
+                  ) : null}
+                  {run.kind === "error" ? (
+                    <p role="alert" className="text-sm text-red-700">
+                      {run.message}
+                    </p>
+                  ) : null}
+                  {run.kind === "done" ? (
+                    <>
+                      {run.note ? (
+                        <p className="text-sm font-medium text-black">{run.note}</p>
+                      ) : null}
+                      {run.result ? (
+                        <TestResults result={run.result} scope={run.scope} />
+                      ) : null}
+                    </>
+                  ) : null}
+                </div>
+              )}
+            </div>
           </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ToolButton({
+  label,
+  pressed,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  pressed?: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      aria-pressed={pressed}
+      disabled={disabled}
+      onClick={onClick}
+      className={cn(
+        "inline-flex size-8 items-center justify-center rounded-lg transition-colors focus-visible:outline-2 focus-visible:outline-[#03535F] disabled:opacity-40",
+        pressed
+          ? "bg-[#E7F2F3] text-[#03535F]"
+          : "text-[#4B4B4B] hover:bg-[#F4F4F4] hover:text-[#03535F]",
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** A drag handle between two panes. Desktop only; on mobile it is just a gap. */
+function Divider({
+  vertical,
+  label,
+  active,
+  onPointerDown,
+}: {
+  vertical: boolean;
+  label: string;
+  active: boolean;
+  onPointerDown: (e: React.PointerEvent) => void;
+}) {
+  return (
+    <div
+      role="separator"
+      aria-orientation={vertical ? "vertical" : "horizontal"}
+      aria-label={label}
+      title="Drag to resize"
+      onPointerDown={onPointerDown}
+      className={cn(
+        "group hidden flex-none touch-none items-center justify-center lg:flex",
+        vertical ? "w-3 cursor-col-resize" : "h-3 cursor-row-resize",
+      )}
+    >
+      <span
+        className={cn(
+          "rounded-full transition-colors",
+          vertical ? "h-10 w-1" : "h-1 w-10",
+          active ? "bg-[#03535F]" : "bg-[#D4D4D4] group-hover:bg-[#03535F]",
+        )}
+      />
     </div>
   );
 }

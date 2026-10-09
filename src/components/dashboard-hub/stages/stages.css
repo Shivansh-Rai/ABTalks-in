@@ -92,6 +92,9 @@
 /* Keep the first and last tiles' growth inside the page. */
 .lib-strip > .lib-tile:first-child .lib-tile__card { transform-origin: left center; }
 .lib-strip > .lib-tile:last-child .lib-tile__card { transform-origin: right center; }
+/* A row with one tile is both first and last: it sits at the left edge, so
+   it must grow rightwards or it slides under the sidebar. */
+.lib-strip > .lib-tile:only-child .lib-tile__card { transform-origin: left center; }
 
 @media (hover: hover) and (min-width: 768px) {
   .lib-edge { display: flex; }

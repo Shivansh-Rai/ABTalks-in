@@ -15,10 +15,20 @@ const CASE_LABEL: Record<CaseResult["status"], string> = {
   not_run: "Not run",
 };
 
-type Scope = "sample" | "all";
+/**
+ * "sample": a Run against the sample tests.
+ * "all": a Submit that included hidden tests.
+ * "custom": one run against the learner's own input, with nothing to compare.
+ */
+type Scope = "sample" | "all" | "custom";
 
 function headline(result: TestRunResult, scope: Scope): string {
   if (result.verdict === "compile_error") return "Compilation error";
+  if (scope === "custom") {
+    if (result.verdict === "timeout") return "Time limit exceeded";
+    if (result.verdict === "runtime_error") return "Runtime error";
+    return "Finished";
+  }
   if (scope === "all") {
     return result.verdict === "accepted"
       ? "Accepted"
@@ -45,10 +55,14 @@ export function TestResults({
   scope = "sample",
 }: {
   result: TestRunResult;
-  /** "sample" for a Run, "all" for a Submit that included hidden tests. */
   scope?: Scope;
 }) {
-  const ok = result.verdict === "accepted";
+  const ok =
+    scope === "custom"
+      ? result.verdict === "accepted" || result.verdict === "wrong_answer"
+      : result.verdict === "accepted";
+  const first = result.cases[0];
+
   return (
     <div className="space-y-3">
       <p
@@ -67,6 +81,13 @@ export function TestResults({
 
       {result.verdict === "compile_error" ? (
         <Block label="Compiler output" text={result.compileOutput ?? ""} />
+      ) : scope === "custom" ? (
+        first ? (
+          <div className="space-y-2">
+            <Block label="Your output" text={first.actualOutput ?? ""} />
+            {first.stderr ? <Block label="Error" text={first.stderr} /> : null}
+          </div>
+        ) : null
       ) : (
         <ul className="space-y-2">
           {result.cases.map((c) => (
@@ -74,35 +95,47 @@ export function TestResults({
               key={c.index}
               className="rounded-xl border border-[#E0E0E0] bg-white"
             >
-              <details open={c.status !== "passed"}>
-                <summary className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm">
-                  <span className="font-medium text-black">
-                    {c.hidden ? "Hidden test" : "Test"} {c.index + 1}
-                  </span>
-                  <span
-                    className={cn(
-                      "text-xs font-semibold",
-                      c.status === "passed"
-                        ? "text-emerald-700"
-                        : "text-red-700",
-                    )}
-                  >
-                    {CASE_LABEL[c.status]}
-                  </span>
-                </summary>
-                {c.hidden ? null : (
+              {c.hidden ? (
+                <CaseHeader c={c} />
+              ) : (
+                <details open={c.status !== "passed"}>
+                  <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+                    <CaseHeader c={c} />
+                  </summary>
                   <div className="space-y-2 border-t border-[#E0E0E0] px-3 py-3">
                     <Block label="Input" text={c.input ?? ""} />
                     <Block label="Expected" text={c.expectedOutput ?? ""} />
                     <Block label="Your output" text={c.actualOutput ?? ""} />
                     {c.stderr ? <Block label="Error" text={c.stderr} /> : null}
                   </div>
-                )}
-              </details>
+                </details>
+              )}
             </li>
           ))}
         </ul>
       )}
     </div>
+  );
+}
+
+function CaseHeader({ c }: { c: CaseResult }) {
+  return (
+    <span className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+      <span className="font-medium text-black">
+        {c.hidden ? "Hidden test" : "Test"} {c.index + 1}
+      </span>
+      <span
+        className={cn(
+          "text-xs font-semibold",
+          c.status === "passed"
+            ? "text-emerald-700"
+            : c.status === "not_run"
+              ? "text-[#6B7280]"
+              : "text-red-700",
+        )}
+      >
+        {CASE_LABEL[c.status]}
+      </span>
+    </span>
   );
 }

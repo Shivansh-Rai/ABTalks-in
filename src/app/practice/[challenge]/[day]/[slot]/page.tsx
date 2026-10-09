@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -118,33 +118,60 @@ export default async function PracticeQuestionPage({ params }: Props) {
   });
   if (state !== "OPEN" && state !== "COMPLETE") redirect(challengePath);
 
-  const solved = progress.solvedActivityIds.includes(question.activityId);
+  const solvedIds = new Set(progress.solvedActivityIds);
+  const solved = solvedIds.has(question.activityId);
+  const siblings =
+    getPracticeDayIndex(slug).find((d) => d.day === day)?.questions ?? [];
   const saved = solved
     ? await getSavedSolution(progress.enrollmentId, question.activityId)
     : null;
 
   return (
-    <main className="flex w-full flex-col gap-3 px-4 py-4 sm:px-6 lg:h-[calc(100svh-56px)]">
-      <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-sm">
-        <Link
-          href={challengePath}
-          className="inline-flex items-center gap-1.5 font-medium text-[#03535F] hover:underline"
-        >
-          <ArrowLeft className="size-4" aria-hidden="true" />
-          {challenge.title}
-        </Link>
-        <span aria-hidden="true" className="text-[#8F8F8F]">
-          /
-        </span>
-        <span aria-current="page" className="text-[#4B4B4B]">
-          Day {day}
-        </span>
-      </nav>
-
+    <main className="flex w-full flex-col px-4 py-4 sm:px-6 lg:h-[calc(100svh-56px)] lg:min-h-[560px]">
       <PracticeWorkspace
         challenge={slug}
         day={day}
         slot={slot}
+        header={
+          <nav
+            aria-label="Breadcrumb"
+            className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm"
+          >
+            <Link
+              href={challengePath}
+              className="inline-flex items-center gap-1.5 font-medium text-[#03535F] hover:underline"
+            >
+              <ArrowLeft className="size-4" aria-hidden="true" />
+              {challenge.title}
+            </Link>
+            <span aria-hidden="true" className="text-[#8F8F8F]">
+              /
+            </span>
+            <span className="text-[#4B4B4B]">Day {day}</span>
+            <span className="ml-1 inline-flex gap-1">
+              {siblings.map((q) => (
+                <Link
+                  key={q.slot}
+                  href={`${challengePath}/${day}/${q.slot}`}
+                  aria-current={q.slot === slot ? "page" : undefined}
+                  title={q.title}
+                  className={cn(
+                    "inline-flex h-7 items-center gap-1 rounded-full px-2.5 text-xs font-semibold transition-colors",
+                    q.slot === slot
+                      ? "bg-[#03535F] text-white"
+                      : "bg-white text-[#4B4B4B] ring-1 ring-[#E0E0E0] hover:text-[#03535F]",
+                  )}
+                >
+                  Q{q.slot}
+                  {solvedIds.has(q.activityId) ? (
+                    <CheckCircle2 className="size-3.5" aria-label="Solved" />
+                  ) : null}
+                </Link>
+              ))}
+            </span>
+          </nav>
+        }
+        sampleInput={question.sampleInput}
         statement={<Statement question={question} />}
         languages={question.languages.map((id) => ({
           id,

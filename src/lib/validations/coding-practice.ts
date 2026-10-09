@@ -167,6 +167,8 @@ export const practiceRunSchema = z
     slot: z.number().int().min(1).max(PRACTICE_QUESTIONS_PER_DAY),
     language: languageSchema,
     code: z.string().min(1).max(PRACTICE_MAX_CODE_CHARS),
+    /** Run once against this stdin instead of the sample tests. */
+    customInput: z.string().min(1).max(10_000).optional(),
   })
   .strict();
 
@@ -177,7 +179,7 @@ export const practiceEnrollSchema = z
   .strict();
 
 /** Input of the Submit action. Same shape as a Run. */
-export const practiceSubmitSchema = practiceRunSchema;
+export const practiceSubmitSchema = practiceRunSchema.omit({ customInput: true });
 
 /** `ActivityAttempt.payload` for a saved practice solution. */
 export const savedSolutionSchema = z.object({

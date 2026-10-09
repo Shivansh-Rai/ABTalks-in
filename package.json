@@ -35,6 +35,8 @@
     "db:seed:databricks-ai": "tsx prisma/seed-databricks-ai.ts",
     "db:seed:langchain": "tsx prisma/seed-langchain.ts",
     "db:seed:coding-practice": "cross-env NODE_OPTIONS=--conditions=react-server tsx prisma/seed-coding-practice.ts",
+    "coding-practice:generate": "node scripts/coding-practice/generate-arrays-strings.mjs",
+    "coding-practice:verify": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/verify-coding-practice-solutions.ts",
     "test:code-runner": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/code-runner/code-runner.test.ts",
     "test:coding-practice": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/coding-practice/coding-practice.test.ts",
     "db:cleanup": "tsx prisma/cleanup.ts test",

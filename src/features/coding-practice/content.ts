@@ -28,13 +28,43 @@ import {
 } from "@/lib/validations/coding-practice";
 import arraysStringsChallenge from "./content/arrays-strings/challenge.json";
 import arraysStringsDay01 from "./content/arrays-strings/day-01.json";
+import arraysStringsDay02 from "./content/arrays-strings/day-02.json";
+import arraysStringsDay03 from "./content/arrays-strings/day-03.json";
+import arraysStringsDay04 from "./content/arrays-strings/day-04.json";
+import arraysStringsDay05 from "./content/arrays-strings/day-05.json";
+import arraysStringsDay06 from "./content/arrays-strings/day-06.json";
+import arraysStringsDay07 from "./content/arrays-strings/day-07.json";
+import arraysStringsDay08 from "./content/arrays-strings/day-08.json";
+import arraysStringsDay09 from "./content/arrays-strings/day-09.json";
+import arraysStringsDay10 from "./content/arrays-strings/day-10.json";
+import arraysStringsDay11 from "./content/arrays-strings/day-11.json";
+import arraysStringsDay12 from "./content/arrays-strings/day-12.json";
+import arraysStringsDay13 from "./content/arrays-strings/day-13.json";
+import arraysStringsDay14 from "./content/arrays-strings/day-14.json";
+import arraysStringsDay15 from "./content/arrays-strings/day-15.json";
 
 /** Add a challenge: one entry here, one slug in PRACTICE_PROGRAM_SLUGS. */
 const RAW: Record<PracticeProgramSlug, { challenge: unknown; days: unknown[] }> =
   {
     "arrays-strings": {
       challenge: arraysStringsChallenge,
-      days: [arraysStringsDay01],
+      days: [
+        arraysStringsDay01,
+        arraysStringsDay02,
+        arraysStringsDay03,
+        arraysStringsDay04,
+        arraysStringsDay05,
+        arraysStringsDay06,
+        arraysStringsDay07,
+        arraysStringsDay08,
+        arraysStringsDay09,
+        arraysStringsDay10,
+        arraysStringsDay11,
+        arraysStringsDay12,
+        arraysStringsDay13,
+        arraysStringsDay14,
+        arraysStringsDay15,
+      ],
     },
   };
 
@@ -140,6 +170,8 @@ export type PracticeQuestion = {
   defaultLanguage: CodeLanguageId;
   starterCode: Partial<Record<CodeLanguageId, string>>;
   examples: { input: string; output: string; explanation: string }[];
+  /** Raw stdin of the first sample test: the format custom input must follow. */
+  sampleInput: string;
 };
 
 export function getPracticeQuestion(
@@ -160,6 +192,7 @@ export function getPracticeQuestion(
     statementMd: question.statementMd,
     languages: content.challenge.languages,
     defaultLanguage: content.challenge.defaultLanguage,
+    sampleInput: question.tests.find((t) => !t.hidden)?.input ?? "",
     starterCode: Object.fromEntries(
       content.challenge.languages.map((l) => [l, question.starterCode[l] ?? ""]),
     ),
@@ -216,4 +249,16 @@ export function buildPracticeSource(
   const harness = found.question.harness[language];
   if (!harness) return null;
   return `${harness.prefix}${userCode}\n${harness.driver}`;
+}
+
+/**
+ * SERVER-ONLY. The stored reference solution for one question, for the
+ * verify script. Never used at request time.
+ */
+export function getPracticeSolution(
+  slug: string,
+  day: number,
+  slot: number,
+): { language: CodeLanguageId; code: string } | null {
+  return findQuestion(slug, day, slot)?.question.solution ?? null;
 }

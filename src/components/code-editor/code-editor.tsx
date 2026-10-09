@@ -22,6 +22,8 @@ type CodeEditorProps = {
   /** Any CSS height. Defaults to filling the parent. */
   height?: string;
   ariaLabel?: string;
+  /** Pixels. */
+  fontSize?: number;
 };
 
 /**
@@ -35,6 +37,7 @@ export default function CodeEditor({
   readOnly = false,
   height = "100%",
   ariaLabel = "Code editor",
+  fontSize = 14,
 }: CodeEditorProps) {
   return (
     <CodeMirror
@@ -46,8 +49,9 @@ export default function CodeEditor({
       height={height}
       theme="light"
       aria-label={ariaLabel}
-      className="h-full font-mono text-sm [&_.cm-editor]:h-full [&_.cm-editor]:outline-none [&_.cm-scroller]:font-mono"
-      basicSetup={{ tabSize: 4, foldGutter: false }}
+      style={{ fontSize }}
+      className="h-full font-mono [&_.cm-editor]:h-full [&_.cm-editor]:outline-none [&_.cm-scroller]:font-mono"
+      basicSetup={{ tabSize: language === "javascript" ? 2 : 4, foldGutter: false }}
     />
   );
 }

@@ -214,8 +214,10 @@ export async function judge(input: {
   code: string;
   tests: RunTestCase[];
   timeLimitSec: number;
+  /** Report output only: Judge0 is given no expected output to compare. */
+  skipCompare?: boolean;
 }): Promise<TestRunResult> {
-  const { language, code, tests, timeLimitSec } = input;
+  const { language, code, tests, timeLimitSec, skipCompare = false } = input;
   const baseUrl = process.env.JUDGE0_URL?.trim().replace(/\/+$/, "");
 
   if (!baseUrl || tests.length === 0 || tests.length > MAX_BATCH_SIZE) {
@@ -238,7 +240,9 @@ export async function judge(input: {
               language_id: CODE_LANGUAGES[language].judge0Id,
               source_code: sourceCode,
               stdin: encode(t.input),
-              expected_output: encode(t.expectedOutput),
+              ...(skipCompare
+                ? {}
+                : { expected_output: encode(t.expectedOutput) }),
               cpu_time_limit: timeLimitSec,
               enable_network: false,
             })),

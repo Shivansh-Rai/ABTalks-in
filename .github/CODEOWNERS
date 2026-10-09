@@ -144,3 +144,5 @@
 /src/repositories/coding-practice.ts                @Shivansh-Rai
 /src/lib/validations/coding-practice.ts             @Shivansh-Rai
 /prisma/seed-coding-practice.ts                     @Shivansh-Rai
+/scripts/coding-practice/                           @Shivansh-Rai
+/scripts/verify-coding-practice-solutions.ts        @Shivansh-Rai

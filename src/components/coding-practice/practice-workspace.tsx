@@ -16,6 +16,7 @@ type PracticeWorkspaceProps = {
   challenge: string;
   day: number;
   slot: number;
+  header: React.ReactNode;
   statement: React.ReactNode;
   languages: { id: CodeLanguageId; label: string }[];
   starterCode: Partial<Record<CodeLanguageId, string>>;
@@ -23,6 +24,8 @@ type PracticeWorkspaceProps = {
   solved: boolean;
   initialCode: CodeInput | null;
   submissions: WorkspaceSubmission[];
+  /** Raw stdin of the first sample: the format custom input follows. */
+  sampleInput: string;
 };
 
 /** Binds the practice Run route and Submit action into the reusable workspace. */
@@ -30,6 +33,7 @@ export function PracticeWorkspace({
   challenge,
   day,
   slot,
+  header,
   statement,
   languages,
   starterCode,
@@ -37,10 +41,13 @@ export function PracticeWorkspace({
   solved,
   initialCode,
   submissions,
+  sampleInput,
 }: PracticeWorkspaceProps) {
   const router = useRouter();
 
-  async function onRun(input: CodeInput): Promise<RunOutcome> {
+  async function onRun(
+    input: CodeInput & { customInput?: string },
+  ): Promise<RunOutcome> {
     try {
       const response = await fetch("/api/practice/run", {
         method: "POST",
@@ -110,6 +117,7 @@ export function PracticeWorkspace({
 
   return (
     <CodeWorkspace
+      header={header}
       statement={statement}
       languages={languages}
       starterCode={starterCode}
@@ -118,6 +126,10 @@ export function PracticeWorkspace({
       initialCode={initialCode}
       solved={solved}
       submissions={submissions}
+      customInput={{
+        example: sampleInput.trimEnd(),
+        hint: "One argument per line, written like the example.",
+      }}
       onRun={onRun}
       onSubmit={onSubmit}
     />

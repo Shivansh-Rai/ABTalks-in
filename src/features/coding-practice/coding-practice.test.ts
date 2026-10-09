@@ -159,6 +159,18 @@ for (const slug of PRACTICE_PROGRAM_SLUGS) {
     );
   });
 
+  suite(`${slug}: every day is published and no title repeats`, () => {
+    const challenge = getPracticeChallenge(slug);
+    const index = getPracticeDayIndex(slug);
+    assert(
+      index.map((d) => d.day).join(",") ===
+        Array.from({ length: challenge?.totalDays ?? 0 }, (_, i) => i + 1).join(","),
+      "days 1..totalDays must all have content",
+    );
+    const titles = index.flatMap((d) => d.questions.map((q) => q.title));
+    assert(new Set(titles).size === titles.length, "two questions share a title");
+  });
+
   suite(`${slug}: activity ids are unique and well formed`, () => {
     const ids = getPracticeDayIndex(slug).flatMap((d) =>
       d.questions.map((q) => q.activityId),
