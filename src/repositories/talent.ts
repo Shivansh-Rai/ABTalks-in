@@ -139,6 +139,23 @@ export type RecruiterPublicIdentity = {
  * Overlay for `/hire` and `/talent` list/detail. Does not select email, phone,
  * or resume URL — resume presence is an existence check only.
  */
+/**
+ * The title of the job they hold now, or most recently held.
+ *
+ * Rows arrive `isCurrent` first and then newest, so the first one with a usable
+ * title is the answer. Returns null for a candidate with no experience at all,
+ * which is the fresher case the caller falls back on.
+ */
+function currentJobTitle(
+  rows: { title: string | null; isCurrent: boolean }[],
+): string | null {
+  for (const row of rows) {
+    const title = row.title?.trim();
+    if (title) return title;
+  }
+  return null;
+}
+
 export async function loadRecruiterIdentities(
   userIds: string[],
 ): Promise<Map<string, RecruiterPublicIdentity>> {
@@ -173,7 +190,10 @@ export async function loadRecruiterIdentities(
           },
         },
         experience: {
-          select: { totalMonths: true },
+          // `isCurrent` first, then most recent — the same order the profile
+          // and the summary panel read, so all three agree on "current job".
+          orderBy: [{ isCurrent: "desc" }, { startedOn: "desc" }],
+          select: { totalMonths: true, title: true, isCurrent: true },
         },
       },
     }),
@@ -189,7 +209,23 @@ export async function loadRecruiterIdentities(
     const edu = p.education[0];
     out.set(p.userId, {
       fullName: p.fullName,
-      role: p.headline,
+      // WHAT THEY ARE PAID TO DO, not what they call themselves.
+      //
+      // This was `p.headline`, and a headline is a pitch. One candidate's
+      // headline reads "AI Engineer with 2+ years building production-grade AI
+      // applications for enterprise clients" while both of their experience rows
+      // say "Software Engineer" — so their desk card announced them as an AI
+      // Engineer in ABTalks' own voice, while the detail panel (which reads the
+      // experience table) called them a Software Engineer. Two surfaces, one
+      // person, two different jobs, and the card's version happened to match the
+      // recruiter's search term, which makes the platform look like it is
+      // telling recruiters what they want to hear.
+      //
+      // The current job title is the honest answer. A fresher has no experience
+      // row and nothing to be wrong about, so the headline is still the fallback
+      // there — and `recruiterRoleLabel` falls through to Student / Working
+      // Professional when neither exists.
+      role: currentJobTitle(p.experience) ?? p.headline,
       yearsExperience: months > 0 ? Math.round(months / 12) : null,
       graduationYear: edu?.graduationYear ?? null,
       education: edu?.degree ?? null,
