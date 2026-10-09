@@ -11,6 +11,7 @@ import {
   kindMatches,
   routesViaAbtMailer,
   signAbtMailerRequest,
+  verifyAbtMailerSignature,
 } from "./abt-mailer";
 
 let passed = 0;
@@ -95,6 +96,28 @@ suite("signature is HMAC-SHA256 over `${ts}.${body}`", () => {
   assert(h["X-ABTalks-Timestamp"] === "1700000000", `ts ${h["X-ABTalks-Timestamp"]}`);
   const expected = createHmac("sha256", env.ABT_MAILER_HMAC_SECRET).update(`1700000000.${body}`).digest("hex");
   assert(h["X-ABTalks-Signature"] === `v1=${expected}`, "signature");
+});
+
+suite("verifyAbtMailerSignature accepts a fresh, correct signature only", () => {
+  const secret = env.ABT_MAILER_HMAC_SECRET;
+  const body = '{"type":"bounce"}';
+  const now = 1_700_000_000_000;
+  const h = signAbtMailerRequest(body, secret, now);
+  const ok = (over: Partial<Parameters<typeof verifyAbtMailerSignature>[0]>) =>
+    verifyAbtMailerSignature({
+      body,
+      timestamp: h["X-ABTalks-Timestamp"]!,
+      signature: h["X-ABTalks-Signature"]!,
+      secret,
+      nowMs: now,
+      ...over,
+    });
+  assert(ok({}), "valid");
+  assert(!ok({ body: '{"type":"complaint"}' }), "tampered body");
+  assert(!ok({ secret: "another-secret-another" }), "wrong secret");
+  assert(!ok({ nowMs: now + 301_000 }), "too old");
+  assert(!ok({ signature: null }), "missing signature");
+  assert(!ok({ secret: undefined }), "no secret configured");
 });
 
 suite("enqueued and duplicate count as sent", () => {
