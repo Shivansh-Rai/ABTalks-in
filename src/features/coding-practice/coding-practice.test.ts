@@ -2,6 +2,8 @@
  * Coding practice: day unlock rules and content validation. No database, no network.
  *   npm run test:coding-practice
  */
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { CODE_LANGUAGE_IDS } from "@/features/code-runner/languages";
 import { PRACTICE_PROGRAM_SLUGS } from "@/features/coding-practice/constants";
 import {
@@ -217,6 +219,30 @@ for (const slug of PRACTICE_PROGRAM_SLUGS) {
     }
   });
 }
+
+// ── The Run path never touches the database ─────────────────────────────────
+
+suite("the Run route and the code runner import no database code", () => {
+  const files = [
+    "src/app/api/practice/run/route.ts",
+    ...readdirSync(join(process.cwd(), "src/features/code-runner"))
+      .filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))
+      .map((f) => `src/features/code-runner/${f}`),
+  ];
+  for (const file of files) {
+    const src = readFileSync(join(process.cwd(), file), "utf8");
+    for (const banned of [
+      "@/lib/db",
+      "@/repositories",
+      "@prisma/client",
+      "prisma.",
+      "writeClient",
+      "assertRateLimit(",
+    ]) {
+      assert(!src.includes(banned), `${file} must not reference ${banned}`);
+    }
+  }
+});
 
 console.log(`\n${passed} passed, ${failed} failed`);
 if (failed > 0) process.exit(1);

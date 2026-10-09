@@ -3,7 +3,11 @@ import {
   CODE_LANGUAGE_IDS,
   type CodeLanguageId,
 } from "@/features/code-runner/languages";
-import { PRACTICE_QUESTIONS_PER_DAY } from "@/features/coding-practice/constants";
+import {
+  PRACTICE_MAX_CODE_CHARS,
+  PRACTICE_PROGRAM_SLUGS,
+  PRACTICE_QUESTIONS_PER_DAY,
+} from "@/features/coding-practice/constants";
 
 const languageSchema = z.enum(CODE_LANGUAGE_IDS);
 
@@ -154,3 +158,29 @@ export function practiceDaySchemaFor(challenge: {
 export type PracticeDayContent = z.infer<
   ReturnType<typeof practiceDaySchemaFor>
 >;
+
+/** Body of POST /api/practice/run. The client never sends an activity id. */
+export const practiceRunSchema = z
+  .object({
+    challenge: z.enum(PRACTICE_PROGRAM_SLUGS),
+    day: z.number().int().min(1).max(60),
+    slot: z.number().int().min(1).max(PRACTICE_QUESTIONS_PER_DAY),
+    language: languageSchema,
+    code: z.string().min(1).max(PRACTICE_MAX_CODE_CHARS),
+  })
+  .strict();
+
+export type PracticeRunInput = z.infer<typeof practiceRunSchema>;
+
+export const practiceEnrollSchema = z
+  .object({ challenge: z.enum(PRACTICE_PROGRAM_SLUGS) })
+  .strict();
+
+/** Input of the Submit action. Same shape as a Run. */
+export const practiceSubmitSchema = practiceRunSchema;
+
+/** `ActivityAttempt.payload` for a saved practice solution. */
+export const savedSolutionSchema = z.object({
+  code: z.string(),
+  language: languageSchema,
+});

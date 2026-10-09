@@ -1,0 +1,94 @@
+"use client";
+
+import { CheckCircle2, XCircle } from "lucide-react";
+import type {
+  CaseResult,
+  TestRunResult,
+} from "@/features/code-runner/languages";
+import { cn } from "@/lib/utils";
+
+const CASE_LABEL: Record<CaseResult["status"], string> = {
+  passed: "Passed",
+  wrong_answer: "Wrong answer",
+  runtime_error: "Runtime error",
+  timeout: "Time limit exceeded",
+  not_run: "Not run",
+};
+
+function headline(result: TestRunResult): string {
+  if (result.verdict === "compile_error") return "Compilation error";
+  if (result.verdict === "accepted") return "All sample tests passed";
+  return `${result.passedCount} of ${result.total} sample tests passed`;
+}
+
+function Block({ label, text }: { label: string; text: string }) {
+  return (
+    <div>
+      <p className="text-xs font-medium text-[#6B7280]">{label}</p>
+      <pre className="mt-1 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg border border-[#E0E0E0] bg-[#F4F4F4] px-3 py-2 font-mono text-xs text-[#111111]">
+        {text.length > 0 ? text : " "}
+      </pre>
+    </div>
+  );
+}
+
+/** Renders the outcome of one run. Pure display; no data access. */
+export function TestResults({ result }: { result: TestRunResult }) {
+  const ok = result.verdict === "accepted";
+  return (
+    <div className="space-y-3">
+      <p
+        className={cn(
+          "flex items-center gap-2 text-sm font-semibold",
+          ok ? "text-emerald-700" : "text-red-700",
+        )}
+      >
+        {ok ? (
+          <CheckCircle2 className="size-4" aria-hidden="true" />
+        ) : (
+          <XCircle className="size-4" aria-hidden="true" />
+        )}
+        {headline(result)}
+      </p>
+
+      {result.verdict === "compile_error" ? (
+        <Block label="Compiler output" text={result.compileOutput ?? ""} />
+      ) : (
+        <ul className="space-y-2">
+          {result.cases.map((c) => (
+            <li
+              key={c.index}
+              className="rounded-xl border border-[#E0E0E0] bg-white"
+            >
+              <details open={c.status !== "passed"}>
+                <summary className="flex cursor-pointer items-center justify-between gap-3 px-3 py-2 text-sm">
+                  <span className="font-medium text-black">
+                    Test {c.index + 1}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-xs font-semibold",
+                      c.status === "passed"
+                        ? "text-emerald-700"
+                        : "text-red-700",
+                    )}
+                  >
+                    {CASE_LABEL[c.status]}
+                  </span>
+                </summary>
+                {c.hidden ? null : (
+                  <div className="space-y-2 border-t border-[#E0E0E0] px-3 py-3">
+                    <Block label="Input" text={c.input ?? ""} />
+                    <Block label="Expected" text={c.expectedOutput ?? ""} />
+                    <Block label="Your output" text={c.actualOutput ?? ""} />
+                    {c.stderr ? <Block label="Error" text={c.stderr} /> : null}
+                  </div>
+                )}
+              </details>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
