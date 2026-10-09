@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type Props = {
   kickoffUtc: string;
@@ -37,7 +38,9 @@ function breakdown(ms: number) {
  * effect ticks once a second and swaps in real values on hydration.
  */
 export function VideothonCountdown({ kickoffUtc, deadlineUtc }: Props) {
+  const router = useRouter();
   const [now, setNow] = useState<number | null>(null);
+  const lastPhase = useRef<Phase | null>(null);
 
   useEffect(() => {
     setNow(Date.now());
@@ -52,6 +55,21 @@ export function VideothonCountdown({ kickoffUtc, deadlineUtc }: Props) {
     now == null
       ? { phase: "PRE" as Phase, target: kickoff }
       : resolve(now, kickoff, deadline);
+
+  // The page around the timer is server-rendered against the same two
+  // instants. When the clock crosses one, ask the server again so the locked
+  // brief and the submission form swap without a manual reload. The second
+  // refresh covers a device clock running a few seconds ahead of the server.
+  const livePhase = now == null ? null : state.phase;
+  useEffect(() => {
+    if (livePhase == null) return;
+    const previous = lastPhase.current;
+    lastPhase.current = livePhase;
+    if (previous == null || previous === livePhase) return;
+    router.refresh();
+    const id = window.setTimeout(() => router.refresh(), 15_000);
+    return () => window.clearTimeout(id);
+  }, [livePhase, router]);
 
   const { d, h, m, s } =
     now == null ? { d: 0, h: 0, m: 0, s: 0 } : breakdown(state.target - now);
