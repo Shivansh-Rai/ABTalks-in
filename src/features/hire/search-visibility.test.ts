@@ -186,18 +186,32 @@ suite("the historical migration script is left as a record", () => {
 suite("the profile pool filters on the brief's skills, not just recency", () => {
   const src = code("src/repositories/hire.ts");
   const at = src.indexOf("export async function listProfileCandidates");
-  const fn = src.slice(at, at + 1400);
+  const fn = src.slice(at, at + 2600);
   assert(
     fn.includes("skills?: string[]"),
     "listProfileCandidates must accept the brief's skills",
   );
   assert(
-    fn.includes("skill: { name: { in: wanted"),
+    fn.includes("name: { in: spellings"),
     "the skills must reach the SQL where, or the pool stays a recency window",
   );
   assert(
     fn.includes("claimedByCandidate: true"),
     "the claimed-skill condition must survive",
+  );
+  // Every spelling, not only the one typed. Matching `Skill.name` against the
+  // recruiter's literal word pre-filtered a "ReactJS" brief to the 12 people who
+  // had typed "ReactJS" and dropped the 377 stored as "React" before scoring
+  // could see them — while `score-candidate.ts` folds both through
+  // `canonicalSkillName` and would have matched them. The pool and the scorer
+  // have to agree on what a skill is.
+  assert(
+    fn.includes("skillSpellings"),
+    "the wanted skills must be expanded through the catalog before the query",
+  );
+  assert(
+    fn.includes("aliases:"),
+    "Skill.aliases must be consulted for rows the catalog does not cover",
   );
 });
 

@@ -47,7 +47,35 @@ export const VIDEOTHON = {
   // The current build assumes ONE open prompt announced on WhatsApp; the
   // dashboard renders the string below directly, no picker. Wire in briefs
   // (like the code hackathon's HackathonProblem rows) as a follow-up.
-  brief: "Create a video to demonstrate ABTalks.in website at your creativity and skills.",
+  //
+  // Everything from `brief` to `guidePdf` is the problem statement. It is
+  // rendered by the dashboard Server Component from kickoff onwards and must
+  // never be passed to (or imported by) a client component: that would ship
+  // the text in the JS bundle before kickoff.
+  brief: "Record a 2–4 minutes screen video that shows ABTalks working from both sides: a recruiter looking for talent, and a student building proof of skill.",
+  briefPoints: [
+    {
+      lead: "Show both sides.",
+      body: "Start from the website's landing page, sign up as a recruiter and as a candidate, and connect the two.",
+    },
+    {
+      lead: "Explore.",
+      body: "There is more in the product than this guide covers. Click around and find the features you find most interesting.",
+    },
+    {
+      lead: "Be creative.",
+      body: "Your angle, story, voice-over and editing are yours. Two demos that look the same are a missed chance.",
+    },
+    {
+      lead: "Keep it tight.",
+      body: "2 minutes minimum, 4 minutes maximum.",
+    },
+  ],
+  // Recruiter sign-up refuses personal mailboxes (lib/validations/work-email).
+  tempMailUrl: "https://temp-mail.org",
+  // Served from public/hackathon-v2/. The file name carries spaces.
+  guidePdf: "/hackathon-v2/VideoThon%20Demo%20Guide%20-%20ABTalks.pdf",
+  guidePdfFileName: "VideoThon Demo Guide - ABTalks.pdf",
   // TODO(organizer): sponsor slot. Set `enabled: false` to hide the panel.
   sponsor: {
     enabled: false as boolean,

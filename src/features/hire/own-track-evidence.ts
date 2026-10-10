@@ -1,7 +1,7 @@
 import "server-only";
 
 import { Domain } from "@prisma/client";
-import { logger } from "@/lib/logger";
+import { errorFields, logger } from "@/lib/logger";
 import { hireChallengePool } from "@/lib/feature-flags";
 import { CHALLENGE_POOL_CAP } from "@/features/hire/search-candidates";
 import { memberEligibilityWhere, resolvePoolCohorts } from "@/features/hire/pool-policy";
@@ -220,7 +220,7 @@ export async function loadOwnTrackEvidence(
     // A preview that cannot read its own numbers renders the profile-only state
     // rather than a 500 — the page is a mirror, not a gate.
     logger.error("[profile] loadOwnTrackEvidence failed", {
-      error: String(error).slice(0, 240),
+      ...errorFields(error),
     });
     return null;
   }

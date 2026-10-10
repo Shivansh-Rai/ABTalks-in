@@ -282,11 +282,26 @@ function reweight(
   priority: string[] | undefined,
   coverage: EvidenceCoverage = FULL_COVERAGE,
   roleAsked = false,
+  experienceAsked = false,
 ): Record<ScoreDimension, number> {
   const w = { ...BASE_WEIGHTS };
   // No role named, no role dimension: the other weights rescale exactly as they
   // did before it existed.
   if (!roleAsked) w.role = 0;
+  // Same rule for experience, and for the same reason.
+  //
+  // `experienceScore` returns a flat 0.7 for EVERYBODY when the recruiter named
+  // no range — there is nothing to be nearer to or further from. That constant
+  // was still taking a sixth of the weight, so it added 11.7 identical points to
+  // every candidate and contributed nothing but noise to the total.
+  //
+  // It was also the proximate cause of a ranking collapse. On a search for
+  // "aws + docker + kubernetes" the pool is pre-filtered to people who hold
+  // those skills, so `stack` is near-flat too; with the cohort dimensions
+  // uncovered for profile-only candidates, stack and experience were the ONLY
+  // two left, both constant, and all 20 results scored exactly 85 — leaving the
+  // name tiebreak to rank 815 people alphabetically. Measured 2026-10-07.
+  if (!experienceAsked) w.experience = 0;
   const boost = new Set<ScoreDimension>();
   for (const p of priority ?? []) {
     const key = PRIORITY_TO_DIM[normToken(p).replace(/ /g, "_")] ??
@@ -303,7 +318,11 @@ function reweight(
   // Every dimension uncovered would mean nothing to rank on. Fall back to the
   // declared dimensions rather than dividing by zero.
   if (sum <= 0) {
-    return { ...BASE_WEIGHTS, missions: 0, cleanPass: 0, projects: 0, consistency: 0, interview: 0, stack: 83.3, experience: 16.7, role: 0 };
+    // Stack alone when nothing else is covered. Experience is deliberately 0
+    // here too unless a range was asked: see the note above.
+    return experienceAsked
+      ? { ...BASE_WEIGHTS, missions: 0, cleanPass: 0, projects: 0, consistency: 0, interview: 0, stack: 83.3, experience: 16.7, role: 0 }
+      : { ...BASE_WEIGHTS, missions: 0, cleanPass: 0, projects: 0, consistency: 0, interview: 0, stack: 100, experience: 0, role: 0 };
   }
   const scale = 100 / sum;
   for (const k of Object.keys(w) as ScoreDimension[]) {
@@ -497,12 +516,36 @@ export function evaluateHardFilters(
     ) {
       reasons.push("Work mode mismatch");
     }
+  }
+
+  // LOCATION — only from a STATED WORK PREFERENCE, never from the profile city.
+  //
+  // It is tempting to fall back to `CandidateProfile.locationCity`, because 333
+  // candidates have filled that in against 42 with a `CandidatePreference`, and
+  // a Bengaluru search reaching only 19 people looks obviously broken. I made
+  // that change on 2026-10-07 and it was wrong.
+  //
+  // `locationCity` is the "City" field in Basic Info: where the candidate IS.
+  // `preferredLocations` is where they want to WORK, and `willingToRelocate`
+  // sits on that same row. Someone in Noida who has stated no preference may
+  // want a Bengaluru job perfectly happily — and because the relocation flag
+  // lives on the preference row they do not have, there is no signal that says
+  // otherwise. Excluding them reads their current address as a refusal to move.
+  //
+  // The audit caught it immediately: `CITY_MATCHER_DISAGREES`, 255-301
+  // candidates "missing" per city, including 301 for the nonexistent city the
+  // filter registry uses as a control. That is the same invariant the work-mode
+  // and engagement-type checks above keep — an unstated field must never
+  // exclude anybody.
+  //
+  // So city filtering genuinely only works for the candidates who have stated a
+  // preference, and the fix for that is more stated preferences, not a proxy.
+  // Making location a RANKING signal (a profile-city match ranks higher, a
+  // mismatch never excludes) would use the field honestly, but that is a new
+  // scoring dimension and a product decision, not a bug fix.
+  if (avail) {
     const wantedCity = effectiveCity(spec);
-    if (
-      wantedCity &&
-      !avail.openToRelocate &&
-      avail.preferredCities.length > 0
-    ) {
+    if (wantedCity && !avail.openToRelocate && avail.preferredCities.length > 0) {
       const city = cityKey(wantedCity);
       const hit = avail.preferredCities.some((c) => {
         const have = cityKey(c);
@@ -624,7 +667,12 @@ export function scoreCandidate(
   // Prefer hard-filter missing list when present; stackScore missing aligns.
   const missing = missingMust.length > 0 ? missingMust : stack.missing;
 
-  const weights = reweight(spec.evidencePriority, coverage, role != null);
+  const weights = reweight(
+    spec.evidencePriority,
+    coverage,
+    role != null,
+    spec.minExperience != null || spec.maxExperience != null,
+  );
   const cohortDay = member.cohortDay > 0 ? member.cohortDay : 1;
   const dims: Record<ScoreDimension, number> = {
     stack: stack.score,
@@ -778,6 +826,42 @@ function toEvidence(member: ScoreableMember) {
 /** Listing order of tiers: proven work first. */
 const TIER_ORDER: Record<MatchTier, number> = { STRONG: 0, PARTIAL: 1, NONE: 2 };
 
+/**
+ * How much this candidate has actually told us, for breaking a score tie.
+ *
+ * Not a score and not weighted: it never moves anyone past someone with a higher
+ * score. It only decides who comes first among people the score rates equally,
+ * and it prefers the fuller profile — which is both more useful to a recruiter
+ * and the thing we want candidates to be rewarded for.
+ */
+function evidenceWeight(c: ScoredCandidate): number {
+  const d = c.dossier;
+  return (
+    c.evidence.skills.length +
+    c.evidence.missionsPassed * 3 +
+    c.evidence.projectScores.length * 3 +
+    c.evidence.commitDayCount +
+    (c.evidence.yearsExperience > 0 ? 5 : 0) +
+    (d?.links.value.github ? 3 : 0) +
+    (d?.education.value ? 2 : 0) +
+    (c.jobRole ? 2 : 0)
+  );
+}
+
+/**
+ * Deterministic order with no human meaning — the last resort when score and
+ * evidence are both equal. A name sorted here instead, which made the alphabet a
+ * permanent ranking advantage.
+ */
+function stableKey(candidateRef: string): string {
+  let h = 2166136261;
+  for (let i = 0; i < candidateRef.length; i += 1) {
+    h ^= candidateRef.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(36).padStart(7, "0");
+}
+
 export function rankCandidates(
   members: ScoreableMember[],
   spec: JobSpec,
@@ -799,16 +883,27 @@ export function rankCandidates(
   // was listed below it (QA-KI-008). STRONG is the claim about proven work, so
   // proven work is listed first; within a tier the score decides.
   //
-  // Name is the tiebreak where there is one. Candidates outside the program
-  // carry no name by design, so their ties fall back to the handle — arbitrary,
-  // but stable, which is what a tiebreak is for.
+  // Then ties break on EVIDENCE RICHNESS, and only after that on a stable hash.
+  //
+  // The tiebreak used to be the candidate's name, which is stable — but it is
+  // also the same bias on every search ever run, and it was deciding far more
+  // often than anyone intended. Measured on 2026-10-07: 4 of 16 real recruiter
+  // queries returned a top 20 with a SINGLE distinct score, so the list a
+  // recruiter saw was 20 people sorted alphabetically out of a pool of 815, and
+  // the same early-alphabet surnames led unrelated searches. A candidate called
+  // Aarav was permanently discoverable and one called Zoya permanently was not.
+  //
+  // `evidenceWeight` is not a new scoring dimension and carries no weight in the
+  // score: it only orders people the score cannot separate, preferring the
+  // candidate who has actually told us more. The hash is the final fallback —
+  // still deterministic (same search, same order) but not correlated with
+  // anything about the person.
   list.sort(
     (a, b) =>
       TIER_ORDER[a.tier] - TIER_ORDER[b.tier] ||
       b.score - a.score ||
-      (a.fullName || a.candidateRef).localeCompare(
-        b.fullName || b.candidateRef,
-      ),
+      evidenceWeight(b) - evidenceWeight(a) ||
+      stableKey(a.candidateRef).localeCompare(stableKey(b.candidateRef)),
   );
   const limit = opts?.limit ?? 25;
   return list.slice(0, limit);

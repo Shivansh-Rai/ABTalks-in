@@ -17,12 +17,7 @@ import {
 } from "@/lib/validations/hire";
 import type { ScoutChip } from "@/features/hire/scout-chips";
 import { findUnsupported } from "@/features/hire/capabilities";
-import {
-  applyPoolBrief,
-  confirmPoolBrief,
-  readPoolExtra,
-  skipUnfilledIntake,
-} from "@/features/hire/pool-brief";
+import { applyPoolBrief, confirmPoolBrief, hasSearchCriteria, readPoolExtra, skipUnfilledIntake } from "@/features/hire/pool-brief";
 import {
   EVIDENCE_KEYS,
   asRoleTitle,
@@ -137,12 +132,9 @@ function result(
  * the whole candidate set. Prefer this helper over ad-hoc checks.
  */
 export function searchable(spec: JobSpec): boolean {
-  const extra = readPoolExtra(spec);
-  return (
-    Boolean(spec.title?.trim()) ||
-    (spec.mustHaveStack?.length ?? 0) > 0 ||
-    extra.sources.length > 0
-  );
+  // One definition, in pool-brief: `searchCandidates` refuses whatever this
+  // rejects, so Scout's gate and the engine's gate must not be able to drift.
+  return hasSearchCriteria(spec);
 }
 
 /** Alias kept for call sites that read as a predicate name. */

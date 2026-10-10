@@ -1,10 +1,14 @@
-import { createHmac } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 
 /**
  * Plan 185: hand selected transactional mail to ABT-Mailer (our SES sender)
  * instead of Brevo. Only `kind`s listed in `EMAIL_VIA_ABT_KINDS` move; every
- * other mail — sign-in codes included — stays on Brevo. Clearing the env var
- * moves everything back to Brevo with no code change.
+ * other mail stays on Brevo. Clearing the env var moves everything back to
+ * Brevo with no code change.
+ *
+ * Plan 186: a list entry may be `*` (every kind) or `prefix.*` (e.g.
+ * `account.admin_update.*`). `EMAIL_KEEP_ON_BREVO_KINDS` uses the same
+ * syntax and wins, so `*` plus a short exception list is the usual setup.
  *
  * ABT-Mailer contract: POST {ABT_MAILER_URL}/api/emails/transactional in
  * "raw" mode, HMAC-SHA256 over `${timestamp}.${body}`. See ABT-Mailer's
@@ -28,6 +32,15 @@ export function abtMailerKinds(raw: string | undefined): Set<string> {
   );
 }
 
+/** True when `kind` matches an entry: exact, `*`, or `prefix.*`. */
+export function kindMatches(patterns: Set<string>, kind: string): boolean {
+  if (patterns.has("*") || patterns.has(kind)) return true;
+  for (const p of patterns) {
+    if (p.endsWith(".*") && kind.startsWith(p.slice(0, -1))) return true;
+  }
+  return false;
+}
+
 export function routesViaAbtMailer(
   kind: string,
   hasAttachments: boolean,
@@ -36,7 +49,37 @@ export function routesViaAbtMailer(
   // ABT-Mailer has no attachment support; those stay on Brevo.
   if (hasAttachments) return false;
   if (!env.ABT_MAILER_URL || !env.ABT_MAILER_HMAC_SECRET) return false;
-  return abtMailerKinds(env.EMAIL_VIA_ABT_KINDS).has(kind);
+  if (kindMatches(abtMailerKinds(env.EMAIL_KEEP_ON_BREVO_KINDS), kind)) return false;
+  return kindMatches(abtMailerKinds(env.EMAIL_VIA_ABT_KINDS), kind);
+}
+
+/**
+ * Mail the recipient must get even after unsubscribing from or complaining
+ * about marketing: sign-in / password codes, password reset, account notices.
+ * ABT-Mailer only lets a hard bounce stop these.
+ */
+const ESSENTIAL_KINDS = abtMailerKinds(
+  "recruiter.otp,auth.signin_code,auth.password_code,auth.password_reset," +
+    "account.admin_update,account.admin_update.*,account.self_deleted,recruiter.welcome",
+);
+
+/**
+ * Mail whose body or subject holds a lasting secret: ABT-Mailer wipes it once
+ * sent. The 6-digit codes are not on this list — they expire in 10
+ * minutes and work once, and support needs to see them in ABT-Mailer's logs
+ * (as it could in Brevo's). A reset link and the welcome password stay usable
+ * for longer, so those are still wiped.
+ */
+const SENSITIVE_KINDS = abtMailerKinds("auth.password_reset,recruiter.welcome");
+
+export function abtMailerCategory(
+  kind: string,
+): "TRANSACTIONAL_ESSENTIAL" | "TRANSACTIONAL_NONESSENTIAL" {
+  return kindMatches(ESSENTIAL_KINDS, kind) ? "TRANSACTIONAL_ESSENTIAL" : "TRANSACTIONAL_NONESSENTIAL";
+}
+
+export function isSensitiveKind(kind: string): boolean {
+  return kindMatches(SENSITIVE_KINDS, kind);
 }
 
 export function signAbtMailerRequest(
@@ -51,6 +94,30 @@ export function signAbtMailerRequest(
     "X-ABTalks-Timestamp": ts,
     "X-ABTalks-Signature": `v1=${sig}`,
   };
+}
+
+const SIGNATURE_TOLERANCE_S = 300;
+
+/**
+ * Check a request ABT-Mailer sent us (its bounce / complaint webhook): same
+ * scheme as signAbtMailerRequest, 5-minute replay window, constant-time.
+ */
+export function verifyAbtMailerSignature(input: {
+  body: string;
+  timestamp: string | null;
+  signature: string | null;
+  secret: string | undefined;
+  nowMs?: number;
+}): boolean {
+  const { body, timestamp, signature, secret } = input;
+  if (!secret || secret.length < 16 || !timestamp || !signature?.startsWith("v1=")) return false;
+  const ts = Number(timestamp);
+  if (!Number.isInteger(ts)) return false;
+  const now = Math.floor((input.nowMs ?? Date.now()) / 1000);
+  if (Math.abs(now - ts) > SIGNATURE_TOLERANCE_S) return false;
+  const expected = Buffer.from(createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex"), "utf8");
+  const given = Buffer.from(signature.slice(3), "utf8");
+  return given.length === expected.length && timingSafeEqual(given, expected);
 }
 
 /**
@@ -90,6 +157,8 @@ export async function sendViaAbtMailer(input: {
   headers: Record<string, string>;
   from: { email: string; name: string };
   replyTo: string;
+  /** The caller passed secrets to redact; treat like a sensitive kind. */
+  hasSecrets?: boolean;
 }): Promise<AbtMailerOutcome> {
   const url = process.env.ABT_MAILER_URL;
   const secret = process.env.ABT_MAILER_HMAC_SECRET;
@@ -107,7 +176,8 @@ export async function sendViaAbtMailer(input: {
       text: input.text,
       headers: input.headers,
     },
-    category: "TRANSACTIONAL_NONESSENTIAL",
+    category: abtMailerCategory(input.kind),
+    sensitive: Boolean(input.hasSecrets) || isSensitiveKind(input.kind),
     overrides: { fromEmail: input.from.email, fromName: input.from.name, replyTo: input.replyTo },
   });
 

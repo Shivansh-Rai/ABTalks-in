@@ -798,6 +798,30 @@ export function canonicalSkillEntry(raw: string): CanonicalSkill | null {
   return BY_NAME.get(name.toLowerCase()) ?? null;
 }
 
+/**
+ * Every spelling of a skill the catalog knows: its canonical name plus all of
+ * its aliases, and the input itself.
+ *
+ * For SQL. The in-memory matcher can call `canonicalSkillName` per skill, but
+ * the pool pre-filter in `repositories/hire.ts` is a Prisma `where` and cannot
+ * run a function over each candidate's rows — so it has to be handed every
+ * spelling up front. Without that, a brief saying "ReactJS" pre-filtered the
+ * pool to the 12 people who literally typed "ReactJS" and never considered the
+ * 377 whose skill is stored as "React", no matter that scoring would have
+ * matched them: they were excluded before scoring ever saw them.
+ *
+ * Returns the input unchanged (as a single entry) for free text the catalog
+ * does not know, so an unknown skill still matches itself.
+ */
+export function skillSpellings(raw: string): string[] {
+  const trimmed = raw.trim();
+  if (!trimmed) return [];
+  const entry = canonicalSkillEntry(trimmed);
+  if (!entry) return [trimmed];
+  const out = new Set<string>([trimmed, entry.name, ...(entry.aliases ?? [])]);
+  return [...out].filter(Boolean);
+}
+
 /** The group a skill belongs to, or null for free text the catalog lacks. */
 export function skillGroupOf(raw: string): SkillGroup | null {
   return canonicalSkillEntry(raw)?.group ?? null;

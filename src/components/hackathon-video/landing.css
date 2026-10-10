@@ -1909,6 +1909,71 @@ body:has(.vt-dialog) [role="presentation"]:has([role="listbox"]) {
   line-height: 1.45;
   white-space: pre-line;
 }
+/* Under the quote: the four asks, the note and the guide download. */
+.vt-brief__points {
+  list-style: none;
+  margin: 26px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+.vt-brief__points li {
+  position: relative;
+  padding-left: 22px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--vt-muted);
+}
+.vt-brief__points li::before {
+  content: "";
+  position: absolute;
+  top: 0.62em;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #FFFFFF;
+}
+.vt-brief__points li strong {
+  color: var(--vt-text);
+  font-weight: 600;
+}
+.vt-brief__note {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--vt-card-hair);
+}
+.vt-brief__note-title {
+  margin: 0 0 8px;
+  font-family: ui-monospace, "SF Mono", "Consolas", monospace;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--vt-text);
+}
+.vt-brief__note-body {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--vt-muted);
+  overflow-wrap: anywhere;
+}
+.vt-mono .vt-brief__link,
+.vt-mono .vt-brief__download {
+  color: #FFFFFF;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+.vt-mono .vt-brief__download {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 16px;
+  font-weight: 600;
+}
+.vt-mono .vt-brief__link:hover,
+.vt-mono .vt-brief__download:hover { text-decoration-thickness: 2px; }
+.vt-mono .vt-brief__link:focus-visible,
+.vt-mono .vt-brief__download:focus-visible { outline: 2px solid #FFFFFF; outline-offset: 4px; }
 
 /* ============================================================
  * GUIDELINES  (four numbered rules, 2 columns, hairline rows)

@@ -186,6 +186,7 @@ export async function sendEmail(opts: {
       headers: mergedHeaders,
       from: { email: FROM_EMAIL, name: FROM_NAME },
       replyTo: opts.replyTo ?? REPLY_TO,
+      hasSecrets: (opts.redact ?? []).some((s) => s.length > 0),
     });
     const { reason, sentryEventId } = await recordDelivery(deliveryId, ctx, outcome);
     if (outcome.status === "SENT") return { ok: true, deliveryId };

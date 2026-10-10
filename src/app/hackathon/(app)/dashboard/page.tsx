@@ -135,7 +135,39 @@ export default async function VideothonDashboardPage() {
                 </p>
               </div>
             </div>
-            <p className="vt-brief__text">{VIDEOTHON.brief}</p>
+            <p className="vt-brief__text">&ldquo;{VIDEOTHON.brief}&rdquo;</p>
+
+            <ul className="vt-brief__points">
+              {VIDEOTHON.briefPoints.map((point) => (
+                <li key={point.lead}>
+                  <strong>{point.lead}</strong> {point.body}
+                </li>
+              ))}
+            </ul>
+
+            <div className="vt-brief__note">
+              <p className="vt-brief__note-title">Important Point</p>
+              <p className="vt-brief__note-body">
+                To register in Recruiter Portal get a temporary email at{" "}
+                <a
+                  href={VIDEOTHON.tempMailUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="vt-brief__link"
+                >
+                  {VIDEOTHON.tempMailUrl}
+                </a>{" "}
+                (applicable only if you have not registered with an
+                Organization Mail ID).
+              </p>
+              <a
+                href={VIDEOTHON.guidePdf}
+                download={VIDEOTHON.guidePdfFileName}
+                className="vt-brief__download"
+              >
+                Click to download the detailed PDF
+              </a>
+            </div>
           </>
         ) : (
           <>

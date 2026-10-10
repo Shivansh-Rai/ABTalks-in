@@ -23,6 +23,7 @@ import {
   searchableUserWhere,
   type RecruiterPublicIdentity,
 } from "@/repositories/talent";
+import { skillSpellings } from "@/lib/skill-catalog";
 
 /**
  * Candidate reads for `/hire`.
@@ -595,10 +596,31 @@ export async function listProfileCandidates(
   // (plan 161 §2g). Ranking still belongs to score-candidate.ts — this only
   // decides who is considered.
   const wanted = [...new Set((opts?.skills ?? []).map((s) => s.trim()).filter(Boolean))];
+  const spellings = [...new Set(wanted.flatMap((w) => skillSpellings(w)))];
   const skillWhere = wanted.length
     ? {
         claimedByCandidate: true,
-        skill: { name: { in: wanted, mode: "insensitive" as const } },
+        skill: {
+          // EVERY spelling, not just the one the recruiter typed.
+          //
+          // This filter decides who is even considered, and it used to match
+          // `Skill.name` alone. A brief saying "ReactJS" therefore pre-filtered
+          // the pool to the 12 candidates who had literally typed "ReactJS",
+          // excluding the 377 stored as "React" before scoring could look at
+          // them — even though `score-candidate.ts` folds the two through
+          // `canonicalSkillName` and would have matched them.
+          //
+          // `skillSpellings` expands each term through the same catalog the
+          // matcher uses, so the pool and the scorer agree on what a skill is.
+          // `Skill.aliases[]` is consulted too, for rows the catalog does not
+          // cover; it is empty on every row today, which is why the catalog
+          // expansion — not the column — is what makes this work.
+          OR: [
+            { name: { in: spellings, mode: "insensitive" as const } },
+            { aliases: { hasSome: spellings } },
+            { aliases: { hasSome: spellings.map((w) => w.toLowerCase()) } },
+          ],
+        },
       }
     : { claimedByCandidate: true };
 
@@ -639,13 +661,54 @@ export const HACKATHON_POOL_TAKE = 200;
 
 export async function listHackathonCandidates(
   take = HACKATHON_POOL_TAKE,
+  opts?: { skills?: string[] },
 ): Promise<HackathonCandidateRow[]> {
+// When the brief names skills, load the participants who HOLD them.
+//
+// 3,330 participants are eligible (team submitted, user searchable) and the cap
+// is 200, so this query returned an arbitrary 6% of them — and it had no
+// `orderBy` at all, so *which* 6% was whatever Postgres happened to return,
+// differently from one run to the next.
+//
+// That was not merely incomplete, it lost evidence. HACKATHON has
+// `dedupePriority: 30` against PROFILE's 10, so it WINS the merge: a
+// participant inside the 200 shows as a hackathon card carrying their shipped
+// project, and the identical person outside it shows as a bare profile with the
+// `projects` dimension empty. Only 158 of the 3,330 have claimed skills, so a
+// skill-named brief now loads at most those — comfortably inside the cap — and
+// their project evidence stops being a lottery.
+const wanted = [...new Set((opts?.skills ?? []).map((x) => x.trim()).filter(Boolean))];
+const spellings = [...new Set(wanted.flatMap((w) => skillSpellings(w)))];
 const rows = await prisma.hackathonParticipant.findMany({
   where: {
     team: { submission: { isNot: null } },
-    user: searchableUserWhere(),
+    user: {
+      ...searchableUserWhere(),
+      ...(spellings.length
+        ? {
+            candidateProfile: {
+              is: {
+                skills: {
+                  some: {
+                    claimedByCandidate: true,
+                    skill: {
+                      OR: [
+                        { name: { in: spellings, mode: "insensitive" as const } },
+                        { aliases: { hasSome: spellings } },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          }
+        : {}),
+    },
   },
   select: HACKATHON_EVIDENCE_SELECT,
+  // A `take` with no `orderBy` is not a selection, it is a coin toss — and it
+  // made the same search return different people on different runs.
+  orderBy: { createdAt: "desc" },
   take,
 });
 const identities = await loadRecruiterIdentities(rows.map((r) => r.userId));

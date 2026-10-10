@@ -1,6 +1,6 @@
 import "server-only";
 
-import { logger } from "@/lib/logger";
+import { errorFields, logger } from "@/lib/logger";
 import { listCandidateAvailability } from "@/repositories/candidate";
 import {
   listCurriculumDays,
@@ -126,7 +126,7 @@ export async function loadAvailabilityByUserId(
     return await listCandidateAvailability(userIds);
   } catch (error) {
     logger.error("[hire] candidate availability unread", {
-      error: String(error).slice(0, 240),
+      ...errorFields(error),
     });
     return new Map();
   }

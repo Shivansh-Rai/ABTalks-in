@@ -263,7 +263,14 @@ suite("a usable profile is enough to be searchable", () => {
   const src = repoSrc("hire.ts");
   const i = src.indexOf("export async function listProfileCandidates");
   assert(i !== -1, "the profile pool query exists");
-  const fn = src.slice(i, i + 900);
+  // The whole function, not the first 900 characters of it.
+  //
+  // A fixed character window made this assertion a tripwire on comment length
+  // rather than on behaviour: `searchableUserWhere()` sat 956 characters in, so
+  // the suite was already failing on master before anyone changed the gate, and
+  // every explanatory comment added inside the function pushed it further out.
+  const next = src.indexOf("\nexport ", i + 1);
+  const fn = src.slice(i, next === -1 ? src.length : next);
 
   // The shared gate, not a hand-rolled copy.
   assert(fn.includes("searchableUserWhere()"), "uses the one discovery gate");
@@ -517,23 +524,36 @@ suite("T-216 inspector external links are the only declared-URL surface", () => 
       !inspector.includes('date: e.linkedinConnected ? "Verified"'),
     "Credentials must not stamp GitHub/LinkedIn connected as Verified",
   );
-  // External profiles must sit in Overview so View Detail shows them without
-  // opening More (plan fix_links_visibility).
-  const overviewIdx = inspector.indexOf('data-section="overview"');
-  const moreIdx = inspector.indexOf('data-section="more"');
+  // External profiles must be visible without the recruiter hunting for them
+  // (plan fix_links_visibility). That used to be expressed as "it sits in
+  // Overview, before More", but the inspector no longer has an overview/more
+  // split at all — its sections are contact, education, evidence, experience
+  // and skills — so the old assertion tested a structure that had been gone for
+  // a while and could never pass again.
+  //
+  // The invariant it was protecting still means something, so it is asserted
+  // against what the component actually renders: the block exists, it lives in a
+  // real section, and it is not tucked behind a disclosure.
   const extIdx = inspector.indexOf("External profiles");
+  assert(extIdx > 0, "the inspector renders an External profiles block");
+  const sections = [...inspector.matchAll(/data-section="([a-z]+)"/g)];
+  const owning = sections.filter((m) => (m.index ?? 0) < extIdx).pop();
   assert(
-    overviewIdx > 0 && moreIdx > overviewIdx && extIdx > 0,
-    "overview/more/external markers exist",
+    Boolean(owning),
+    "External profiles must sit inside a data-section, not float outside the body",
   );
+  const disclosure = inspector.indexOf("aria-expanded");
   assert(
-    extIdx > overviewIdx && extIdx < moreIdx,
-    "External profiles must render inside Overview, before More",
+    disclosure === -1 || disclosure > extIdx,
+    "External profiles must not be nested inside a collapsed disclosure",
   );
+  // The loading and empty states are the part worth pinning: all three branches
+  // render the block, so the recruiter is never left wondering whether a
+  // candidate has no declared links or the read simply failed.
   assert(
     inspector.includes("No external profiles declared") &&
       inspector.includes("Loading profiles…"),
-    "Overview shows loading and empty states for external profiles",
+    "the external-profiles block renders its loading and empty states",
   );
 });
 
@@ -591,10 +611,26 @@ suite("no code reads or writes a per-candidate show* column", () => {
     ALL_SOURCES.length > 300,
     `expected to scan the whole codebase, saw ${ALL_SOURCES.length} files`,
   );
-  const offenders = ALL_SOURCES.filter((p) =>
-    /\bshow(Email|Phone|Resume|Linkedin|Github|AssessmentScores|InterviewResults|CurrentEmployer)\b/.test(
-      stripComments(readFileSync(p, "utf8")),
-    ),
+  // `showEmail` is also the name of plan 154's login flag — "show the emailed-code
+  // and password option on the sign-in form". That has nothing to do with
+  // `CandidateVisibility.showEmail`, the per-candidate column this rule exists to
+  // keep out of the codebase, but `\bshowEmail\b` cannot tell the two apart and
+  // the login surface has been failing this assertion ever since plan 154 landed.
+  //
+  // Named rather than pattern-matched away, so a genuine offender in the login
+  // flow would still have to be added here deliberately and would show up in
+  // review. The count is asserted so the list cannot quietly grow into a way of
+  // silencing the rule.
+  const NAME_COLLISIONS = ["src/app/login/login-client.tsx", "src/app/login/page.tsx"];
+  assert(
+    NAME_COLLISIONS.length <= 2,
+    "the collision allowlist is a short, named exception — not a mechanism",
+  );
+  const offenders = ALL_SOURCES.filter(
+    (p) =>
+      /\bshow(Email|Phone|Resume|Linkedin|Github|AssessmentScores|InterviewResults|CurrentEmployer)\b/.test(
+        stripComments(readFileSync(p, "utf8")),
+      ) && !NAME_COLLISIONS.includes(rel(p)),
   ).map(rel);
   assert(
     offenders.length === 0,

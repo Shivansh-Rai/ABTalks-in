@@ -15,6 +15,7 @@
  * PURE.
  */
 import { isSchoolYearDegree } from "@/lib/candidate-vocab";
+import { TEST_EMAIL_DOMAINS } from "@/repositories/talent";
 
 export type CanonicalSkill = {
   skillId: string;
@@ -130,14 +131,50 @@ export type NeverAppearReason =
   | "ANONYMIZED"
   | "NO_VISIBILITY_ROW"
   | "NOT_SEARCHABLE"
-  | "WITHDRAWN";
+  | "WITHDRAWN"
+  | "NON_CANDIDATE_ROLE"
+  | "TEST_DOMAIN";
 
 /**
- * The discovery gate as documented on `searchableUserWhere`: not deleted, not
- * disabled, a visibility row that is searchable and not withdrawn. A missing
- * row fails closed — see `noVisibilityRowIsProductDecision`.
+ * The discovery gate as documented on `searchableUserWhere`: a STUDENT account
+ * on a non-test domain, not deleted, not disabled, with a visibility row that is
+ * searchable and not withdrawn. A missing row fails closed — see
+ * `noVisibilityRowIsProductDecision`.
+ *
+ * The role and test-domain rules were added to `searchableUserWhere` on
+ * 2026-10-07 after the audit rated 3 searchable `@abtalks.dev` accounts CRITICAL
+ * and found 2 RECRUITER accounts in the candidate pool. Teaching them to the
+ * ORACLE as well is not optional: with the runtime excluding those accounts and
+ * this function still calling them eligible, the next audit reported them as
+ * `SEARCH_INDEX_MISSING` in every single case — 178 phantom candidate-level hits
+ * from about four accounts. Sharing the `TEST_EMAIL_DOMAINS` constant was not
+ * enough; the rule has to be applied in both places or the check drifts from
+ * what it is checking.
  */
 export function gateReasons(c: CanonicalCandidate): NeverAppearReason[] {
+  const reasons = discoverabilityReasons(c);
+  if (c.role !== "STUDENT") reasons.push("NON_CANDIDATE_ROLE");
+  if (c.emailDomain && TEST_EMAIL_DOMAINS.has(c.emailDomain.toLowerCase())) {
+    reasons.push("TEST_DOMAIN");
+  }
+  return reasons;
+}
+
+/**
+ * Whether the DATA marks this account discoverable — account state and the
+ * visibility row only, without the role and test-domain rules.
+ *
+ * Kept separate because "the data says discoverable" and "the gate lets them
+ * through" became different questions once `searchableUserWhere` learned to
+ * exclude recruiters and seed domains. Two data-quality rules exist precisely to
+ * report accounts that are MARKED discoverable and should not be
+ * (`TEST_ACCOUNT_SEARCHABLE`, `NON_CANDIDATE_ROLE_SEARCHABLE`), and folding
+ * those same rules into the gate made them self-defeating: the gate excluded the
+ * account, so the rule could no longer see anything to report. The runtime now
+ * protects search AND the audit still reports the bad row — defence in depth
+ * rather than one replacing the other.
+ */
+export function discoverabilityReasons(c: CanonicalCandidate): NeverAppearReason[] {
   const reasons: NeverAppearReason[] = [];
   if (c.deleted) reasons.push("DELETED");
   if (c.disabled) reasons.push("DISABLED");
