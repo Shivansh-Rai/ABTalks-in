@@ -140,19 +140,39 @@ No Server→Client prop shape changes anywhere in this plan.
    Google rejects an unregistered redirect URI, so a successful sign-in is the
    proof. **Do not start Phase 3 until this passes.**
 
-### Phase 2 — Code: cookie scope (deploy with Phase 3, not before)
+### Phase 2 — Code: cookie scope (independent of the cutover — see step 10)
 
 7. `src/auth.config.ts`: delete `oauthCookieDomain()`, the `cookieDomain`
    constant and the `...(cookieDomain ? { domain: cookieDomain } : {})` spread.
    Replace the comment with the §6-A rationale.
 8. `middleware.ts`: document why `.abtalks.in` stays in the expiry sweep (§6-D).
 9. `npx tsc --noEmit` and `npm run build` must pass.
-10. **Ship Phase 2 and Phase 3 in the same window.** On the old host alone,
-    host-only check cookies narrow the apex↔www OAuth bridge: a user bouncing
-    between those two hosts mid-flow could hit `InvalidCheck`. One canonical
-    host removes the exposure, so do not leave Phase 2 deployed on its own.
+10. **Phase 2 is not a prerequisite for cutover.** `oauthCookieDomain()`
+    matches only the two literal `abtalks.in` hostnames, so the moment
+    `AUTH_URL` becomes `https://app.klymb.ai` it returns `undefined` and the
+    cookies go host-only *with the old code still deployed*. Phase 2 removes
+    dead code and the trap of it reactivating if anyone ever sets `AUTH_URL`
+    back — valuable, but it can merge before or after Phase 3. Do NOT treat it
+    as a gate, and do not deploy it to the old host on its own: there it would
+    narrow the live apex↔www OAuth bridge for no benefit.
 
 ### Phase 3 — Cutover (the user-visible moment)
+
+**Observed starting state (measured 2026-10-10):** `AUTH_URL` is
+`https://abtalks.in`; `abtalks.in` 307s to `www.abtalks.in`, so **www is the
+canonical host today**, not the apex. `app.klymb.ai` already serves the app
+(200, `<title>ABTalks</title>`) but Auth.js there still resolves every
+`signinUrl` / `callbackUrl` to `https://abtalks.in/...`, and the OAuth-check
+cookies are emitted with `Domain=.abtalks.in` — which a browser on
+`app.klymb.ai` rejects outright.
+
+**Consequence: Phase 1 step 6 cannot be satisfied as written, and a Google
+sign-in started from `app.klymb.ai` today does not test the new host at all.**
+With `AUTH_URL` on the old host, Auth.js sends
+`redirect_uri=https://abtalks.in/api/auth/callback/google`, so Google returns
+the user to the OLD host. It looks like a successful sign-in and proves
+nothing about `app.klymb.ai`. The env flip has to come first; the gate moves
+to step 13 below.
 
 11. **Vercel env vars, Production scope:**
     - `NEXT_PUBLIC_APP_URL=https://app.klymb.ai`
@@ -161,24 +181,42 @@ No Server→Client prop shape changes anywhere in this plan.
       `REPLY_TO_EMAIL`, `OUTREACH_REPLY_TO_EMAIL`, `ABT_MAILER_URL` and both
       mail-routing lists **unchanged**.
     `NEXT_PUBLIC_APP_URL` is inlined at build time → **redeploy, not restart.**
-12. **Vercel:** make `app.klymb.ai` the primary domain, then set `abtalks.in`
-    and `www.abtalks.in` to **Redirect to `app.klymb.ai`**. Prefer this over a
-    middleware host check so the redirect happens at the edge before any
-    function invocation. Verify path preservation:
-    `curl -sI https://abtalks.in/r/sometoken | grep -i location`
-    → `https://app.klymb.ai/r/sometoken`.
-13. **Expect every signed-in user to be logged out.** The session cookie is
+12. **Do not set the domain redirects yet.** Leave `abtalks.in` /
+    `www.abtalks.in` serving the app. This is the rollback lever: if step 13
+    fails, revert the two env vars, redeploy, and the old host is still live
+    and canonical. Nothing is irreversible until step 14.
+13. **THE GATE — Google sign-in on the new host.** Sign in with Google at
+    `https://app.klymb.ai/login`. Confirm all three:
+    - `curl -s https://app.klymb.ai/api/auth/providers` shows every
+      `callbackUrl` on `https://app.klymb.ai/...` (not `abtalks.in`);
+    - the Google consent screen appears rather than
+      `Error 400: redirect_uri_mismatch` — a mismatch means Phase 1 step 5 did
+      not land, so fix the redirect URI and retry;
+    - you land back on `app.klymb.ai` **signed in**, not bounced to `/login`.
+    Then devtools → Application → Cookies: the session cookie and every
+    OAuth-check cookie must show **no** `Domain` value.
+    If any of the three fails, roll back per step 12.
+14. Sign in through **every remaining door**: candidate email code, candidate
+    password, recruiter OTP, recruiter password, admin (Google-only). Confirm
+    `/admin` gates and a recruiter session cannot reach a candidate surface.
+15. **Only now, the redirects.** Make `app.klymb.ai` the primary domain, then
+    point **both** `abtalks.in` **and** `www.abtalks.in` at `app.klymb.ai`.
+    Point them individually — do not leave the existing
+    `abtalks.in → www.abtalks.in` 307 in place in front of a second hop, or
+    every legacy link pays two redirects and leaks link equity. Verify:
+    ```
+    curl -sI https://abtalks.in/r/abc     | grep -i location   # → app.klymb.ai/r/abc
+    curl -sI https://www.abtalks.in/r/abc | grep -i location   # → app.klymb.ai/r/abc
+    ```
+16. **Expect every signed-in user to be logged out.** The session cookie is
     host-only by design and does not travel across domains. There is no
     supported way to carry a `__Secure-` host-only session over without
     widening it to `.klymb.ai`, which §6-A forbids. Warn users beforehand and
     cut over off-peak IST.
-14. Sign in through **every** door: Google, candidate email code, candidate
-    password, recruiter OTP, recruiter password, admin (Google-only). Confirm
-    `/admin` gates and a recruiter session cannot reach a candidate surface.
 
 ### Phase 4 — Third-party and operational follow-through
 
-15. **Both mail webhooks** now point at this app's host and must move — a 308
+17. **Both mail webhooks** now point at this app's host and must move — a 308
     on a POST is fragile, and bounce handling failing silently is a real failure
     mode:
     - Brevo dashboard → transactional webhook →
@@ -188,30 +226,30 @@ No Server→Client prop shape changes anywhere in this plan.
       separate `abt-mailer` project, not this repo. Check it for any other
       hard-coded `abtalks.in` callback or allow-list entry while you are there.
     Send one test through each rail and confirm a row lands.
-16. **Sender identity needs no change**, but confirm it: `FROM_EMAIL`
+18. **Sender identity needs no change**, but confirm it: `FROM_EMAIL`
     (`team@abtalks.in`) is used by *both* rails, so `abtalks.in` must stay a
     verified SES identity in ABT-Mailer **and** a verified Brevo sender. Do not
     let the domain move prompt a sender change — see §6-C.
-17. **Google Search Console:** verify `app.klymb.ai` as a property. The *Change
+19. **Google Search Console:** verify `app.klymb.ai` as a property. The *Change
     of Address* tool is apex→apex only, so a move into a subdomain of a domain
     you do not fully own is not eligible; rely on the 308s. Request indexing of
     `/`, `/workshop`, `/hire`, `/program`, `/hackathon`.
-18. **GA4:** update the web data stream's URL. Because the apex app is a
+20. **GA4:** update the web data stream's URL. Because the apex app is a
     separate application, check whether it has its own GA property — if so, add
     each other's hostname to *referral exclusions* so an apex→app hop is not
     counted as new acquisition traffic.
-19. **Sentry:** check `instrumentation-client.ts` / `sentry.server.config.ts`
+21. **Sentry:** check `instrumentation-client.ts` / `sentry.server.config.ts`
     for `tracePropagationTargets` or an allowed-domains list pinned to the old
     host. Confirm with a deliberate test error that events arrive and source
     maps resolve.
-20. **Vercel crons** (`/api/cron/program-commits`, `/api/cron/hire-alerts`,
+22. **Vercel crons** (`/api/cron/program-commits`, `/api/cron/hire-alerts`,
     `/api/cron/resume-imports`) are path-relative to the deployment and need no
     change; `RESUME_IMPORT_SELF_URL` is unset and falls back to `VERCEL_URL`.
     Confirm the next scheduled run succeeds rather than assuming it.
-21. **Chatbot knowledge base**, once the new host is live:
+23. **Chatbot knowledge base**, once the new host is live:
     `SITE_BASE_URL=https://app.klymb.ai npm run ingest:site`, then
     `npm run kb:embed` (costs OpenAI credit), then `npm run test:chatbot`.
-22. **Literals follow-up (separate PR per owner):** land §3's fallback-string
+24. **Literals follow-up (separate PR per owner):** land §3's fallback-string
     and visible-copy changes, each gated on its owner's approval.
 
 ## 6. Guardrails
@@ -258,16 +296,24 @@ subdomain session fixation.
 - **DO NOT** point `ABT_MAILER_URL` at the new domain. It is the *sender
   service's* own host (`abt-mailer.vercel.app`) and is unrelated to this move.
 
-### 6-D. Why `.abtalks.in` stays in the middleware sweep
+### 6-D. Why `.abtalks.in` was REMOVED from the middleware sweep
 
-`expireOAuthCheckCookies` only ever *expires* cookies — it never sets one, so
-it carries no security surface. Removing the `.abtalks.in` entry would create a
-transitional bug: a browser still holding a widened cookie from an earlier
-deploy would hold both it and a new host-only cookie of the same name, send
-both, and Auth.js reading the stale one is exactly the `InvalidCheck` 500 the
-function exists to prevent. On `app.klymb.ai` the entry is inert, because a host
-cannot set a cookie for a domain it is not under. Delete it once `abtalks.in`
-has been redirect-only for 30 days.
+An earlier revision of this plan kept `.abtalks.in` in
+`expireOAuthCheckCookies`, reasoning that the function only expires cookies so
+it carries no risk, and that the entry would clear cookies widened by an
+earlier deploy. **Measurement on the live deploy disproved that.**
+
+`curl -sI https://app.klymb.ai/login` returns **12** OAuth-check `Set-Cookie`
+headers for **12** names in `OAUTH_CHECK_COOKIE_NAMES` — one each, every one
+carrying `Domain=.abtalks.in`. `NextResponse.cookies.set` keys by name, so the
+second loop iteration overwrote the first and the host-only variant was never
+emitted at all. The sweep has therefore never cleared a host-only cookie, which
+is the exact case it exists for.
+
+The entry is now gone and the sweep is host-only, one header per name. A
+widened cookie still sitting on someone's browser is scoped to a domain
+`app.klymb.ai` is not under, so it is never sent to the new host and could not
+be cleared from there regardless; it lapses on its own 15-minute `maxAge`.
 
 ### 6-E. Other DO-NOTs
 
