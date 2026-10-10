@@ -124,9 +124,17 @@ function applySourceCookie(
 }
 
 /**
- * Drop leftover Auth.js PKCE/state/nonce cookies (host-only and .abtalks.in).
- * A stale verifier from a previous Google attempt decrypts as InvalidCheck and
- * 500s /api/auth/error — especially when switching accounts or bouncing www.
+ * Drop leftover Auth.js PKCE/state/nonce cookies. A stale verifier from a
+ * previous Google attempt decrypts as InvalidCheck and 500s /api/auth/error —
+ * especially when switching accounts.
+ *
+ * `auth.config.ts` now sets these host-only (plan 189 §6-A), so host-only is
+ * the only scope this app CREATES. `.abtalks.in` stays in the sweep purely to
+ * CLEAR cookies an earlier deploy widened: a browser holding both a widened
+ * and a host-only cookie of the same name sends both, and Auth.js reading the
+ * stale one is the exact 500 this function exists to prevent. On app.klymb.ai
+ * the entry is inert — a host cannot set a cookie for a domain it is not
+ * under. Safe to delete once abtalks.in has been redirect-only for 30 days.
  */
 function expireOAuthCheckCookies(response: NextResponse) {
   const domains: (string | undefined)[] = [undefined, ".abtalks.in"];
