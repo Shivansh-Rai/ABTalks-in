@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { auth } from "@/auth";
-import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
+import { PracticeShell } from "@/components/coding-practice/practice-shell";
 import { isCodingPracticeEnabled } from "@/lib/feature-flags";
 
 /**
@@ -15,21 +15,17 @@ export default async function PracticeLayout({
   if (!isCodingPracticeEnabled()) notFound();
 
   const session = await auth();
-  const shellUser = {
-    name: session?.user?.name ?? "",
-    email: session?.user?.email ?? "",
-    image: session?.user?.image ?? null,
-  };
   return (
-    <DashboardShell
-      user={shellUser}
+    <PracticeShell
+      user={{
+        name: session?.user?.name ?? "",
+        email: session?.user?.email ?? "",
+        image: session?.user?.image ?? null,
+      }}
       isAdmin={session?.user?.isAdmin ?? false}
-      showSectionNav={false}
       signedIn={Boolean(session?.user?.id)}
-      collapsible
-      startCollapsed
     >
       {children}
-    </DashboardShell>
+    </PracticeShell>
   );
 }

@@ -122,7 +122,7 @@ function CaseHeader({ c }: { c: CaseResult }) {
   return (
     <span className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
       <span className="font-medium text-black">
-        {c.hidden ? "Hidden test" : "Test"} {c.index + 1}
+        Test Case {c.index + 1}
       </span>
       <span
         className={cn(

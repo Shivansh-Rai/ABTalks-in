@@ -30,6 +30,8 @@ type DashboardShellProps = {
   contentClassName?: string;
   /** False on public routes where user may be signed out. Default true. */
   signedIn?: boolean;
+  /** False for a full-height tool page that should have no footer. Default true. */
+  showFooter?: boolean;
 };
 
 export function DashboardShell({
@@ -42,6 +44,7 @@ export function DashboardShell({
   sectionNavItems,
   contentClassName,
   signedIn = true,
+  showFooter = true,
 }: DashboardShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   // Default to collapsed. Overridden after mount by whatever the user last
@@ -143,7 +146,7 @@ export function DashboardShell({
           />
           <div className="flex min-h-[calc(100%-55px)] flex-col">
             <div className="flex min-h-0 flex-1 flex-col">{children}</div>
-            <DashboardFooter />
+            {showFooter ? <DashboardFooter /> : null}
           </div>
         </div>
       </div>
