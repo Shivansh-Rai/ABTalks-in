@@ -11,6 +11,8 @@ import {
   type StageSummary,
 } from "@/components/dashboard-hub/stages/stage-switcher";
 import { BuildSkillsPanel } from "@/components/dashboard-hub/stages/build-skills-panel";
+import { PracticeDsa } from "@/components/dashboard-hub/practice-dsa";
+import { isCodingPracticeEnabled } from "@/lib/feature-flags";
 import {
   TestSkillsPanel,
   testMilestones,
@@ -261,6 +263,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                     showSnowflake={data.hasSnowflakeAccess}
                     showDatabricksAi={data.hasDatabricksAiAccess}
                   />
+                  {isCodingPracticeEnabled() ? <PracticeDsa /> : null}
                   <FaqSection items={STAGE_FAQ.build} />
                   </>
                 ),

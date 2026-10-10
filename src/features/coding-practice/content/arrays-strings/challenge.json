@@ -1,0 +1,10 @@
+{
+  "programSlug": "arrays-strings",
+  "idCode": "as",
+  "title": "Array and String Mastery in 15 Days",
+  "subtitle": "Two problems a day for fifteen days. Arrays and strings, from basics to interview level.",
+  "description": "A 15 day practice track on arrays and strings with two coding problems each day.",
+  "totalDays": 15,
+  "languages": ["python", "java", "cpp", "javascript"],
+  "defaultLanguage": "python"
+}

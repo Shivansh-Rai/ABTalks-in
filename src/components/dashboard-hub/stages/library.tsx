@@ -2,14 +2,14 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, BarChart3, Blocks, Bot, ChevronLeft, ChevronRight, Code2, Network, Sparkles, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, Blocks, Bot, Braces, ChevronLeft, ChevronRight, Code2, Network, Sparkles, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 /* Netflix-style library: two rows on a dark stage, each a horizontally
    scrolling strip of tiles with edge arrows. Data is plain so it can cross
    the server → client boundary; icons and art are picked here. */
 
-export type LibraryArt = "snowflake" | "databricks" | "ai" | "se" | "ds" | "claude" | "hackathon" | "cohort";
+export type LibraryArt = "snowflake" | "databricks" | "ai" | "se" | "ds" | "claude" | "hackathon" | "cohort" | "dsa";
 
 export type LibraryItem = {
   key: string;
@@ -49,6 +49,7 @@ const ICON: Record<LibraryArt, typeof Code2> = {
   claude: Sparkles,
   hackathon: Zap,
   cohort: Bot,
+  dsa: Braces,
 };
 
 const ROWS = {
@@ -75,7 +76,12 @@ export function Library({ cohorts, challenges }: { cohorts: LibraryItem[]; chall
    vertically (overflow-x: clip), so a hovered tile can grow past the row
    and drop its details over whatever is below. Paging moves the strip
    with a transform; on touch screens it falls back to native scrolling. */
-function Row({ id, row, items }: { id: string; row: (typeof ROWS)[keyof typeof ROWS]; items: LibraryItem[] }) {
+/** One titled strip of tiles, for a section that lives outside the two library rows. */
+export function LibraryRow({ id, title, sub, items }: { id: string; title: string; sub: string; items: LibraryItem[] }) {
+  return <Row id={id} row={{ title, sub }} items={items} />;
+}
+
+function Row({ id, row, items }: { id: string; row: { title: string; sub: string }; items: LibraryItem[] }) {
   const frame = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLUListElement>(null);
   const [offset, setOffset] = useState(0);
@@ -302,6 +308,7 @@ const TINT: Record<LibraryArt, { from: string; to: string; bar: string; glow: st
   ds: { from: "#FFC870", to: "#E08A00", bar: "rgba(255,190,90,0.18)", glow: "rgba(224,138,0,0.35)" },
   claude: { from: "#FFB38A", to: "#D9652B", bar: "rgba(255,160,110,0.18)", glow: "rgba(217,101,43,0.35)" },
   hackathon: { from: "#C89BFF", to: "#7B3FE4", bar: "rgba(170,120,255,0.16)", glow: "rgba(123,63,228,0.35)" },
+  dsa: { from: "#5FD0C6", to: "#03535F", bar: "rgba(3,83,95,0.10)", glow: "rgba(3,83,95,0.35)" },
 };
 
 function GlossyArt({ Icon, tint }: { Icon: typeof Code2; tint: (typeof TINT)[LibraryArt] }) {

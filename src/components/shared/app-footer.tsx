@@ -189,6 +189,8 @@ export function AppFooter() {
   if (pathname.startsWith("/challenge/")) return null;
   // Courses render inside DashboardShell, which ships DashboardFooter.
   if (pathname === "/learn" || pathname.startsWith("/learn/")) return null;
+  // Coding practice too (plan 186): it renders inside DashboardShell.
+  if (pathname === "/practice" || pathname.startsWith("/practice/")) return null;
   if (pathname === "/") return null;
 
   // The cohort interview and its report share the cream program surface, so
