@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { signIn } from "next-auth/react";
-import { ArrowLeft, Loader2, Mail } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Loader2, Mail, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { requestRecruiterOtpAction } from "@/app/actions/recruiter-auth-actions";
 import { PasswordSignIn } from "@/components/auth/password-sign-in";
@@ -25,9 +26,12 @@ import { cn } from "@/lib/utils";
 export function RecruiterLoginForm({
   initialEmail = "",
   passwordEnabled = false,
+  registerHref = "/talent/register",
 }: {
   initialEmail?: string;
   passwordEnabled?: boolean;
+  /** Where "Create an account" goes; the page builds it with its own `from`. */
+  registerHref?: string;
 }) {
   const router = useRouter();
   const [method, setMethod] = useState<"code" | "password">("code");
@@ -35,13 +39,23 @@ export function RecruiterLoginForm({
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
   const [devCode, setDevCode] = useState<string | null>(null);
+  /**
+   * Shown in the form rather than a toast. A toast is gone in four seconds,
+   * and the one message a recruiter most needs to read here — "you have no
+   * account yet" — is the one they are most likely to be looking away for.
+   */
+  const [error, setError] = useState<string | null>(null);
+  const [needsRegistration, setNeedsRegistration] = useState(false);
   const [pending, startTransition] = useTransition();
 
   function requestCode() {
+    setError(null);
+    setNeedsRegistration(false);
     startTransition(async () => {
       const res = await requestRecruiterOtpAction({ email, intent: "signin" });
       if (!res.ok) {
-        toast.error(res.message);
+        setError(res.message);
+        setNeedsRegistration(res.needsRegistration === true);
         return;
       }
       setDevCode(res.data.devCode ?? null);
@@ -137,12 +151,20 @@ export function RecruiterLoginForm({
             autoComplete="email"
             autoFocus
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (error) {
+                setError(null);
+                setNeedsRegistration(false);
+              }
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && email.trim()) requestCode();
             }}
             placeholder="you@company.com"
             disabled={pending}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? "recruiter-email-error" : undefined}
           />
           <p className="text-xs text-muted-foreground">
             {passwordEnabled
@@ -150,6 +172,33 @@ export function RecruiterLoginForm({
               : "We’ll email you a 6-digit code. No password, no Google account."}
           </p>
         </div>
+
+        {error ? (
+          <div
+            id="recruiter-email-error"
+            role="alert"
+            className={cn(
+              "space-y-3 rounded-lg border p-3 text-sm",
+              needsRegistration
+                ? "border-border bg-muted/50"
+                : "border-destructive/30 bg-destructive/5 text-destructive",
+            )}
+          >
+            <p>{error}</p>
+            {needsRegistration ? (
+              <Link
+                href={`${registerHref}${registerHref.includes("?") ? "&" : "?"}email=${encodeURIComponent(email.trim())}`}
+                className={cn(
+                  buttonVariants({ size: "sm" }),
+                  "w-full gap-2",
+                )}
+              >
+                <UserPlus className="size-4" aria-hidden="true" />
+                Create an account
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
 
         <button
           type="button"
@@ -169,7 +218,8 @@ export function RecruiterLoginForm({
         </button>
 
         <p className="text-center text-xs text-muted-foreground">
-          Only for recruiters we have already verified.
+          No account yet? Registering takes a minute and opens your workspace
+          straight away.
         </p>
       </div>
     );

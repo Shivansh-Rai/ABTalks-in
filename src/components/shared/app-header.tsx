@@ -98,7 +98,13 @@ export function AppHeader({
       <div className="abt-header-inner">
         <div className="flex min-w-0 items-center gap-3">
           <Link
-            href="/"
+            // `/` resolves a signed-in visitor to their own home: a recruiter
+            // to /hire, everyone else to /dashboard. An admin it sends to
+            // /admin — and /admin renders this header, so for them the logo
+            // was a redirect back to the page they were already on. Linking
+            // them straight there keeps the destination honest and drops the
+            // round trip. Everyone else keeps `/`, which already lands right.
+            href={user.isAdmin ? "/admin" : "/"}
             data-collapsed={collapsed}
             className="logo-link focus-spark shrink-0"
           >

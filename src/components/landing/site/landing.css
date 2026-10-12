@@ -238,6 +238,17 @@
   margin-inline: auto;
 }
 .abtalks-landing .nav__links-cta { display: none; }
+/* …except Sign in. The two `.nav__links-cta` items are the mobile drawer's
+   copies of the Get Started CTA and of Sign in; the CTA is already rendered
+   at desktop as `.nav__cta`, so un-hiding both would double it. Sign in has
+   no desktop twin, which left a signed-out visitor on a wide screen with no
+   way into /login at all — the `:has()` keeps the exemption to that one. */
+@media (min-width: 861px) {
+  .abtalks-landing .nav__links-cta:has(> a[href="/login"]) {
+    display: inline-flex;
+    align-items: center;
+  }
+}
 .abtalks-landing .nav__link {
   font-size: 14px; line-height: 20px; font-weight: 500;
   color: var(--lp-color-text-secondary);
