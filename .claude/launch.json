@@ -2,6 +2,18 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "abtalks-interview-latency",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "cross-env",
+        "ENABLE_INTERVIEW_LATENCY_PROBE=true",
+        "next",
+        "dev"
+      ],
+      "port": 3000,
+      "autoPort": true
+    },
+    {
       "name": "abtalks-interview-testdb",
       "runtimeExecutable": "npm",
       "runtimeArgs": [

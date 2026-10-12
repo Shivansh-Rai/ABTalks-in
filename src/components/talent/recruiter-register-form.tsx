@@ -27,8 +27,11 @@ import { PASSWORD_MIN_LENGTH } from "@/lib/validations/email-auth";
  * credential, so it is optional and unverified.
  */
 export function RecruiterRegisterForm({
+  initialEmail = "",
   passwordEnabled = false,
 }: {
+  /** Prefilled when /talent/login sent them here with no account. */
+  initialEmail?: string;
   /** Plan 154: offer an optional password alongside the emailed code. */
   passwordEnabled?: boolean;
 }) {
@@ -36,7 +39,7 @@ export function RecruiterRegisterForm({
   const [step, setStep] = useState<"form" | "code">("form");
   const [fullName, setFullName] = useState("");
   const [company, setCompany] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(initialEmail);
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [acceptedTerms, setAcceptedTerms] = useState(false);

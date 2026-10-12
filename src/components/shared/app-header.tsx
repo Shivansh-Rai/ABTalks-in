@@ -25,6 +25,7 @@ import {
   type ChallengeSwitcherEnrollment,
 } from "@/components/shared/challenge-switcher";
 import { MobileSidebar } from "@/components/shared/mobile-sidebar";
+import { toneFor } from "@/lib/identity-tone";
 import { cn } from "@/lib/utils";
 
 export type AppHeaderUser = {
@@ -98,7 +99,13 @@ export function AppHeader({
       <div className="abt-header-inner">
         <div className="flex min-w-0 items-center gap-3">
           <Link
-            href="/"
+            // `/` resolves a signed-in visitor to their own home: a recruiter
+            // to /hire, everyone else to /dashboard. An admin it sends to
+            // /admin — and /admin renders this header, so for them the logo
+            // was a redirect back to the page they were already on. Linking
+            // them straight there keeps the destination honest and drops the
+            // round trip. Everyone else keeps `/`, which already lands right.
+            href={user.isAdmin ? "/admin" : "/"}
             data-collapsed={collapsed}
             className="logo-link focus-spark shrink-0"
           >
@@ -158,7 +165,9 @@ export function AppHeader({
                   {user.image ? (
                     <AvatarImage src={user.image} alt="" />
                   ) : null}
-                  <AvatarFallback>{initials(label)}</AvatarFallback>
+                  <AvatarFallback className="identity-tone" data-tone={toneFor(user.email || label)}>
+                    {initials(label)}
+                  </AvatarFallback>
                 </Avatar>
                 <span className="hidden min-w-0 flex-col items-start text-left md:flex">
                   <span className="max-w-[140px] truncate font-medium lg:max-w-[160px]">

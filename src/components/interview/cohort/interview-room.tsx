@@ -36,6 +36,10 @@ import {
   type RoomLineKind,
 } from "@/features/interview/room-lines";
 import {
+  SPEECH_CHARS_PER_SECOND,
+  streamLineAudio,
+} from "@/components/interview/cohort/stream-audio";
+import {
   VoicePoweredOrb,
   type OrbMode,
   type OrbPalette,
@@ -729,8 +733,21 @@ export function InterviewRoom<TFinish = FinishInterviewData>({
       let lastWritten = -1;
       const tick = () => {
         revealRafRef.current = requestAnimationFrame(tick);
-        const duration = audio.duration;
-        if (!Number.isFinite(duration) || duration <= 0) return;
+
+        // A STREAMED line has no real duration until the stream ends and
+        // `endOfStream()` lands, so for most of the line `audio.duration` is
+        // NaN or Infinity. Returning early in that case left the text frozen at
+        // zero characters for the whole question and then snapped it to full,
+        // which looks more broken than no reveal at all. Estimate from the text
+        // instead, and the real duration takes over the moment it exists.
+        //
+        // SPEECH_CHARS_PER_SECOND is measured, not guessed — see its comment.
+        const real = audio.duration;
+        const duration =
+          Number.isFinite(real) && real > 0
+            ? real
+            : text.length / SPEECH_CHARS_PER_SECOND;
+        if (duration <= 0) return;
 
         const ratio = Math.min(audio.currentTime / duration, 1);
         // Slightly ahead of the audio. A reader who is a few characters in
@@ -847,22 +864,53 @@ export function InterviewRoom<TFinish = FinishInterviewData>({
           const reported = decodeSpokenLine(res.headers.get("X-Interview-Line"));
           if (reported) spoken = reported;
 
-          const url = URL.createObjectURL(await res.blob());
-          // Superseded while the audio was downloading. Drop it rather than
-          // starting a second voice on top of the one now speaking.
-          if (stale()) {
+          // Progressive first: start speaking at the first chunk rather than at
+          // the last. Falls back to the whole-blob path on a browser that
+          // cannot stream MP3 (Safari) or if the MediaSource errors before any
+          // audio was buffered — the fallback is the behaviour that shipped
+          // before this, so a failure here costs latency and nothing else.
+          const streamed = res.body
+            ? streamLineAudio(res.body, () => stale())
+            : null;
+
+          if (streamed) {
+            try {
+              await streamed.playable;
+              if (stale()) {
+                streamed.release();
+                return;
+              }
+              audioRef.current = streamed.audio;
+              await streamed.audio.play();
+              startReveal(spoken, streamed.audio);
+              await new Promise<void>((resolve) => {
+                streamed.audio.onended = () => resolve();
+                streamed.audio.onerror = () => resolve();
+              });
+              streamed.release();
+            } catch {
+              streamed.release();
+              if (stale()) return;
+              await viaBrowser();
+            }
+          } else {
+            const url = URL.createObjectURL(await res.blob());
+            // Superseded while the audio was downloading. Drop it rather than
+            // starting a second voice on top of the one now speaking.
+            if (stale()) {
+              URL.revokeObjectURL(url);
+              return;
+            }
+            const audio = new Audio(url);
+            audioRef.current = audio;
+            await audio.play();
+            startReveal(spoken, audio);
+            await new Promise<void>((resolve) => {
+              audio.onended = () => resolve();
+              audio.onerror = () => resolve();
+            });
             URL.revokeObjectURL(url);
-            return;
           }
-          const audio = new Audio(url);
-          audioRef.current = audio;
-          await audio.play();
-          startReveal(spoken, audio);
-          await new Promise<void>((resolve) => {
-            audio.onended = () => resolve();
-            audio.onerror = () => resolve();
-          });
-          URL.revokeObjectURL(url);
         } else {
           /* browser voice fallback */
           await viaBrowser();

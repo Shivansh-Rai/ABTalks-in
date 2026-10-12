@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut } from "lucide-react";
+import { LogOut, Shield } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth-actions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
+import { toneFor } from "@/lib/identity-tone";
 import { cn } from "@/lib/utils";
 
 function initials(name: string): string {
@@ -26,8 +27,11 @@ function initials(name: string): string {
 
 export function RecruiterAccountMenu({
   account,
+  isAdmin = false,
 }: {
   account: RecruiterAccountSnapshot;
+  /** Platform admin, from the session in the layout — not a recruiter role. */
+  isAdmin?: boolean;
 }) {
   return (
     <DropdownMenu>
@@ -40,7 +44,12 @@ export function RecruiterAccountMenu({
         )}
       >
         <Avatar className="hire-account__avatar size-8">
-          <AvatarFallback>{initials(account.fullName)}</AvatarFallback>
+          <AvatarFallback
+            className="identity-tone"
+            data-tone={toneFor(account.email || account.fullName)}
+          >
+            {initials(account.fullName)}
+          </AvatarFallback>
         </Avatar>
         <span className="hire-account__who">
           <span className="max-w-[140px] truncate font-medium">
@@ -82,6 +91,25 @@ export function RecruiterAccountMenu({
               : "Open requests"}
           </DropdownMenuItem>
         </DropdownMenuGroup>
+
+        {/* The desk has no other way out to /admin: its chrome is entirely
+            recruiter-scoped and the brand mark goes to the recruiter home.
+            An account that holds both grants had to log out and back in
+            through another surface to reach the admin console. */}
+        {isAdmin ? (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem
+                render={<Link href="/admin" />}
+                className="cursor-pointer hire-menu__link"
+              >
+                <Shield className="size-3.5" aria-hidden="true" />
+                Platform admin
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </>
+        ) : null}
         <DropdownMenuSeparator />
 
         <form action={signOutAction} className="p-1">

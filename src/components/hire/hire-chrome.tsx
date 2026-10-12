@@ -32,6 +32,7 @@ import type { CreditLevel } from "@/lib/credits-format";
 
 export function HireChrome({
   account,
+  isAdmin,
   credits,
   podRows,
   unreadMessages,
@@ -39,6 +40,8 @@ export function HireChrome({
   children,
 }: {
   account: RecruiterAccountSnapshot | null;
+  /** Platform admin, from the session. Adds the only /admin entry on the desk. */
+  isAdmin: boolean;
   /** Null when this visitor has no recruiter workspace to have a balance in. */
   credits: { balanceMinor: number; currency: string; level: CreditLevel } | null;
   /** Every shortlist row the recruiter has, tagged with its project; scoped below. */
@@ -349,7 +352,7 @@ export function HireChrome({
                   the sheet's "told when something needs you" acceptance line
                   cannot be met inside /hire/*. Same component candidates use. */}
               <NotificationBellButton className="abt-header-icon" />
-              <RecruiterAccountMenu account={account} />
+              <RecruiterAccountMenu account={account} isAdmin={isAdmin} />
             </>
           ) : (
             <button
