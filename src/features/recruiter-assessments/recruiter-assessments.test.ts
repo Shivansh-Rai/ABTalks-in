@@ -263,6 +263,10 @@ function inMemoryStore(): AssessmentStore & {
       ) {
         return false;
       }
+      // As the real store does: the assessment's assignments go with it.
+      for (const [key, a] of assignments) {
+        if (a.assessmentId === assessmentId) assignments.delete(key);
+      }
       rows.delete(assessmentId);
       return true;
     },
@@ -875,12 +879,29 @@ async function run() {
     assert(store.assignments.size === 0, "no rows");
   });
 
-  await suite("14. delete: PUBLISHED → CONFLICT, DRAFT → ok", async () => {
+  // Until 2026-10-12 a published assessment could not be deleted. It now
+  // can, and takes its candidates' assignments and results with it.
+  await suite("14. delete: any status, and a published one takes its assignments", async () => {
     const store = inMemoryStore();
     const published = await publishedAssessment(store);
-    const refused = await deleteAssessment(store, SCOPE_A, published);
-    assert(!refused.ok && refused.code === "CONFLICT", "PUBLISHED refused");
-    assert(store.rows.has(published), "published row kept");
+    const assigned = await assignAssessment(store, fakeNotifier(), SCOPE_A, {
+      assessmentId: published,
+      candidateRefs: FIRST_THREE,
+    });
+    // A function, so TypeScript does not pin the size to the first value seen.
+    const assignmentsLeft = () => store.assignments.size;
+    assert(assigned.ok && assignmentsLeft() === 3, "setup: three assigned");
+
+    const foreign = await deleteAssessment(store, SCOPE_B, published);
+    assert(!foreign.ok && foreign.code === "NOT_FOUND", "another workspace → NOT_FOUND");
+    assert(store.rows.has(published) && assignmentsLeft() === 3, "and nothing was removed");
+
+    const gone = await deleteAssessment(store, SCOPE_A, published);
+    assert(gone.ok, "PUBLISHED deleted by its owner");
+    assert(!store.rows.has(published), "published row gone");
+    assert(assignmentsLeft() === 0, "its assignments went with it");
+    const again = await deleteAssessment(store, SCOPE_A, published);
+    assert(!again.ok && again.code === "NOT_FOUND", "second delete → NOT_FOUND");
 
     const draft = await createAssessment(store, SCOPE_A, validMcqDraft());
     assert(draft.ok, "setup draft");

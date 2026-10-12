@@ -140,7 +140,7 @@ function fakeStore(opts: { started: number; row?: PlatformAssessmentRow | null }
     async list() {
       return [];
     },
-    async deleteDraft() {
+    async delete() {
       return true;
     },
     async resolveAudience(a) {
