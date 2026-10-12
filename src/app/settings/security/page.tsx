@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
 import {
@@ -40,9 +42,20 @@ export default async function SecuritySettingsPage() {
   if (!user) redirect("/login?from=/settings/security");
 
   const googleOnly = await isGoogleOnlyAccount(user.email, user);
+  // Back to where the link to this page lives: the profile for a candidate,
+  // Hire settings for a recruiter.
+  const backHref = user.recruiterProfile ? "/hire/settings" : "/profile";
+  const backLabel = user.recruiterProfile ? "Back to settings" : "Back to profile";
 
   return (
     <main className="mx-auto max-w-lg px-4 py-12">
+      <Link
+        href={backHref}
+        className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        {backLabel}
+      </Link>
       <h1 className="mb-2 text-2xl font-semibold">Password &amp; sign-in</h1>
       <p className="mb-8 text-sm text-muted-foreground">
         Signed in as <span className="font-medium text-foreground">{user.email}</span>.
@@ -55,6 +68,8 @@ export default async function SecuritySettingsPage() {
         hasPassword={hasUsablePassword(user)}
         googleOnly={googleOnly}
         needsCode={!isFreshSignIn(session.authTime)}
+        backHref={backHref}
+        backLabel={backLabel}
       />
     </main>
   );

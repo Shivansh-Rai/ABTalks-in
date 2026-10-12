@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   requestPasswordCodeAction,
@@ -25,6 +25,9 @@ import {
  *   this one is signed straight back in with the new password.
  * - A first password needs a recent sign-in, or else an emailed code
  *   (`needsCode`, decided on the server from the session's sign-in time).
+ * - A failure is shown at the input it is about, or above the button when it
+ *   is about none. Success replaces the form with a confirmation and the way
+ *   back (`backHref`), so the page is not a dead end.
  */
 export function PasswordSettingsForm({
   email,
@@ -32,12 +35,16 @@ export function PasswordSettingsForm({
   hasPassword,
   googleOnly,
   needsCode,
+  backHref,
+  backLabel,
 }: {
   email: string;
   audience: AuthAudience;
   hasPassword: boolean;
   googleOnly: boolean;
   needsCode: boolean;
+  backHref: string;
+  backLabel: string;
 }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -45,7 +52,21 @@ export function PasswordSettingsForm({
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [devCode, setDevCode] = useState<string | null>(null);
+  const [error, setError] = useState<{
+    field: "currentPassword" | "newPassword" | "code" | "form";
+    message: string;
+  } | null>(null);
+  const [done, setDone] = useState<"changed" | "set" | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
+
+  // Focus goes to the input the error is about, once it is enabled again.
+  useEffect(() => {
+    if (!error || pending) return;
+    formRef.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+      ?.focus();
+  }, [error, pending]);
 
   if (googleOnly) {
     return (
@@ -53,6 +74,37 @@ export function PasswordSettingsForm({
         This account signs in with Google only, so it can&apos;t have a
         password.
       </p>
+    );
+  }
+
+  if (done) {
+    return (
+      <div
+        role="status"
+        className="flex flex-col items-start gap-4 rounded-xl border bg-card p-5"
+      >
+        <div className="flex items-start gap-3">
+          <CheckCircle2
+            className="mt-0.5 size-5 shrink-0 text-primary"
+            aria-hidden="true"
+          />
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-foreground">
+              {done === "changed" ? "Password changed" : "Password set"}
+            </p>
+            <p className="text-sm text-muted-foreground">
+              {done === "changed"
+                ? "Your other devices were signed out. This one stays signed in."
+                : "You can now sign in with your email and this password."}
+            </p>
+          </div>
+        </div>
+        {/* A full navigation, not <Link>: the session cookie may have just
+            been replaced, and everything downstream reads it server-side. */}
+        <a href={backHref} className={cn(buttonVariants({ size: "lg" }), "h-11")}>
+          {backLabel}
+        </a>
+      </div>
     );
   }
 
@@ -64,11 +116,35 @@ export function PasswordSettingsForm({
     (!hasPassword || currentPassword.length > 0) &&
     (!codeRequired || code.length === 6);
 
+  function invalid(field: "currentPassword" | "newPassword" | "code") {
+    return error?.field === field
+      ? { "aria-invalid": true, "aria-describedby": `settings-${field}-error` }
+      : {};
+  }
+
+  function errorFor(field: "currentPassword" | "newPassword" | "code" | "form") {
+    if (error?.field !== field) return null;
+    return (
+      <p
+        id={`settings-${field}-error`}
+        role="alert"
+        className={
+          field === "form"
+            ? "rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+            : "text-xs text-destructive"
+        }
+      >
+        {error.message}
+      </p>
+    );
+  }
+
   function sendCode() {
+    setError(null);
     startTransition(async () => {
       const res = await requestPasswordCodeAction();
       if (!res.ok) {
-        toast.error(res.message);
+        setError({ field: "code", message: res.message });
         return;
       }
       setDevCode(res.data.devCode ?? null);
@@ -78,6 +154,7 @@ export function PasswordSettingsForm({
   }
 
   function submit() {
+    setError(null);
     startTransition(async () => {
       const res = await setPasswordAction({
         newPassword,
@@ -85,7 +162,15 @@ export function PasswordSettingsForm({
         ...(codeRequired ? { code } : {}),
       });
       if (!res.ok) {
-        toast.error(res.message);
+        setError({
+          field:
+            res.field === "currentPassword" ||
+            res.field === "newPassword" ||
+            res.field === "code"
+              ? res.field
+              : "form",
+          message: res.message,
+        });
         return;
       }
       if (res.data.reauthenticate) {
@@ -105,13 +190,13 @@ export function PasswordSettingsForm({
           return;
         }
       }
-      toast.success(hasPassword ? "Password changed." : "Password set.");
-      window.location.reload();
+      setDone(hasPassword ? "changed" : "set");
     });
   }
 
   return (
     <form
+      ref={formRef}
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
@@ -133,9 +218,14 @@ export function PasswordSettingsForm({
             id="settings-current-password"
             autoComplete="current-password"
             value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
+            onChange={(e) => {
+              setError(null);
+              setCurrentPassword(e.target.value);
+            }}
             disabled={pending}
+            {...invalid("currentPassword")}
           />
+          {errorFor("currentPassword")}
           <p className="text-xs text-muted-foreground">
             Forgot it? Sign out and use &ldquo;Forgot password?&rdquo; on the
             sign-in page.
@@ -149,12 +239,18 @@ export function PasswordSettingsForm({
           id="settings-new-password"
           autoComplete="new-password"
           value={newPassword}
-          onChange={(e) => setNewPassword(e.target.value)}
+          onChange={(e) => {
+            setError(null);
+            setNewPassword(e.target.value);
+          }}
           disabled={pending}
+          {...invalid("newPassword")}
         />
-        <p className="text-xs text-muted-foreground">
-          At least {PASSWORD_MIN_LENGTH} characters.
-        </p>
+        {errorFor("newPassword") ?? (
+          <p className="text-xs text-muted-foreground">
+            At least {PASSWORD_MIN_LENGTH} characters.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">
@@ -198,14 +294,17 @@ export function PasswordSettingsForm({
                 maxLength={6}
                 placeholder="000000"
                 value={code}
-                onChange={(e) =>
-                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                }
+                onChange={(e) => {
+                  setError(null);
+                  setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                }}
                 disabled={pending}
                 className="text-center font-mono text-lg tracking-[0.5em]"
+                {...invalid("code")}
               />
             </>
           ) : null}
+          {errorFor("code")}
           <button
             type="button"
             onClick={sendCode}
@@ -217,6 +316,7 @@ export function PasswordSettingsForm({
         </div>
       ) : null}
 
+      {errorFor("form")}
       <button
         type="submit"
         disabled={pending || !canSubmit}

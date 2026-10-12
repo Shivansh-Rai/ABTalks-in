@@ -18,6 +18,11 @@ type HireAuthContextValue = {
   approved: boolean;
   signedIn: boolean;
   authEnabled: boolean;
+  /**
+   * Platform Admin. Decides what the desk shows and nothing more: every admin
+   * action checks `requireAdmin()` itself.
+   */
+  isAdmin: boolean;
   openAuth: (reason: HireAuthReason) => void;
 };
 
@@ -30,6 +35,7 @@ export function useHireAuth(): HireAuthContextValue {
       approved: false,
       signedIn: false,
       authEnabled: false,
+      isAdmin: false,
       openAuth: () => {
         window.location.href = "/hire";
       },
@@ -42,11 +48,13 @@ export function HireAuthProvider({
   approved,
   signedIn,
   authEnabled,
+  isAdmin = false,
   children,
 }: {
   approved: boolean;
   signedIn: boolean;
   authEnabled: boolean;
+  isAdmin?: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
@@ -58,8 +66,8 @@ export function HireAuthProvider({
   }, []);
 
   const value = useMemo(
-    () => ({ approved, signedIn, authEnabled, openAuth }),
-    [approved, signedIn, authEnabled, openAuth],
+    () => ({ approved, signedIn, authEnabled, isAdmin, openAuth }),
+    [approved, signedIn, authEnabled, isAdmin, openAuth],
   );
 
   return (

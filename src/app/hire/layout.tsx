@@ -172,6 +172,7 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
         approved={active}
         signedIn={Boolean(userId)}
         authEnabled={isRecruiterAuthEnabled()}
+        isAdmin={session?.user?.isAdmin === true}
       >
         {/* A recruiter who registered *because* they wanted specific candidates
             keeps that ask in sessionStorage until it is recorded, and the
