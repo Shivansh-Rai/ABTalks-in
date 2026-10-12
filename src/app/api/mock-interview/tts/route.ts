@@ -112,11 +112,12 @@ export async function POST(request: Request) {
 
   // `resolveMs` separates the database read from the synthesis call, so a slow
   // turn can be attributed to one or the other instead of being reported as a
-  // single opaque number.
+  // single opaque number. `synthMs` is now time to the vendor's RESPONSE
+  // HEADERS, not to the last audio byte — the body streams on from here, so
+  // there is no total-bytes figure to log at this point any more.
   logger.info("[mock-interview/tts] spoken", {
     line: parsed.data.line,
     chars: line.data.text.length,
-    bytes: audio.data.audio.byteLength,
     resolveMs,
     synthMs,
   });
@@ -125,7 +126,9 @@ export async function POST(request: Request) {
     status: 200,
     headers: {
       "Content-Type": audio.data.contentType,
-      "Content-Length": String(audio.data.audio.byteLength),
+      // No `Content-Length`: the body is a passthrough stream whose total size
+      // is not known until it ends, and announcing a wrong one truncates the
+      // audio. Omitting it lets the response go out chunked.
       // The exact words in the audio, so the room can show the line it is
       // actually hearing rather than the one it guessed. Base64 because header
       // values are ASCII-only and a question may contain anything.
