@@ -149,8 +149,11 @@ export type PlatformStore = {
   ): Promise<boolean>;
   find(assessmentId: string): Promise<PlatformAssessmentRow | null>;
   list(): Promise<PlatformListRow[]>;
-  /** DRAFT-guarded. A published assessment holds candidates' results. */
-  deleteDraft(assessmentId: string): Promise<boolean>;
+  /**
+   * Any status. Removes the assessment and every assignment, answer and
+   * activity record candidates have on it, in one transaction.
+   */
+  delete(assessmentId: string): Promise<boolean>;
   /** The distinct user ids the audience covers right now (the send snapshot). */
   resolveAudience(audience: PlatformAudience): Promise<string[]>;
   /**
@@ -341,21 +344,19 @@ async function saveParsedDraft(
   return OK({ id: draft.assessmentId });
 }
 
-export async function deletePlatformDraft(
+/**
+ * Delete a platform assessment in any status (product decision, 2026-10-12).
+ * For a sent one this also deletes every candidate's assignment, answers,
+ * score and activity log for it; the admin confirms that by typing DELETE.
+ */
+export async function deletePlatformAssessment(
   store: PlatformStore,
   assessmentId: string,
 ): Promise<Result<{ id: string }>> {
   const row = await store.find(assessmentId);
   if (!row) return FAIL("NOT_FOUND", "Assessment not found");
-  if (row.status !== "DRAFT") {
-    return FAIL(
-      "CONFLICT",
-      "Sent assessments can't be deleted — they hold candidates' results.",
-    );
-  }
-  const removed = await store.deleteDraft(assessmentId);
-  if (!removed)
-    return FAIL("CONFLICT", "This assessment is no longer a draft.");
+  const removed = await store.delete(assessmentId);
+  if (!removed) return FAIL("NOT_FOUND", "Assessment not found");
   return OK({ id: assessmentId });
 }
 

@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { StatCard } from "@/components/admin/stat-card";
 import { buttonVariants } from "@/components/ui/button";
+import { AssessmentDeleteButton } from "@/components/hire/assessment/assessment-delete";
 import { getAssessmentsConsole } from "@/features/admin/get-assessments-console";
 import { describeAudience } from "@/features/platform-assessments/service";
 import { prismaPlatformStore } from "@/features/platform-assessments/prisma-store";
@@ -107,12 +108,13 @@ async function PlatformTab() {
             <th className="px-5 py-3 font-medium">Submitted</th>
             <th className="px-5 py-3 font-medium">Status</th>
             <th className="px-5 py-3 font-medium">Updated</th>
+            <th className="w-12 px-2 py-3" aria-label="Actions" />
           </tr>
         </thead>
         <tbody>
           {rows.length === 0 ? (
             <tr>
-              <td colSpan={6} className="px-5 py-10 text-center text-[#787878]">
+              <td colSpan={7} className="px-5 py-10 text-center text-[#787878]">
                 No platform assessments yet.{" "}
                 <Link
                   href="/admin/assessments/new"
@@ -132,7 +134,8 @@ async function PlatformTab() {
               return (
                 <tr
                   key={row.id}
-                  className="border-b border-[#E9E9E9] last:border-0 hover:bg-[#FAFAFA]"
+                  // `group`: the delete bin in the last cell appears on hover.
+                  className="group border-b border-[#E9E9E9] last:border-0 hover:bg-[#FAFAFA]"
                 >
                   <td className="px-5 py-3">
                     <Link
@@ -169,6 +172,16 @@ async function PlatformTab() {
                   </td>
                   <td className="px-5 py-3 text-[#787878]">
                     {formatDateIST(row.updatedAt)}
+                  </td>
+                  <td className="px-2 py-1.5 text-right">
+                    <AssessmentDeleteButton
+                      variant="icon"
+                      revealOnHover
+                      surface="admin"
+                      assessmentId={row.id}
+                      title={row.title}
+                      assignedCount={row.status === "DRAFT" ? 0 : row.sent}
+                    />
                   </td>
                 </tr>
               );

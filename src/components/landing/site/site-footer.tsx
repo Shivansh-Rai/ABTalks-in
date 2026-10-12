@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { FOOTER_COLUMNS } from "./landing-content";
 
@@ -12,7 +13,14 @@ export function SiteFooter({
     <footer className="footer">
       <div className="container footer__grid">
         <div className="footer__brand">
-          <span className="footer__logo">AB TALKS</span>
+          <Link href="/" className="footer__logo" aria-label="ABTalks home">
+            <Image
+              src="/landing/abtalks-logo-mark.png"
+              alt="ABTalks"
+              width={561}
+              height={168}
+            />
+          </Link>
         </div>
 
         {FOOTER_COLUMNS.map((col) => (

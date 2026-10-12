@@ -223,6 +223,10 @@ export type AssessmentStore = {
   ): Promise<void>;
   findOwned(assessmentId: string, scope: Scope): Promise<AssessmentRow | null>;
   listOwned(scope: Scope): Promise<AssessmentListStoreRow[]>;
+  /**
+   * Removes the assessment and, with it, every assignment, answer and
+   * activity record candidates have on it. One transaction.
+   */
   delete(assessmentId: string, scope: Scope): Promise<boolean>;
   /** DRAFT → PUBLISHED in one guarded write. False when nothing moved. */
   publish(assessmentId: string, scope: Scope, at: Date): Promise<boolean>;
@@ -364,11 +368,10 @@ export async function deleteAssessment(
 ): Promise<Result<{ id: string }>> {
   const row = await store.findOwned(assessmentId, scope);
   if (!row) return NOT_FOUND("Assessment not found");
-  if (row.status !== "DRAFT") {
-    return CONFLICT(
-      "Published assessments can't be deleted — they hold candidates' results.",
-    );
-  }
+  // Any status (product decision, 2026-10-12): deleting a published assessment
+  // also deletes every candidate's assignment, answers, score and activity log
+  // for it. The store does both in one transaction; the recruiter confirms it
+  // by typing DELETE in the dialog. Ownership is in the store's WHERE.
   const removed = await store.delete(assessmentId, scope);
   if (!removed) return NOT_FOUND("Assessment not found");
   return OK({ id: assessmentId });

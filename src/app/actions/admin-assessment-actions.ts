@@ -11,7 +11,7 @@ import {
 } from "@/lib/validations/assessment";
 import {
   createPublishAndSend,
-  deletePlatformDraft,
+  deletePlatformAssessment,
   editSentAssessment,
   savePlatformDraft,
 } from "@/features/platform-assessments/service";
@@ -81,13 +81,13 @@ const idSchema = z.object({ assessmentId: z.string().min(1).max(64) });
 export async function deletePlatformAssessmentAction(
   input: unknown,
 ): Promise<ActionOk | ActionErr> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const parsed = idSchema.safeParse(input);
   if (!parsed.success) return { ok: false, message: "Invalid input" };
 
   try {
-    const result = await deletePlatformDraft(
+    const result = await deletePlatformAssessment(
       prismaPlatformStore(),
       parsed.data.assessmentId,
     );
@@ -98,7 +98,14 @@ export async function deletePlatformAssessmentAction(
         status: statusFor(result.code),
       };
     }
+    // Logged: for a sent assessment this removes candidates' results.
+    logger.info("[admin-assessment-actions] deleted", {
+      assessmentId: result.data.id,
+      adminUserId: admin.userId,
+    });
     revalidate();
+    // Its assignments are gone too, so it must leave candidates' lists.
+    revalidatePath("/assessments");
     return { ok: true };
   } catch (error) {
     logger.error("[admin-assessment-actions] delete", { error: String(error) });
