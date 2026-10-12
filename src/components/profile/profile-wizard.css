@@ -1447,6 +1447,16 @@ body.pw-sheet-open,
 body.pw-sheet-open .abt-content-scroll {
   overflow: hidden;
 }
+/* The second global rule, for the same reason (#701). The Rudra launcher is
+   fixed bottom-right at z-50, which is the sheet's Save button exactly, and
+   it floats fully lit over the scrim. The sheet is a modal with a focus trap,
+   so the launcher is out of keyboard reach anyway; it steps aside while the
+   sheet is open and comes back when it closes. Matched on the launcher's
+   closed-state label (ChatLauncher.tsx) so no chatbot code has to know about
+   this page. */
+body.pw-sheet-open button[aria-label="Open chat"] {
+  display: none;
+}
 /* Quick Links stays live while the form is open — it is how you switch
    sections — so the profile card sits above the scrim, below the sheet.
 
