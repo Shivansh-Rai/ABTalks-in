@@ -108,7 +108,14 @@ export async function deleteRecruiterAssessmentAction(
         status: statusFor(result.code),
       };
     }
+    // A published one took its assignments with it, so it must also leave
+    // the candidates' own list. Logged: this removes candidates' results.
+    logger.info("[recruiter-assessment-actions] deleted", {
+      assessmentId: result.data.id,
+      recruiterUserId: workspace.data.userId,
+    });
     revalidatePath("/hire/assessments");
+    revalidatePath("/assessments");
     return { ok: true };
   } catch (error) {
     logger.error("[recruiter-assessment-actions] delete", {

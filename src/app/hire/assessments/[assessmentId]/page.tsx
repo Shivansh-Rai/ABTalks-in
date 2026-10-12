@@ -12,6 +12,7 @@ import {
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
 import { findProjectIdForAssessment } from "@/features/hire/project-assessments";
 import { AssessmentAssignPanel } from "@/components/hire/assessment/assessment-assign-panel";
+import { AssessmentDeleteButton } from "@/components/hire/assessment/assessment-delete";
 
 type Props = {
   params: Promise<{ assessmentId: string }>;
@@ -114,6 +115,15 @@ export default async function HireAssessmentDetailPage({
         <div className="hire-assess-detail__title">
           <h1>{assessment.title}</h1>
           <span className="hire-assess-list__status">{assessment.status}</span>
+          <AssessmentDeleteButton
+            variant="button"
+            surface="recruiter"
+            assessmentId={assessment.id}
+            title={assessment.title}
+            assignedCount={summary.assigned}
+            redirectTo="/hire/assessments"
+            className="ml-auto"
+          />
         </div>
         <p className="hire-assess-detail__facts">{facts.join(" · ")}</p>
       </header>
