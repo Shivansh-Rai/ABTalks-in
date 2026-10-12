@@ -226,16 +226,20 @@ export function prismaAssessmentStore(): AssessmentStore {
     },
 
     async delete(assessmentId, scope) {
-      const owned = await prisma.recruiterAssessment.findFirst({
-        where: { id: assessmentId, ...scopeWhere(scope) },
-        select: { id: true },
-      });
-      if (!owned) return false;
-      await prisma.recruiterAssessment.delete({
-        where: { id: assessmentId },
-        select: { id: true },
-      });
-      return true;
+      // Assignments are RESTRICT on the assessment, so they go first; their
+      // answers, sessions and activity events cascade from them. Then the
+      // assessment, whose questions and options cascade. Both statements
+      // carry the owner scope, so a foreign id deletes nothing in either, and
+      // the batch is one transaction: never half of this.
+      const [, removed] = await prisma.$transaction([
+        prisma.recruiterAssessmentAssignment.deleteMany({
+          where: { assessmentId, assessment: scopeWhere(scope) },
+        }),
+        prisma.recruiterAssessment.deleteMany({
+          where: { id: assessmentId, ...scopeWhere(scope) },
+        }),
+      ]);
+      return removed.count === 1;
     },
 
     async publish(assessmentId, scope, at) {

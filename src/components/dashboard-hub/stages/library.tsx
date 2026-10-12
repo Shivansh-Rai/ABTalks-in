@@ -186,8 +186,17 @@ function ChooserTile({ item, options }: { item: LibraryItem; options: { label: s
     };
   }, [open]);
 
+  // A click leaves focus inside the tile, and :focus-within keeps it grown.
+  // Once the pointer leaves, close the box and drop that focus so the tile
+  // shrinks back instead of sitting over its neighbours and the next row.
+  const onMouseLeave = () => {
+    setOpen(false);
+    const focused = document.activeElement;
+    if (focused instanceof HTMLElement && root.current?.contains(focused)) focused.blur();
+  };
+
   return (
-    <li ref={root} className={TILE_CLASS}>
+    <li ref={root} className={TILE_CLASS} onMouseLeave={onMouseLeave}>
       <div tabIndex={-1} onClick={() => setOpen((o) => !o)} className={cn(CARD_CLASS, "cursor-pointer")}>
         <TileFace
           item={item}

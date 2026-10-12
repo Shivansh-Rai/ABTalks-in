@@ -10,6 +10,7 @@ import {
 import { prismaAssessmentStore } from "@/features/recruiter-assessments/prisma-store";
 import { dsButtonVariants } from "@/components/design/ds-button";
 import { CLAY_CTA } from "@/components/jobs/job-ui";
+import { AssessmentDeleteButton } from "@/components/hire/assessment/assessment-delete";
 import { AssessmentRowMenu } from "@/components/hire/assessment/assessment-row-menu";
 import { cn } from "@/lib/utils";
 
@@ -231,7 +232,9 @@ export default async function HireAssessmentsPage() {
               </thead>
               <tbody>
                 {rows.map((row) => (
-                  <tr key={row.id}>
+                  // `group`: the delete bin beside the row's action appears
+                  // on hover or keyboard focus.
+                  <tr key={row.id} className="group">
                     <td className="hire-assess-index__main">
                       <Link
                         href={`/hire/assessments/${row.id}`}
@@ -264,10 +267,19 @@ export default async function HireAssessmentsPage() {
                     <td>
                       <div className="hire-assess-index__actions">
                         <PrimaryAction row={row} />
+                        <AssessmentDeleteButton
+                          variant="icon"
+                          revealOnHover
+                          surface="recruiter"
+                          assessmentId={row.id}
+                          title={row.title}
+                          assignedCount={row.results?.students ?? 0}
+                        />
                         <AssessmentRowMenu
                           assessmentId={row.id}
                           title={row.title}
                           status={row.status}
+                          assignedCount={row.results?.students ?? 0}
                         />
                       </div>
                     </td>
@@ -292,6 +304,7 @@ export default async function HireAssessmentsPage() {
                     assessmentId={row.id}
                     title={row.title}
                     status={row.status}
+                    assignedCount={row.results?.students ?? 0}
                   />
                 </div>
                 <div className="hire-assess-card__status">
