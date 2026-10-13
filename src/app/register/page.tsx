@@ -20,6 +20,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { buttonVariants } from "@/components/ui/button";
+import { signOutToLoginAction } from "@/app/actions/auth-actions";
+import { cn } from "@/lib/utils";
 import { RegistrationForm } from "./registration-form";
 import { findChallengeEnrollment } from "@/repositories/learning";
 import { safeNextPath, isCandidateRegistered } from "@/features/registration/registration-gate";
@@ -153,6 +156,15 @@ export default async function RegisterPage({ searchParams }: PageProps) {
                 {session.user.email ?? session.user.id}
               </span>
             </CardDescription>
+            {/* The address is the account, so changing it means signing in again. */}
+            <form action={signOutToLoginAction}>
+              <button
+                type="submit"
+                className={cn(buttonVariants({ variant: "link" }), "h-auto p-0")}
+              >
+                Change email
+              </button>
+            </form>
           </CardHeader>
           <CardContent>
             <RegistrationForm

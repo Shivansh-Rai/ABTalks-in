@@ -580,6 +580,15 @@ export function RecruiterOnboardingWizard({
             resendIn={resendIn}
             onCodeChange={setCode}
             onResend={() => resendCode("register")}
+            onChangeEmail={() => {
+              setCode("");
+              setPassword("");
+              setDevCode(null);
+              setCodeError(null);
+              setServerError(null);
+              setAlreadyRegistered(false);
+              go("identity", -1);
+            }}
             onBack={() => {
               setCode("");
               setPassword("");

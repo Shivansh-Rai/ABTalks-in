@@ -87,7 +87,15 @@ export function VerifyReviewStep({
           <p>
             Next we’ll email a 6-digit code to{" "}
             <span className="font-semibold text-[#161616]">{draft.email.trim()}</span>{" "}
-            to verify it’s yours.
+            to verify it’s yours.{" "}
+            <button
+              type="button"
+              onClick={() => onEdit("identity")}
+              disabled={pending}
+              className={TEXT_LINK}
+            >
+              Change email
+            </button>
           </p>
         )
       }
@@ -218,6 +226,7 @@ export function CodeStep({
   resendIn,
   onCodeChange,
   onResend,
+  onChangeEmail,
   onBack,
   onSubmit,
   children,
@@ -240,6 +249,8 @@ export function CodeStep({
   resendIn: number;
   onCodeChange: (code: string) => void;
   onResend: () => void;
+  /** Shown only where the address can still change (before the account exists). */
+  onChangeEmail?: () => void;
   onBack?: () => void;
   onSubmit: () => void;
   /** Plan 154: fields below the code, e.g. a password. */
@@ -256,6 +267,19 @@ export function CodeStep({
           {lead}{" "}
           <span className="font-semibold text-[#161616]">{email}</span>. It
           expires in 10 minutes.
+          {onChangeEmail ? (
+            <>
+              {" "}
+              <button
+                type="button"
+                onClick={onChangeEmail}
+                disabled={pending}
+                className={TEXT_LINK}
+              >
+                Change email
+              </button>
+            </>
+          ) : null}
         </p>
       }
       onSubmit={onSubmit}
