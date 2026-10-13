@@ -80,11 +80,21 @@ function isRecruiterPath(pathname: string | null): boolean {
   );
 }
 
+/**
+ * An assessment attempt (`/assessments/<assignmentId>`), which runs full
+ * screen in strict mode. A help assistant has no place on a proctored test
+ * (#707). The `/assessments` list itself keeps the assistant.
+ */
+function isAssessmentAttemptPath(pathname: string | null): boolean {
+  if (!pathname) return false;
+  return /^\/assessments\/[^/]+\/?$/.test(pathname);
+}
+
 export function ChatWidget() {
   const pathname = usePathname();
   // Gate before the widget mounts, so none of its state, effects or
-  // network calls run on recruiter pages.
-  if (isRecruiterPath(pathname)) return null;
+  // network calls run on recruiter pages or during an assessment attempt.
+  if (isRecruiterPath(pathname) || isAssessmentAttemptPath(pathname)) return null;
   return <ChatWidgetInner />;
 }
 

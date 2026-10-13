@@ -13,19 +13,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-  deleteRecruiterAssessmentAction,
-  duplicateRecruiterAssessmentAction,
-} from "@/app/actions/recruiter-assessment-actions";
-import { buttonVariants } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { duplicateRecruiterAssessmentAction } from "@/app/actions/recruiter-assessment-actions";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,22 +22,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { cn } from "@/lib/utils";
+import { AssessmentDeleteDialog } from "./assessment-delete";
 
 /**
  * The ⋮ "View more" menu on each /hire/assessments row and card. Secondary
  * actions only — the state's primary action (Continue editing / View results)
- * sits next to it on the row. Delete is DRAFT-only (the service refuses
- * published ones) and always goes through a confirm dialog.
+ * sits next to it on the row. Delete is offered in every status and always
+ * goes through the confirm dialog, which asks for a typed word when candidates
+ * hold results on the assessment.
  */
 export function AssessmentRowMenu({
   assessmentId,
   title,
   status,
+  assignedCount,
 }: {
   assessmentId: string;
   title: string;
   status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
+  /** Candidates it is assigned to: decides how strongly delete is confirmed. */
+  assignedCount: number;
 }) {
   const router = useRouter();
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -65,19 +57,6 @@ export function AssessmentRowMenu({
       }
       toast.success("Copy created as a draft");
       router.push(`/hire/create-test?id=${res.data.id}`);
-    });
-  }
-
-  function remove() {
-    startTransition(async () => {
-      const res = await deleteRecruiterAssessmentAction({ assessmentId });
-      if (!res.ok) {
-        toast.error(res.message);
-        return;
-      }
-      setConfirmOpen(false);
-      toast.success("Draft deleted");
-      router.refresh();
     });
   }
 
@@ -141,57 +120,25 @@ export function AssessmentRowMenu({
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          {isDraft ? (
-            <DropdownMenuItem
-              variant="destructive"
-              className="cursor-pointer hire-assess-menu__danger"
-              onClick={() => setConfirmOpen(true)}
-            >
-              <Trash2 aria-hidden="true" />
-              Delete draft
-            </DropdownMenuItem>
-          ) : (
-            <DropdownMenuItem disabled className="hire-assess-menu__locked">
-              <Trash2 aria-hidden="true" />
-              <span>
-                Delete
-                <small>Published tests keep candidate results</small>
-              </span>
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem
+            variant="destructive"
+            className="cursor-pointer hire-assess-menu__danger"
+            onClick={() => setConfirmOpen(true)}
+          >
+            <Trash2 aria-hidden="true" />
+            {isDraft ? "Delete draft" : "Delete"}
+          </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Dialog open={confirmOpen} onOpenChange={(open) => !pending && setConfirmOpen(open)}>
-        <DialogContent className="hire-app sm:max-w-md" showCloseButton={false}>
-          <DialogHeader>
-            <DialogTitle>Delete this draft?</DialogTitle>
-            <DialogDescription>
-              &ldquo;{title}&rdquo; and its questions will be removed. This
-              can&apos;t be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <button
-              type="button"
-              className={cn(buttonVariants({ variant: "outline" }))}
-              onClick={() => setConfirmOpen(false)}
-              disabled={pending}
-            >
-              Cancel
-            </button>
-            <button
-              type="button"
-              className={cn(buttonVariants({ variant: "destructive" }))}
-              onClick={remove}
-              disabled={pending}
-            >
-              <Trash2 aria-hidden="true" />
-              {pending ? "Deleting…" : "Delete draft"}
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AssessmentDeleteDialog
+        open={confirmOpen}
+        onOpenChange={setConfirmOpen}
+        surface="recruiter"
+        assessmentId={assessmentId}
+        title={title}
+        assignedCount={assignedCount}
+      />
     </>
   );
 }

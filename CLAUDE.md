@@ -136,8 +136,10 @@ Your first responsibility is to respect module ownership.
 
 This is a HARD LOCK and overrides every other instruction in this file,
 including "My Ownership" below, whoever the current developer is (Sohail,
-Shivansh, Zainab, Shashank, Shallika or anyone else) and whatever tool
-(Claude, Cursor, Copilot, …) is doing the editing.
+Shivansh or anyone else) and whatever tool (Claude, Cursor, Copilot, …) is
+doing the editing. Departures do not unlock it: Notifications stayed with
+Manuvrtti when Zainab, Shashank and Shallika left, and it stays with
+Manuvrtti whoever else leaves.
 
 Only **Manuvrtti** may create, edit, move, rename or delete notification code.
 Everyone else must get Manuvrtti's explicit approval FIRST, for that specific
@@ -182,9 +184,16 @@ Rules for AI agents working for anyone other than Manuvrtti:
 
 I am Sohail.
 
+Zainab, Shashank and Shallika have left (recorded 2026-10-12). Everything they
+owned is mine now — it is folded into the list below rather than left under
+their names, so there is no module an agent can read as "someone else's, ask
+them first" when there is nobody to ask. `.github/CODEOWNERS` already routes
+those paths to `@byteninjaa0`; Zainab's 67 rules moved on 2026-10-09, and
+Shashank and Shallika never had rules of their own.
+
 My primary ABTalks ownership is:
-- Candidate search
-- Search ranking
+
+Platform & security
 - Authentication architecture
 - Authorization
 - Recruiter isolation
@@ -196,6 +205,39 @@ My primary ABTalks ownership is:
 - Shared architecture
 - Infrastructure
 - Database conventions
+
+Search
+- Candidate search
+- Search ranking
+- Search synonyms (was Shashank)
+
+Hire side & recruiter (was Zainab)
+- Hire side & Recruiter (`/hire`, `/admin/hire`, `features/hire`,
+  `features/recruiter*`, recruiter onboarding & seats)
+- Resume Parsing & Import (`/admin/resume-imports`, `features/resume`,
+  `resume-import` repo & actions)
+- Company identity
+- Credits, credit ledger, plans / limits
+- Contact unlock
+- Outreach
+- Mock Interviews (`/mock-interviews`, `/interview`, `features/interview`,
+  mock interview actions)
+
+Talent & pipeline (was Shashank)
+- Talent projects
+- Candidate review panel
+- Shortlist / reject
+- Hiring pipeline
+- Recruiter-side assessment builder
+- Recruiter analytics
+
+Design & front end (was Shallika)
+- UI/UX
+- Design system
+- Information architecture
+- Product flows
+- Responsive behaviour
+- Visual QA
 
 Follow the module ownership and cross-module rules defined in the repository CLAUDE.md.
 
@@ -205,9 +247,10 @@ I am also responsible for reviewing architecture-sensitive cross-module changes.
 
 Do not modify functionality owned by other developers unless explicitly approved.
 
-Other ownership:
+Two other people own code here. Everything not listed below is mine — see
+"My Ownership" above for the full list.
 
-Shivansh:
+Shivansh (@Shivansh-Rai):
 - Candidate profile
 - Candidate skills
 - Education / experience / projects
@@ -217,27 +260,7 @@ Shivansh:
 - Assessment Builder
 - Career guidance
 
-Zainab (@zainabshujat):
-- Resume Parsing & Import (`/admin/resume-imports`, `features/resume`, `resume-import` repo & actions)
-- Hire side & Recruiter (`/hire`, `/admin/hire`, `features/hire`, `features/recruiter*`, recruiter onboarding & seats)
-- Company identity
-- Credits
-- Credit ledger
-- Contact unlock
-- Plans / limits
-- Outreach
-- Mock Interviews (`/mock-interviews`, `/interview`, `features/interview`, mock interview actions)
-
-Shashank:
-- Talent projects
-- Search synonyms
-- Candidate review panel
-- Shortlist / reject
-- Hiring pipeline
-- Recruiter-side assessment builder
-- Recruiter analytics
-
-Manuvrtti:
+Manuvrtti (@manuVrtti):
 - Jobs
 - Applications
 - Job alerts
@@ -246,28 +269,10 @@ Manuvrtti:
 - Analytics events
 - UTM tracking
 
-Sohail:
-- Authentication architecture
-- Authorization
-- Recruiter isolation
-- Platform Admin
-- Security
-- Rate limiting
-- Audit
-- System configuration
-- Shared architecture
-- Infrastructure
-- Database conventions
-- Candidate search
-* Search ranking
-
-Shallika:
-- UI/UX
-- Design system
-- Information architecture
-- Product flows
-- Responsive behaviour
-- Visual QA
+Zainab, Shashank and Shallika have left. Their modules are listed under "My
+Ownership" above, not here. A plan or diff that still asks for "Zainab's
+approval", "Shashank's approval" or "Shallika's approval" is reading a stale
+copy of this file — those changes need Sohail, like any other module of his.
 
 # Mandatory Rules
 

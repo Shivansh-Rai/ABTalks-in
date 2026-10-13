@@ -180,6 +180,7 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
         <HireDeskProvider>
           <HireChrome
             account={account}
+            isAdmin={session?.user?.isAdmin === true}
             credits={
               credits?.ok
                 ? {

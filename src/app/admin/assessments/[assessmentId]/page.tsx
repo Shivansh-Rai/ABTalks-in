@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Pencil } from "lucide-react";
 import { requireAdmin } from "@/lib/admin-auth";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
-import { PlatformAssessmentDeleteButton } from "@/components/admin/platform-assessment-delete-button";
+import { AssessmentDeleteButton } from "@/components/hire/assessment/assessment-delete";
 import { PlatformBuilderFrame } from "@/components/admin/platform-builder-frame";
 import { AssessmentBuilder } from "@/components/hire/assessment/assessment-builder";
 import { buttonVariants } from "@/components/ui/button";
@@ -54,7 +54,14 @@ export default async function AdminPlatformAssessmentPage({
           >
             ← All assessments
           </Link>
-          <PlatformAssessmentDeleteButton assessmentId={row.id} />
+          <AssessmentDeleteButton
+            variant="button"
+            surface="admin"
+            assessmentId={row.id}
+            title={row.title}
+            assignedCount={0}
+            redirectTo="/admin/assessments"
+          />
         </div>
         <PlatformBuilderFrame>
           <AssessmentBuilder
@@ -128,6 +135,14 @@ export default async function AdminPlatformAssessmentPage({
               <Pencil aria-hidden="true" />
               Edit assessment
             </Link>
+            <AssessmentDeleteButton
+              variant="button"
+              surface="admin"
+              assessmentId={row.id}
+              title={row.title}
+              assignedCount={summary.sent}
+              redirectTo="/admin/assessments"
+            />
           </>
         }
       />

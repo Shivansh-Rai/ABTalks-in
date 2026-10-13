@@ -532,10 +532,14 @@ it is *not* solved.
   would reach it and could be set by any `*.klymb.ai` subdomain (subdomain
   session fixation). Never reintroduce a cookie domain. Sharing a session with
   another klymb.ai host is an auth-architecture change, not a config tweak.
-- `middleware.ts`'s `expireOAuthCheckCookies` still lists `.abtalks.in`. That
-  function only *expires* cookies, so it has no security surface; the entry
-  clears widened cookies left by earlier deploys and is inert on the new host.
-  Removable once `abtalks.in` has been redirect-only for 30 days.
+- `middleware.ts`'s `expireOAuthCheckCookies` is host-only too, one
+  `Set-Cookie` per name. It used to loop over `[undefined, ".abtalks.in"]`
+  intending to clear both scopes, but `NextResponse.cookies.set` keys by NAME,
+  so the second iteration overwrote the first and the host-only variant was
+  never emitted — measured on the live deploy: 12 names in
+  `OAUTH_CHECK_COOKIE_NAMES`, 12 headers out, every one `Domain=.abtalks.in`.
+  It had therefore never cleared a host-only cookie, the only case it exists
+  for now that nothing sets a cookie domain.
 - The cutover signed every user out: a host-only session cookie cannot cross
   domains, and widening it was not an option. Expected, not a bug.
 

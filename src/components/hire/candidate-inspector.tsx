@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ArrowUpRight,
   Award,
+  Briefcase,
   Check,
   ChevronDown,
   CircleMinus,
@@ -66,6 +67,7 @@ import {
   OpenToWorkBadge,
 } from "@/components/hire/hire-card-facts";
 import type { MatchCardData, MatchDecision } from "@/components/hire/match-card";
+import { resolveCompany } from "@/lib/company-identity";
 import { cn } from "@/lib/utils";
 import { MaskedName } from "@/components/hire/desk-match-card";
 import { UnlockContactDialog } from "@/components/hire/unlock-contact-dialog";
@@ -1289,10 +1291,44 @@ export function CandidateInspector({
                 </>
               );
 
+              // One tile per employer, and the same tile every time that
+              // employer appears: `resolveCompany` folds the spelling variants
+              // together first ("EXL", "Exl", "EXL Services" are 109 rows of
+              // one company), so the colour and initials cannot disagree
+              // between two rows of the same panel.
+              const company = resolveCompany(job.companyName || job.title);
+
               return (
                 <div key={job.id} className="hire-profile__org-block">
-                  <span className="hire-profile__tile" aria-hidden="true">
-                    {monogram(job.companyName || job.title)}
+                  <span
+                    className="hire-profile__tile"
+                    data-tone={
+                      company.kind === "monogram" ? company.tone : undefined
+                    }
+                    aria-hidden="true"
+                  >
+                    {company.kind === "logo" ? (
+                      /* eslint-disable-next-line @next/next/no-img-element --
+                         a 24x24 CC0 brand mark from /public; next/image would
+                         add a loader round trip and cannot optimise an SVG. */
+                      <img
+                        src={company.src}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="hire-profile__tile-logo"
+                      />
+                    ) : company.kind === "neutral" ? (
+                      /* "N/A", "-", "Freelance", "Confidential" — 4.5% of
+                         rows name no employer, and a confident "FR" would
+                         invent one. */
+                      <Briefcase
+                        className="hire-profile__tile-icon"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      company.monogram
+                    )}
                   </span>
                   <div className="hire-profile__org-main">
                     {expandable ? (

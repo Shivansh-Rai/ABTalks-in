@@ -234,11 +234,20 @@ export function prismaPlatformStore(): PlatformStore {
       }));
     },
 
-    async deleteDraft(assessmentId) {
-      const res = await prisma.recruiterAssessment.deleteMany({
-        where: { id: assessmentId, ...PLATFORM, status: "DRAFT" },
-      });
-      return res.count === 1;
+    async delete(assessmentId) {
+      // Assignments are RESTRICT on the assessment, so they go first (their
+      // answers, sessions and events cascade); then the assessment, whose
+      // questions cascade. Both are pinned to PLATFORM rows, so this can
+      // never remove a recruiter's assessment. One transaction.
+      const [, removed] = await prisma.$transaction([
+        prisma.recruiterAssessmentAssignment.deleteMany({
+          where: { assessmentId, assessment: PLATFORM },
+        }),
+        prisma.recruiterAssessment.deleteMany({
+          where: { id: assessmentId, ...PLATFORM },
+        }),
+      ]);
+      return removed.count === 1;
     },
 
     async resolveAudience(audience) {

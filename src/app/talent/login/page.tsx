@@ -60,6 +60,7 @@ export default async function RecruiterLoginPage({ searchParams }: Props) {
         <RecruiterLoginForm
           initialEmail={params.email ?? ""}
           passwordEnabled={isEmailLoginEnabled()}
+          registerHref={registerHref}
         />
       </div>
 

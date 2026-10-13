@@ -20,6 +20,7 @@ import { signOutAction } from "@/app/actions/auth-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSynergy } from "@/components/shared/synergy-provider";
 import type { AppHeaderUser } from "@/components/shared/app-header";
+import { toneFor } from "@/lib/identity-tone";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -89,7 +90,9 @@ export function MobileSidebar({ user }: Props) {
                 <div className="mb-4 flex items-center gap-3">
                   <Avatar className="size-12 ring-2 ring-border/80">
                     {user.image ? <AvatarImage src={user.image} alt="" /> : null}
-                    <AvatarFallback>{initials(label)}</AvatarFallback>
+                    <AvatarFallback className="identity-tone" data-tone={toneFor(user.email || label)}>
+              {initials(label)}
+            </AvatarFallback>
                   </Avatar>
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">

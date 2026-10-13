@@ -769,3 +769,45 @@
     animation: none;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Identity tones — the avatar fallback for anyone without a photo.
+
+   A flat grey circle with two grey letters reads as a missing image rather
+   than as a person, and every signed-in user on the platform got the same
+   one. The tone is a hash of a stable key (see lib/identity-tone), so one
+   person keeps one colour across the header, the menus and the admin tables,
+   and two people in the same list are very unlikely to match.
+
+   Ten tones, each a wash plus its own ink, checked for contrast in both
+   schemes. Set with `data-tone`; the companion company tile in
+   hire-scout.css uses the same ten.
+--------------------------------------------------------------------------- */
+.identity-tone[data-tone] {
+  background: var(--identity-wash);
+  color: var(--identity-ink);
+  font-weight: 600;
+}
+.identity-tone[data-tone="0"] { --identity-wash: #e0e7ff; --identity-ink: #3730a3; }
+.identity-tone[data-tone="1"] { --identity-wash: #d1fae5; --identity-ink: #065f46; }
+.identity-tone[data-tone="2"] { --identity-wash: #ffedd5; --identity-ink: #9a3412; }
+.identity-tone[data-tone="3"] { --identity-wash: #dbeafe; --identity-ink: #1e40af; }
+.identity-tone[data-tone="4"] { --identity-wash: #fae8ff; --identity-ink: #86198f; }
+.identity-tone[data-tone="5"] { --identity-wash: #ccfbf1; --identity-ink: #115e59; }
+.identity-tone[data-tone="6"] { --identity-wash: #fee2e2; --identity-ink: #991b1b; }
+.identity-tone[data-tone="7"] { --identity-wash: #ede9fe; --identity-ink: #5b21b6; }
+.identity-tone[data-tone="8"] { --identity-wash: #fef3c7; --identity-ink: #854d0e; }
+.identity-tone[data-tone="9"] { --identity-wash: #e0f2fe; --identity-ink: #075985; }
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .identity-tone[data-tone="0"] { --identity-wash: #312e81; --identity-ink: #c7d2fe; }
+  :root:not([data-theme="light"]) .identity-tone[data-tone="1"] { --identity-wash: #064e3b; --identity-ink: #a7f3d0; }
+  :root:not([data-theme="light"]) .identity-tone[data-tone="2"] { --identity-wash: #7c2d12; --identity-ink: #fed7aa; }
+  :root:not([data-theme="light"]) .identity-tone[data-tone="3"] { --identity-wash: #1e3a8a; --identity-ink: #bfdbfe; }
+  :root:not([data-theme="light"]) .identity-tone[data-tone="4"] { --identity-wash: #701a75; --identity-ink: #f5d0fe; }
+  :root:not([data-theme="light"]) .identity-tone[data-tone="5"] { --identity-wash: #134e4a; --identity-ink: #99f6e4; }
+  :root:not([data-theme="light"]) .identity-tone[data-tone="6"] { --identity-wash: #7f1d1d; --identity-ink: #fecaca; }
+  :root:not([data-theme="light"]) .identity-tone[data-tone="7"] { --identity-wash: #4c1d95; --identity-ink: #ddd6fe; }
+  :root:not([data-theme="light"]) .identity-tone[data-tone="8"] { --identity-wash: #713f12; --identity-ink: #fde68a; }
+  :root:not([data-theme="light"]) .identity-tone[data-tone="9"] { --identity-wash: #0c4a6e; --identity-ink: #bae6fd; }
+}

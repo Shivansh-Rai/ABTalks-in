@@ -41,9 +41,21 @@ const SUPPORT_EMAIL = "team@abtalks.in";
  * a registration to exist, and says so rather than silently emailing a code
  * that could never be used for anything.
  */
+export type RequestRecruiterOtpResult =
+  | { ok: true; data: { sent: true; devCode?: string } }
+  /**
+   * `needsRegistration` is the one case the sign-in form has to treat as
+   * something other than an error: there is nothing wrong with the address,
+   * it simply has no recruiter account yet. The form turns it into a link to
+   * /talent/register rather than a line of red text the reader has to act on
+   * themselves — which is what sent people round the "request another code"
+   * loop until the limiter stopped them.
+   */
+  | { ok: false; message: string; needsRegistration?: true };
+
 export async function requestRecruiterOtpAction(
   input: unknown,
-): Promise<ActionResult<{ sent: true; devCode?: string }>> {
+): Promise<RequestRecruiterOtpResult> {
   const parsed = requestRecruiterOtpSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, message: "Enter a valid work email address." };
@@ -89,10 +101,16 @@ export async function requestRecruiterOtpAction(
           message: "This email is already registered. Sign in instead.",
         };
       }
+      // Stale copy until now: it said "Register first and we'll be in touch",
+      // which was true when a recruiter application waited on an admin. Since
+      // registerRecruiterWithOtpAction started provisioning the workspace in
+      // the same commit as the profile there is nothing to wait for, and
+      // reading otherwise is what stopped people registering.
       return {
         ok: false,
+        needsRegistration: true,
         message:
-          "We have no registration for this email. Register first and we'll be in touch.",
+          "No recruiter account uses this email yet. Create one — it takes about a minute.",
       };
     }
 

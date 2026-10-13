@@ -13,7 +13,7 @@ export const metadata: Metadata = {
     "Register to hire on ABTalks with your work email. No password, no Google account.",
 };
 
-type Props = { searchParams: Promise<{ from?: string }> };
+type Props = { searchParams: Promise<{ from?: string; email?: string }> };
 
 function safeFrom(from: string | undefined): string {
   if (!from || !from.startsWith("/") || from.startsWith("//")) return "/hire";
@@ -62,7 +62,12 @@ export default async function TalentRegisterPage({ searchParams }: Props) {
           We verify your work email with a code. Your workspace opens straight
           away — there is nothing to wait for.
         </p>
-        <RecruiterRegisterForm passwordEnabled={isEmailLoginEnabled()} />
+        {/* Carried over when sign-in sent them here for having no account:
+            they have already typed it once. */}
+        <RecruiterRegisterForm
+          initialEmail={params.email ?? ""}
+          passwordEnabled={isEmailLoginEnabled()}
+        />
       </div>
 
       <p className="text-center text-sm text-muted-foreground">
