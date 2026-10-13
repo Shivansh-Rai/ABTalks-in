@@ -17,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { LandingUser } from "@/features/landing/get-landing-state";
+import { toneFor } from "@/lib/identity-tone";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -50,7 +51,9 @@ export function LandingUserMenu({ user }: Props) {
       >
         <Avatar className="size-8 ring-2 ring-border/80 sm:size-9">
           {user.image ? <AvatarImage src={user.image} alt="" /> : null}
-          <AvatarFallback>{initials(label)}</AvatarFallback>
+          <AvatarFallback className="identity-tone" data-tone={toneFor(user.email || label)}>
+          {initials(label)}
+        </AvatarFallback>
         </Avatar>
         <span className="hidden min-w-0 flex-col items-start text-left md:flex">
           <span className="max-w-[140px] truncate font-medium lg:max-w-[160px]">

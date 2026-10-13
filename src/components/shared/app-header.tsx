@@ -25,6 +25,7 @@ import {
   type ChallengeSwitcherEnrollment,
 } from "@/components/shared/challenge-switcher";
 import { MobileSidebar } from "@/components/shared/mobile-sidebar";
+import { toneFor } from "@/lib/identity-tone";
 import { cn } from "@/lib/utils";
 
 export type AppHeaderUser = {
@@ -164,7 +165,9 @@ export function AppHeader({
                   {user.image ? (
                     <AvatarImage src={user.image} alt="" />
                   ) : null}
-                  <AvatarFallback>{initials(label)}</AvatarFallback>
+                  <AvatarFallback className="identity-tone" data-tone={toneFor(user.email || label)}>
+                    {initials(label)}
+                  </AvatarFallback>
                 </Avatar>
                 <span className="hidden min-w-0 flex-col items-start text-left md:flex">
                   <span className="max-w-[140px] truncate font-medium lg:max-w-[160px]">

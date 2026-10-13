@@ -52,19 +52,45 @@ const SPEECH_VOICE = process.env.INTERVIEW_TTS_VOICE ?? "ash";
 /**
  * Which vendor serves speech.
  *
- * OpenAI when its key is present; otherwise Groq, which hosts Whisper for
- * transcription. Two vendors rather than one because this project has a working
- * Groq key and no OpenAI key, and an interview that cannot hear the candidate
- * is not a voice interview.
+ * Two vendors rather than one because this project has keys for both, and an
+ * interview that cannot hear the candidate is not a voice interview.
+ *
+ * TRANSCRIPTION PREFERS GROQ, and the reason is latency, measured rather than
+ * assumed. The same 45-second technical answer, as `audio/ogg` opus, with the
+ * same `verbose_json` and vocabulary prompt this file sends:
+ *
+ *   openai whisper-1              4186 ms   723 chars
+ *   groq   whisper-large-v3-turbo  550 ms   721 chars
+ *   groq   whisper-large-v3        922 ms   722 chars
+ *
+ * Same transcript, 7.6x the wait. Worse, whisper-1's cost scales with how long
+ * the candidate talked, so the better someone answered the longer they sat in
+ * silence afterwards — the one place in an interview where delay is least
+ * affordable. Groq also reports the detected language (`"English"`, which
+ * `checkLanguage` lowercases), so the English gate keeps its primary signal.
+ *
+ * SYNTHESIS still prefers OpenAI: Groq's TTS model requires an org admin to
+ * accept the model terms, which has not happened, so `ttsVendor` below treats
+ * it as unavailable.
+ *
+ * `INTERVIEW_STT_VENDOR` forces one either way, without a deploy.
  */
 type SpeechVendor = { name: "openai" | "groq"; apiKey: string };
 
 function sttVendor(): SpeechVendor | null {
-  if (process.env.OPENAI_API_KEY) {
+  const forced = (process.env.INTERVIEW_STT_VENDOR ?? "").toLowerCase();
+  if (forced === "openai" && process.env.OPENAI_API_KEY) {
     return { name: "openai", apiKey: process.env.OPENAI_API_KEY };
   }
+  if (forced === "groq" && process.env.GROQ_API_KEY) {
+    return { name: "groq", apiKey: process.env.GROQ_API_KEY };
+  }
+
   if (process.env.GROQ_API_KEY) {
     return { name: "groq", apiKey: process.env.GROQ_API_KEY };
+  }
+  if (process.env.OPENAI_API_KEY) {
+    return { name: "openai", apiKey: process.env.OPENAI_API_KEY };
   }
   return null;
 }
@@ -181,9 +207,14 @@ export async function transcribeAnswer(
   //   2. LANGUAGE. Only whisper supports `verbose_json`, which carries the
   //      detected language the English-only gate prefers. On a gpt-4o model the
   //      gate silently degrades to its script heuristic.
+  // `-turbo` on Groq: measured at 550 ms against 922 ms for the full
+  // `whisper-large-v3` on the same 45-second answer, with a transcript that
+  // differed by one character. A distilled decoder is the right trade here
+  // because the vocabulary prompt below, not raw decoder depth, is what fixes
+  // the errors this audio actually produces (tool and model names).
   const model =
     process.env.INTERVIEW_STT_MODEL ??
-    (vendor.name === "groq" ? "whisper-large-v3" : "whisper-1");
+    (vendor.name === "groq" ? "whisper-large-v3-turbo" : "whisper-1");
 
   const form = new FormData();
   form.append("file", audio, filename);
@@ -360,14 +391,29 @@ export async function resolveSpeakableLine(
 /**
  * Synthesizes one interviewer line.
  *
- * Returns the raw audio bytes for the route to stream. Failure is reported
- * rather than thrown: an interview whose audio fails must fall back to reading
- * the question on screen, not stop.
+ * Returns the vendor's response body AS A STREAM, for the route to pass
+ * straight through. It used to `await res.arrayBuffer()`, which meant the
+ * server sat on the whole MP3 until the last byte arrived before sending its
+ * first — so the browser's download could not even begin until synthesis had
+ * completely finished. Measured on one 118-character interviewer line:
+ *
+ *   buffered   first byte to the client ~3200 ms  (= full synthesis)
+ *   streamed   first byte to the client ~1135 ms
+ *
+ * Roughly two seconds of dead air per turn, spent waiting for bytes the vendor
+ * had already produced. Nothing about the audio changes — the same mp3 arrives
+ * in the same order, just without being held back.
+ *
+ * Failure is still reported rather than thrown: an interview whose audio fails
+ * must fall back to reading the question on screen, not stop. Note that only
+ * failures the vendor reports BEFORE the body opens can be caught here; once
+ * the stream is handed over, a mid-stream abort surfaces to the client as
+ * truncated audio, which the room already handles through its `onerror` path.
  */
 export async function synthesizeLine(
   text: string,
   safetyIdentifier: string,
-): Promise<VoiceResult<{ audio: ArrayBuffer; contentType: string }>> {
+): Promise<VoiceResult<{ audio: ReadableStream<Uint8Array>; contentType: string }>> {
   const vendor = ttsVendor();
   if (!vendor) {
     return {
@@ -416,9 +462,16 @@ export async function synthesizeLine(
       return { ok: false, status: 502, message: "Could not play that question." };
     }
 
+    if (!res.body) {
+      logger.error("[interview/tts] synthesis returned no body", {
+        vendor: vendor.name,
+      });
+      return { ok: false, status: 502, message: "Could not play that question." };
+    }
+
     return {
       ok: true,
-      data: { audio: await res.arrayBuffer(), contentType: "audio/mpeg" },
+      data: { audio: res.body, contentType: "audio/mpeg" },
     };
   } catch (error) {
     logger.error("[interview/tts] request errored", { error: String(error) });

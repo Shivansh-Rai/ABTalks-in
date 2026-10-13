@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import type { RecruiterAccountSnapshot } from "@/features/hire/recruiter-account-types";
+import { toneFor } from "@/lib/identity-tone";
 import { cn } from "@/lib/utils";
 
 function initials(name: string): string {
@@ -43,7 +44,12 @@ export function RecruiterAccountMenu({
         )}
       >
         <Avatar className="hire-account__avatar size-8">
-          <AvatarFallback>{initials(account.fullName)}</AvatarFallback>
+          <AvatarFallback
+            className="identity-tone"
+            data-tone={toneFor(account.email || account.fullName)}
+          >
+            {initials(account.fullName)}
+          </AvatarFallback>
         </Avatar>
         <span className="hire-account__who">
           <span className="max-w-[140px] truncate font-medium">

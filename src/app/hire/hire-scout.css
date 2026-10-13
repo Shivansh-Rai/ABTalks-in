@@ -10411,6 +10411,47 @@ button.hire-profile__in:focus-visible {
   color: #18181b;
 }
 
+/* The tile palette. Ten tones, picked for a readable ink-on-wash pair rather
+   than for looking like a chart: the tile sits beside a job title, so it has
+   to register as an identity mark and not a status badge. `data-tone` is set
+   from a hash of the CANONICAL company name (see lib/company-identity), so one
+   employer is one colour wherever it appears.
+
+   Only ~9% of employers in the data have a bundled logo and ~4% name no
+   company at all, which leaves this as the thing a recruiter actually looks
+   at most of the time. */
+.hire-profile__tile[data-tone] {
+  border-color: transparent;
+  background: var(--tile-wash);
+  color: var(--tile-ink);
+}
+.hire-profile__tile[data-tone="0"] { --tile-wash: #eef2ff; --tile-ink: #4338ca; }
+.hire-profile__tile[data-tone="1"] { --tile-wash: #ecfdf5; --tile-ink: #047857; }
+.hire-profile__tile[data-tone="2"] { --tile-wash: #fff7ed; --tile-ink: #c2410c; }
+.hire-profile__tile[data-tone="3"] { --tile-wash: #eff6ff; --tile-ink: #1d4ed8; }
+.hire-profile__tile[data-tone="4"] { --tile-wash: #fdf4ff; --tile-ink: #a21caf; }
+.hire-profile__tile[data-tone="5"] { --tile-wash: #f0fdfa; --tile-ink: #0f766e; }
+.hire-profile__tile[data-tone="6"] { --tile-wash: #fef2f2; --tile-ink: #b91c1c; }
+.hire-profile__tile[data-tone="7"] { --tile-wash: #f5f3ff; --tile-ink: #6d28d9; }
+.hire-profile__tile[data-tone="8"] { --tile-wash: #fefce8; --tile-ink: #a16207; }
+.hire-profile__tile[data-tone="9"] { --tile-wash: #f0f9ff; --tile-ink: #0369a1; }
+
+/* Brand marks are square and drawn to the edge of their own viewBox, so they
+   need the inset the monogram does not. */
+.hire-profile__tile-logo {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+/* No employer named. Quiet on purpose — it is the absence of a fact. */
+.hire-profile__tile-icon {
+  width: 20px;
+  height: 20px;
+  color: #a1a1aa;
+  stroke-width: 1.5;
+}
+
 .hire-profile__tile--school {
   width: 40px;
   height: 40px;

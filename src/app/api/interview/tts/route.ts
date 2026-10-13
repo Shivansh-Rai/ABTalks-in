@@ -90,7 +90,9 @@ export async function POST(request: Request) {
     status: 200,
     headers: {
       "Content-Type": audio.data.contentType,
-      "Content-Length": String(audio.data.audio.byteLength),
+      // No `Content-Length`: the body is a passthrough stream whose total size
+      // is not known until it ends, and announcing a wrong one truncates the
+      // audio. Omitting it lets the response go out chunked.
       // The exact words in the audio, so the room can show the line it is
       // actually hearing rather than the one it guessed. Base64 because header
       // values are ASCII-only and a question may contain anything.
