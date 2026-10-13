@@ -16,6 +16,17 @@ import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Host shown in the issuer line, derived from `NEXT_PUBLIC_APP_URL` rather
+ * than written out. A literal here is a promise this page cannot keep: it read
+ * "abtalks.in" for every one of the 3,429 issued credentials, and plan 189
+ * hands that domain to a different site — so a recruiter checking a
+ * certificate was about to be pointed somewhere unrelated to it.
+ */
+const APP_HOST = (process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai")
+  .replace(/^https?:\/\//, "")
+  .replace(/\/+$/, "");
+
 type PageProps = {
   params: Promise<{ certificateId: string }>;
 };
@@ -141,7 +152,7 @@ export default async function VerifyCertificatePage({ params }: PageProps) {
             </div>
 
             <p className="text-center text-xs text-muted-foreground">
-              Issued by ABTalks · abtalks.in
+              Issued by ABTalks · {APP_HOST}
             </p>
           </CardContent>
         </Card>

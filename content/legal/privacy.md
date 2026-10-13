@@ -34,7 +34,7 @@ We are the **Data Fiduciary** for the personal data described in this Policy.
 | **Date of incorporation** | 25 July 2026 |
 | **Contact** | [team@abtalks.in](mailto:team@abtalks.in) |
 
-ABTalks operates learning challenges, workshops, hackathons, an AI cohort program, and related recruiter/community features at our websites (including abtalks.in and related domains).
+ABTalks operates learning challenges, workshops, hackathons, an AI cohort program, and related recruiter/community features at our websites (including app.klymb.ai and related domains).
 
 ### 1.1 Grievance Officer
 
