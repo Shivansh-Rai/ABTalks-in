@@ -347,7 +347,16 @@ export async function deliverEmailCode(
   return {};
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
+
+/**
+ * `APP_URL` without the scheme, for footer link TEXT. Derived rather than
+ * written out, because a literal host here silently becomes a lie the moment
+ * the domain moves: before plan 189 these footers displayed the old host while
+ * the href already pointed at the new one, and visible text that disagrees
+ * with its destination is what both users and spam filters read as phishing.
+ */
+const APP_HOST = APP_URL.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
 /**
  * Full HTML5 document for a one-time code, deliberately plain.
@@ -378,7 +387,7 @@ export function renderCodeHtml(copy: TemplateCopy, code: string): string {
     <p style="margin:0 0 16px;">${copy.ignoreHtml}</p>
     <p style="margin:0 0 24px;">Thanks,<br>The ABTalks team</p>
     <p style="margin:0;font-size:12px;color:#8A8A8A;border-top:1px solid #E9E9E9;padding-top:16px;">
-      You received this email because ${copy.footerReason} on <a href="${APP_URL}" style="color:#8A8A8A;">abtalks.in</a>. Questions? Reply to this email.
+      You received this email because ${copy.footerReason} on <a href="${APP_URL}" style="color:#8A8A8A;">${APP_HOST}</a>. Questions? Reply to this email.
     </p>
   </div>
 </body>
@@ -400,7 +409,7 @@ Thanks,
 The ABTalks team
 
 ---
-You received this email because ${copy.footerReason} on abtalks.in. Questions? Reply to this email.`;
+You received this email because ${copy.footerReason} on ${APP_HOST}. Questions? Reply to this email.`;
 }
 
 /** Exposed for the template regression test only. */
