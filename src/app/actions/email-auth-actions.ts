@@ -42,7 +42,21 @@ import {
  * check the session themselves.
  */
 
-type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
+/** The input a failure belongs to, so the form can show it at that field. */
+type AuthField = "email" | "code" | "currentPassword" | "newPassword";
+
+type ActionResult<T> =
+  | { ok: true; data: T }
+  | { ok: false; message: string; field?: AuthField | undefined };
+
+function issueField(path: PropertyKey | undefined): AuthField | undefined {
+  return path === "email" ||
+    path === "code" ||
+    path === "currentPassword" ||
+    path === "newPassword"
+    ? path
+    : undefined;
+}
 
 const NOT_AVAILABLE = "Email sign-in isn't available yet.";
 const RECRUITER_ACCOUNT_MESSAGE =
@@ -77,14 +91,14 @@ export async function requestEmailCodeAction(
   if (!isEmailLoginEnabled()) return { ok: false, message: NOT_AVAILABLE };
   const parsed = requestEmailCodeSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, message: "Enter a valid email address." };
+    return { ok: false, message: "Enter a valid email address.", field: "email" };
   }
   const { email, purpose, audience } = parsed.data;
   if (audience === "recruiter" && !isRecruiterAuthEnabled()) {
     return { ok: false, message: "Recruiter sign-in isn't open yet." };
   }
   if (purpose === "candidate-login" && audience !== "candidate") {
-    return { ok: false, message: "Enter a valid email address." };
+    return { ok: false, message: "Enter a valid email address.", field: "email" };
   }
 
   try {
@@ -100,7 +114,7 @@ export async function requestEmailCodeAction(
     // `candidate-login` already implies the candidate door (checked above);
     // `password-reset` can arrive from either.
     if (audience === "candidate" && user?.recruiterProfile) {
-      return { ok: false, message: RECRUITER_ACCOUNT_MESSAGE };
+      return { ok: false, message: RECRUITER_ACCOUNT_MESSAGE, field: "email" };
     }
 
     if (purpose === "candidate-login") {
@@ -146,6 +160,7 @@ export async function resetPasswordAction(
     return {
       ok: false,
       message: parsed.error.issues[0]?.message ?? "Check the form.",
+      field: issueField(parsed.error.issues[0]?.path[0]),
     };
   }
   const { email, code, newPassword } = parsed.data;
@@ -155,12 +170,20 @@ export async function resetPasswordAction(
       purposes: ["password-reset"],
     });
     if (!verified.ok) {
-      return { ok: false, message: emailCodeFailureMessage(verified.reason) };
+      return {
+        ok: false,
+        message: emailCodeFailureMessage(verified.reason),
+        field: "code",
+      };
     }
 
     const user = await findAuthUserByEmail(email);
     if (!user || isFrozen(user) || (await isGoogleOnlyAccount(email, user))) {
-      return { ok: false, message: emailCodeFailureMessage("invalid") };
+      return {
+        ok: false,
+        message: emailCodeFailureMessage("invalid"),
+        field: "code",
+      };
     }
 
     await storePassword({
@@ -198,6 +221,7 @@ export async function setPasswordAction(
     return {
       ok: false,
       message: parsed.error.issues[0]?.message ?? "Check the form.",
+      field: issueField(parsed.error.issues[0]?.path[0]),
     };
   }
   const { newPassword, currentPassword, code } = parsed.data;
@@ -219,12 +243,16 @@ export async function setPasswordAction(
       return { ok: false, message: GOOGLE_ONLY_MESSAGE };
     }
     if (!passwordIsNotEmail(user.email, newPassword)) {
-      return { ok: false, message: PASSWORD_IS_EMAIL_MESSAGE };
+      return { ok: false, message: PASSWORD_IS_EMAIL_MESSAGE, field: "newPassword" };
     }
 
     if (hasUsablePassword(user)) {
       if (!currentPassword) {
-        return { ok: false, message: "Enter your current password." };
+        return {
+          ok: false,
+          message: "Enter your current password.",
+          field: "currentPassword",
+        };
       }
       // The current-password box is a password guess like any other.
       const allowed = await assertRateLimit({
@@ -233,7 +261,11 @@ export async function setPasswordAction(
       });
       if (!allowed.ok) return { ok: false, message: allowed.message };
       if (!(await verifyPassword(currentPassword, user.password))) {
-        return { ok: false, message: "Your current password is incorrect." };
+        return {
+          ok: false,
+          message: "Your current password is incorrect.",
+          field: "currentPassword",
+        };
       }
       await storePassword({
         userId: user.id,
@@ -249,13 +281,18 @@ export async function setPasswordAction(
         return {
           ok: false,
           message: "Confirm it's you with the code we email you.",
+          field: "code",
         };
       }
       const verified = await verifyEmailCode(user.email, code, {
         purposes: ["password-reset"],
       });
       if (!verified.ok) {
-        return { ok: false, message: emailCodeFailureMessage(verified.reason) };
+        return {
+          ok: false,
+          message: emailCodeFailureMessage(verified.reason),
+          field: "code",
+        };
       }
     }
 

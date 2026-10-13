@@ -7,7 +7,8 @@ import { toast } from "sonner";
 import { requestEmailCodeAction } from "@/app/actions/email-auth-actions";
 import {
   PasswordSignIn,
-  toastSignInError,
+  SignInErrorWayOut,
+  signInRefusal,
 } from "@/components/auth/password-sign-in";
 import {
   DEFAULT_LEGAL_CONSENT,
@@ -116,8 +117,49 @@ export function LoginClient({
   const [now, setNow] = useState(0);
   const [pending, setPending] = useState(false);
   const [emailPending, startEmailTransition] = useTransition();
+  /**
+   * An emailed-code failure, shown where it happened: under the email or code
+   * box, or above the button when it is about neither (too many attempts, a
+   * resend that failed).
+   */
+  const [codeError, setCodeError] = useState<{
+    field: "email" | "code" | "form";
+    message: string;
+    refused?: { code: string | undefined };
+  } | null>(null);
   const [legalConsent, setLegalConsent] =
     useState<LegalConsentValues>(DEFAULT_LEGAL_CONSENT);
+
+  // Focus goes to the box the error is about, once it is enabled again.
+  useEffect(() => {
+    if (!codeError || emailPending || codeError.field === "form") return;
+    document
+      .getElementById(codeError.field === "code" ? "login-code" : "login-code-email")
+      ?.focus();
+  }, [codeError, emailPending]);
+
+  function codeErrorFor(field: "email" | "code" | "form") {
+    if (codeError?.field !== field) return null;
+    return (
+      <p
+        id={`login-code-${field}-error`}
+        role="alert"
+        className={
+          field === "form"
+            ? "rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+            : "text-xs text-destructive"
+        }
+      >
+        {codeError.message}
+        {codeError.refused ? (
+          <>
+            {" "}
+            <SignInErrorWayOut code={codeError.refused.code} email={email} />
+          </>
+        ) : null}
+      </p>
+    );
+  }
 
   const target = safeRedirectPath(redirectTo, "/dashboard");
   // Candidates headed for the dashboard pass through the Welcome Back screen,
@@ -182,6 +224,7 @@ export function LoginClient({
     // A code to an unknown address creates the account, so the Terms come
     // before the code, not after it.
     if (!beforeCredentialsSignIn()) return;
+    setCodeError(null);
     startEmailTransition(async () => {
       const res = await requestEmailCodeAction({
         email,
@@ -189,7 +232,12 @@ export function LoginClient({
         audience: "candidate",
       });
       if (!res.ok) {
-        toast.error(res.message);
+        // The email box is only on the first step; a failed resend from the
+        // code step has nowhere to point but the form.
+        setCodeError({
+          field: codeStep === "email" && res.field === "email" ? "email" : "form",
+          message: res.message,
+        });
         return;
       }
       setDevCode(res.data.devCode ?? null);
@@ -203,6 +251,7 @@ export function LoginClient({
 
   function submitCode() {
     if (!beforeCredentialsSignIn()) return;
+    setCodeError(null);
     startEmailTransition(async () => {
       const res = await signIn("email-code", {
         email: email.trim(),
@@ -210,7 +259,12 @@ export function LoginClient({
         redirect: false,
       });
       if (!res || res.error) {
-        toastSignInError(res?.code, "code", email);
+        const refusal = signInRefusal(res?.code, "code");
+        // No email or password box on this step: only a wrong code has a field.
+        setCodeError({
+          ...refusal,
+          field: refusal.field === "code" ? "code" : "form",
+        });
         setCode("");
         return;
       }
@@ -299,7 +353,10 @@ export function LoginClient({
                 type="button"
                 role="radio"
                 aria-checked={method === value}
-                onClick={() => setMethod(value)}
+                onClick={() => {
+                  setCodeError(null);
+                  setMethod(value);
+                }}
                 disabled={emailPending}
                 className={cn(
                   "h-9 rounded-md text-sm font-medium transition-colors",
@@ -343,14 +400,26 @@ export function LoginClient({
                   autoComplete="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setCodeError(null);
+                    setEmail(e.target.value);
+                  }}
                   disabled={emailPending}
+                  aria-invalid={codeError?.field === "email" || undefined}
+                  aria-describedby={
+                    codeError?.field === "email"
+                      ? "login-code-email-error"
+                      : undefined
+                  }
                 />
-                <p className="text-xs text-muted-foreground">
-                  We&apos;ll email you a 6-digit code. New here? The code
-                  creates your account.
-                </p>
+                {codeErrorFor("email") ?? (
+                  <p className="text-xs text-muted-foreground">
+                    We&apos;ll email you a 6-digit code. New here? The code
+                    creates your account.
+                  </p>
+                )}
               </div>
+              {codeErrorFor("form")}
               <button
                 type="submit"
                 disabled={emailPending || !canSignIn || !email.trim()}
@@ -399,13 +468,20 @@ export function LoginClient({
                   maxLength={6}
                   placeholder="000000"
                   value={code}
-                  onChange={(e) =>
-                    setCode(e.target.value.replace(/\D/g, "").slice(0, 6))
-                  }
+                  onChange={(e) => {
+                    setCodeError(null);
+                    setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                  }}
                   disabled={emailPending}
                   className="text-center font-mono text-lg tracking-[0.5em]"
+                  aria-invalid={codeError?.field === "code" || undefined}
+                  aria-describedby={
+                    codeError?.field === "code" ? "login-code-code-error" : undefined
+                  }
                 />
+                {codeErrorFor("code")}
               </div>
+              {codeErrorFor("form")}
               <button
                 type="submit"
                 disabled={emailPending || !canSignIn || code.length !== 6}
@@ -426,6 +502,7 @@ export function LoginClient({
                     setCodeStep("email");
                     setCode("");
                     setDevCode(null);
+                    setCodeError(null);
                   }}
                   disabled={emailPending}
                   className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { signIn } from "next-auth/react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,69 +20,103 @@ import {
   type AuthAudience,
 } from "@/lib/validations/email-auth";
 
+/** Where a failure is shown: under one input, or above the submit button. */
+type ErrorField = "email" | "password" | "code" | "newPassword" | "form";
+
+type FormError = {
+  field: ErrorField;
+  message: string;
+  /** Set for a refused sign-in, which is offered a way out beside the message. */
+  refused?: { code: string | undefined };
+};
+
 /**
- * A refused credentials sign-in, as a toast. A recruiter who typed their
- * details on the candidate door gets a way to the right one; everyone else
- * gets `onUseEmailCode`, when the caller has one.
+ * A refused credentials sign-in, placed at the input it is about. Too many
+ * attempts is about no one field; a recruiter on the candidate door (or the
+ * reverse) is about the address; everything else is the secret just typed.
  */
-export function toastSignInError(
+export function signInRefusal(
   code: string | undefined,
   method: "password" | "code",
-  email: string,
-  onUseEmailCode?: () => void,
-) {
-  const message = signInErrorMessage(code, method);
+): {
+  field: "email" | "password" | "code" | "form";
+  message: string;
+  refused: { code: string | undefined };
+} {
+  const field =
+    code === SIGN_IN_ERROR.rateLimited
+      ? "form"
+      : code === SIGN_IN_ERROR.recruiterAccount ||
+          code === SIGN_IN_ERROR.notRecruiter
+        ? "email"
+        : method;
+  return { field, message: signInErrorMessage(code, method), refused: { code } };
+}
+
+/**
+ * The way out that follows a refused sign-in's message. A recruiter who typed
+ * their details on the candidate door gets a link to the right one; everyone
+ * else gets `onUseEmailCode`, when the caller has one.
+ */
+export function SignInErrorWayOut({
+  code,
+  email,
+  onUseEmailCode,
+}: {
+  code: string | undefined;
+  email: string;
+  onUseEmailCode?: (() => void) | undefined;
+}) {
   if (code === SIGN_IN_ERROR.recruiterAccount) {
-    toast.error(message, {
-      action: {
-        label: "Go to Hire",
-        onClick: () =>
-          window.location.assign(
-            `/talent/login?email=${encodeURIComponent(email.trim())}`,
-          ),
-      },
-    });
-    return;
+    return (
+      <a
+        href={`/talent/login?email=${encodeURIComponent(email.trim())}`}
+        className="font-medium underline underline-offset-2"
+      >
+        Go to Hire
+      </a>
+    );
   }
   // "Email or password is incorrect." is also what an account that has never
   // set a password gets, and what an address with no account gets. Which one
   // it is cannot be said out loud without telling a stranger who has an
   // account here, so the way out is offered to all three alike.
   if (onUseEmailCode) {
-    toast.error(message, {
-      action: { label: "Email me a code", onClick: onUseEmailCode },
-    });
-    return;
+    return (
+      <button
+        type="button"
+        onClick={onUseEmailCode}
+        className="font-medium underline underline-offset-2"
+      >
+        Email me a code
+      </button>
+    );
   }
-  toast.error(message);
+  return null;
 }
 
 /**
  * Sign in with the `password` provider, then leave by full navigation to a
  * same-origin path: the session cookie is new and every guard downstream reads
  * it server-side, and `result.url` points at AUTH_URL's host, which breaks
- * LAN / phone testing.
+ * LAN / phone testing. A refusal comes back with its `code` for the caller to
+ * show.
  */
 export async function signInWithPassword(input: {
   email: string;
   password: string;
   audience: AuthAudience;
   afterSignIn: string;
-  /** Offered on the refusal toast: switch to the emailed-code tab. */
-  onUseEmailCode?: () => void;
-}): Promise<boolean> {
+}): Promise<{ ok: true } | { ok: false; code: string | undefined }> {
   const res = await signIn("password", {
     email: input.email.trim(),
     password: input.password,
     audience: input.audience,
     redirect: false,
   });
-  if (!res || res.error) {
-    toastSignInError(res?.code, "password", input.email, input.onUseEmailCode);
-    return false;
-  }
+  if (!res || res.error) return { ok: false, code: res?.code };
   window.location.assign(input.afterSignIn);
-  return true;
+  return { ok: true };
 }
 
 type Mode = "password" | "reset-request" | "reset-confirm";
@@ -124,7 +158,55 @@ export function PasswordSignIn({
   const [code, setCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [devCode, setDevCode] = useState<string | null>(null);
+  const [error, setError] = useState<FormError | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   const [pending, startTransition] = useTransition();
+
+  // Focus goes to the input the error is about, once it is enabled again.
+  useEffect(() => {
+    if (!error || pending) return;
+    formRef.current
+      ?.querySelector<HTMLElement>('[aria-invalid="true"]')
+      ?.focus();
+  }, [error, pending]);
+
+  function go(next: Mode) {
+    setError(null);
+    setMode(next);
+  }
+
+  function invalid(field: ErrorField) {
+    return error?.field === field
+      ? { "aria-invalid": true, "aria-describedby": `${idPrefix}-${field}-error` }
+      : {};
+  }
+
+  function errorFor(field: ErrorField) {
+    if (error?.field !== field) return null;
+    return (
+      <p
+        id={`${idPrefix}-${field}-error`}
+        role="alert"
+        className={
+          field === "form"
+            ? "rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-sm text-destructive"
+            : "text-xs text-destructive"
+        }
+      >
+        {error.message}
+        {error.refused ? (
+          <>
+            {" "}
+            <SignInErrorWayOut
+              code={error.refused.code}
+              email={email}
+              onUseEmailCode={onUseEmailCode}
+            />
+          </>
+        ) : null}
+      </p>
+    );
+  }
 
   // `disabled` (the Terms box on /login) holds back the two buttons that sign
   // someone in. Typing is always allowed, and so is asking for a reset code:
@@ -134,19 +216,23 @@ export function PasswordSignIn({
 
   function submitPassword() {
     if (onBeforeSignIn && !onBeforeSignIn()) return;
+    setError(null);
     startTransition(async () => {
-      const ok = await signInWithPassword({
+      const res = await signInWithPassword({
         email,
         password,
         audience,
         afterSignIn,
-        onUseEmailCode,
       });
-      if (!ok) setPassword("");
+      if (!res.ok) {
+        setPassword("");
+        setError(signInRefusal(res.code, "password"));
+      }
     });
   }
 
   function requestReset() {
+    setError(null);
     startTransition(async () => {
       const res = await requestEmailCodeAction({
         email,
@@ -154,7 +240,13 @@ export function PasswordSignIn({
         audience,
       });
       if (!res.ok) {
-        toast.error(res.message);
+        // The email box only exists on the request step; a failed resend from
+        // the next step has nowhere to point but the form.
+        setError({
+          field:
+            mode === "reset-request" && res.field === "email" ? "email" : "form",
+          message: res.message,
+        });
         return;
       }
       setDevCode(res.data.devCode ?? null);
@@ -166,22 +258,30 @@ export function PasswordSignIn({
 
   function confirmReset() {
     if (onBeforeSignIn && !onBeforeSignIn()) return;
+    setError(null);
     startTransition(async () => {
       const res = await resetPasswordAction({ email, code, newPassword });
       if (!res.ok) {
-        toast.error(res.message);
+        setError({
+          field:
+            res.field === "code" || res.field === "newPassword"
+              ? res.field
+              : "form",
+          message: res.message,
+        });
         return;
       }
       toast.success("Password saved. Signing you in…");
-      const ok = await signInWithPassword({
+      const signin = await signInWithPassword({
         email,
         password: newPassword,
         audience,
         afterSignIn,
       });
-      if (!ok) {
+      if (!signin.ok) {
         setMode("password");
         setPassword("");
+        setError(signInRefusal(signin.code, "password"));
       }
     });
   }
@@ -197,6 +297,7 @@ export function PasswordSignIn({
   if (mode === "reset-confirm") {
     return (
       <form
+        ref={formRef}
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
@@ -233,10 +334,15 @@ export function PasswordSignIn({
             maxLength={6}
             placeholder="000000"
             value={code}
-            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            onChange={(e) => {
+              setError(null);
+              setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+            }}
             disabled={pending}
             className="text-center font-mono text-lg tracking-[0.5em]"
+            {...invalid("code")}
           />
+          {errorFor("code")}
         </div>
         <div className="flex flex-col gap-2">
           <Label htmlFor={`${idPrefix}-new-password`}>New password</Label>
@@ -244,14 +350,21 @@ export function PasswordSignIn({
             id={`${idPrefix}-new-password`}
             autoComplete="new-password"
             value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            onChange={(e) => {
+              setError(null);
+              setNewPassword(e.target.value);
+            }}
             disabled={pending}
+            {...invalid("newPassword")}
           />
-          <p className="text-xs text-muted-foreground">
-            At least {PASSWORD_MIN_LENGTH} characters.
-          </p>
+          {errorFor("newPassword") ?? (
+            <p className="text-xs text-muted-foreground">
+              At least {PASSWORD_MIN_LENGTH} characters.
+            </p>
+          )}
         </div>
 
+        {errorFor("form")}
         <button
           type="submit"
           disabled={busy || code.length !== 6 || newPassword.length < PASSWORD_MIN_LENGTH}
@@ -263,7 +376,7 @@ export function PasswordSignIn({
         <div className="flex items-center justify-between text-xs">
           <button
             type="button"
-            onClick={() => setMode("password")}
+            onClick={() => go("password")}
             disabled={pending}
             className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground"
           >
@@ -306,6 +419,7 @@ export function PasswordSignIn({
   if (mode === "reset-request") {
     return (
       <form
+        ref={formRef}
         noValidate
         onSubmit={(e) => {
           e.preventDefault();
@@ -328,10 +442,16 @@ export function PasswordSignIn({
             inputMode="email"
             autoComplete="email"
             value={email}
-            onChange={(e) => onEmailChange(e.target.value)}
+            onChange={(e) => {
+              setError(null);
+              onEmailChange(e.target.value);
+            }}
             disabled={pending}
+            {...invalid("email")}
           />
+          {errorFor("email")}
         </div>
+        {errorFor("form")}
         <button
           type="submit"
           disabled={pending || !emailOk}
@@ -342,7 +462,7 @@ export function PasswordSignIn({
         </button>
         <button
           type="button"
-          onClick={() => setMode("password")}
+          onClick={() => go("password")}
           disabled={pending}
           className="mx-auto flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
         >
@@ -355,6 +475,7 @@ export function PasswordSignIn({
 
   return (
     <form
+      ref={formRef}
       noValidate
       onSubmit={(e) => {
         e.preventDefault();
@@ -370,16 +491,21 @@ export function PasswordSignIn({
           inputMode="email"
           autoComplete="username"
           value={email}
-          onChange={(e) => onEmailChange(e.target.value)}
+          onChange={(e) => {
+            setError(null);
+            onEmailChange(e.target.value);
+          }}
           disabled={pending}
+          {...invalid("email")}
         />
+        {errorFor("email")}
       </div>
       <div className="flex flex-col gap-2">
         <div className="flex items-baseline justify-between gap-3">
           <Label htmlFor={`${idPrefix}-password`}>Password</Label>
           <button
             type="button"
-            onClick={() => setMode("reset-request")}
+            onClick={() => go("reset-request")}
             disabled={pending}
             className="text-xs font-medium text-primary underline-offset-2 hover:underline"
           >
@@ -390,10 +516,16 @@ export function PasswordSignIn({
           id={`${idPrefix}-password`}
           autoComplete="current-password"
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setError(null);
+            setPassword(e.target.value);
+          }}
           disabled={pending}
+          {...invalid("password")}
         />
+        {errorFor("password")}
       </div>
+      {errorFor("form")}
       <button type="submit" disabled={busy || !emailOk || !password} className={submitClass}>
         {spinner}
         Sign in

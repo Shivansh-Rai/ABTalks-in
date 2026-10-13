@@ -6,9 +6,10 @@
 ## 1. Goal
 
 Move the ABTalks application from `abtalks.in` / `www.abtalks.in` to
-**`app.klymb.ai`**, with the old host kept alive as a path-preserving 308 so
-every link already sent in email, WhatsApp and shared `/r/<token>` reports keeps
-resolving. Transactional mail keeps sending **from** `team@abtalks.in` (warmed,
+**`app.klymb.ai`**, `abtalks.in` is then repurposed to host a different
+site of ours, keeping four path prefixes redirected so links already sent in
+email and WhatsApp, and the verify URLs printed on 3,429 issued certificates,
+keep resolving (§5 step 15). Transactional mail keeps sending **from** `team@abtalks.in` (warmed,
 already verified on both sending rails) while every link inside it points at
 the new host.
 
@@ -199,15 +200,52 @@ to step 13 below.
 14. Sign in through **every remaining door**: candidate email code, candidate
     password, recruiter OTP, recruiter password, admin (Google-only). Confirm
     `/admin` gates and a recruiter session cannot reach a candidate surface.
-15. **Only now, the redirects.** Make `app.klymb.ai` the primary domain, then
-    point **both** `abtalks.in` **and** `www.abtalks.in` at `app.klymb.ai`.
-    Point them individually — do not leave the existing
-    `abtalks.in → www.abtalks.in` 307 in place in front of a second hop, or
-    every legacy link pays two redirects and leaks link equity. Verify:
+15. **Only now, hand over `abtalks.in` — with carve-outs.** Decision
+    (2026-10-13): `abtalks.in` will host a DIFFERENT site, owned by us, rather
+    than 308 to `app.klymb.ai` wholesale. Four path prefixes must still
+    redirect, because their recipients **cannot reconstruct the URL**: the
+    token is opaque, or the link is baked into an artifact already in someone
+    else's hands.
+
+    | Prefix | Why it must survive |
+    |---|---|
+    | `/verify/:path*` | 3,429 issued `Credential` rows. The verify URL is printed in downloaded PDFs and encoded in their QR codes, and sits on LinkedIn profiles and résumés. Unrecoverable — you cannot reissue an artifact someone already holds. |
+    | `/claim/:path*` | Signed single-use outreach tokens in already-sent invite email (`outreach.ts:61`). Nobody can retype one. |
+    | `/r/:path*` | Opaque recruiter share tokens for assessment reports. Named explicitly in `content/legal/terms.md`. |
+    | `/hackathon`, `/hackathon/:path*` | Printed in UI copy ("register at abtalks.in/hackathon") and spread by WhatsApp share. Reconstructable, but free to include. |
+
+    Deliberately NOT carved out: `/dashboard`, `/profile`, `/hire`, `/jobs`,
+    `/login`, `/program`, `/workshop`. A person who lands on the new site can
+    reach all of these by going to `app.klymb.ai` and signing in, and reserving
+    them would constrain the new site's own URL space for no gain.
+
+    Rules go on **whichever project serves the new site**, not this one, and
+    cover `www.abtalks.in` as well as the apex. On Vercel:
+
+    ```json
+    { "redirects": [
+      { "source": "/verify/:path*",    "destination": "https://app.klymb.ai/verify/:path*",    "permanent": true },
+      { "source": "/claim/:path*",     "destination": "https://app.klymb.ai/claim/:path*",     "permanent": true },
+      { "source": "/r/:path*",         "destination": "https://app.klymb.ai/r/:path*",         "permanent": true },
+      { "source": "/hackathon",        "destination": "https://app.klymb.ai/hackathon",        "permanent": true },
+      { "source": "/hackathon/:path*", "destination": "https://app.klymb.ai/hackathon/:path*", "permanent": true }
+    ] }
     ```
-    curl -sI https://abtalks.in/r/abc     | grep -i location   # → app.klymb.ai/r/abc
-    curl -sI https://www.abtalks.in/r/abc | grep -i location   # → app.klymb.ai/r/abc
-    ```
+
+    **Order matters — deploy the rules before the DNS moves**, or there is a
+    window where a scanned certificate QR 404s:
+    1. Deploy the new site WITH the redirect rules above, on its own URL.
+    2. Remove `abtalks.in` and `www.abtalks.in` from the ABTalks Vercel project
+       (Vercel refuses the same domain on two projects).
+    3. Add both to the new project; let the certificate issue.
+    4. Verify before announcing anything:
+       ```
+       curl -sI https://abtalks.in/verify/ABT-XXXXX     | grep -i location
+       curl -sI https://www.abtalks.in/claim/sometoken  | grep -i location
+       curl -sI https://abtalks.in/r/sometoken          | grep -i location
+       ```
+       Each must land on the same path under `app.klymb.ai`.
+
 16. **Expect every signed-in user to be logged out.** The session cookie is
     host-only by design and does not travel across domains. There is no
     supported way to carry a `__Secure-` host-only session over without
@@ -325,11 +363,30 @@ be cleared from there regardless; it lapses on its own 15-minute `maxAge`.
   middleware host check burns a function invocation on every legacy hit.
 - **DO NOT** add `requireRole` / `requireAdmin` to `/login`, `/logout` or the
   Auth.js handler while touching auth files.
-- **DO NOT** change `AUTH_SECRET`. Rotating it during a domain move compounds
-  two forced-logout events and makes failures indistinguishable.
-- **DO NOT** delete the `abtalks.in` DNS records or let the domain lapse. The
-  308 is load-bearing for already-sent email, WhatsApp shares,
-  `/claim/<token>` invites and `/r/<token>` shared reports.
+- **DO NOT** change `AUTH_SECRET` *during* the cutover — it compounds two
+  forced-logout events and makes failures indistinguishable. Afterwards it is a
+  judgement call, and the better primary mitigation is below.
+- **Stale session cookies on `abtalks.in`.** Users who signed in before the
+  cutover still hold a host-only `__Secure-authjs.session-token.v2` for that
+  host, so the browser sends it to whatever is served there. The value is
+  encrypted with `AUTH_SECRET` and cannot be read without it, but it is a
+  bearer token: replayed as a cookie on `app.klymb.ai` it resumes that session,
+  for up to the Auth.js default 30 days (no `session.maxAge` is set).
+  Since the new site is ours, the clean fix is for IT to expire those names on
+  its responses — same host, so it can. That clears each cookie the first time
+  its owner visits, which is also the only time it travels anywhere, and costs
+  nobody a logout:
+  `__Secure-authjs.session-token.v2`, `authjs.session-token.v2`,
+  `__Secure-authjs.callback-url`, `__Host-authjs.csrf-token`, plus the twelve
+  names in `OAUTH_CHECK_COOKIE_NAMES`.
+  Rotating `AUTH_SECRET` also works and is strictly more thorough, but it signs
+  every active user out of `app.klymb.ai` too. Keep it as belt-and-braces, or
+  as the answer if `abtalks.in` ever passes to a third party.
+- **DO NOT** delete the `abtalks.in` DNS records or let the domain lapse, and
+  do not drop the step-15 carve-outs from the new site. They are load-bearing
+  for 3,429 issued certificates, already-sent `/claim/<token>` invites and
+  `/r/<token>` shared reports. Treat them as permanent infrastructure, not
+  migration scaffolding.
 - **DO NOT** remove the old Google OAuth redirect URIs until the old host has
   redirected cleanly for 30 days.
 - **DO NOT** treat this as a rebrand. "ABTalks" as a product name, the logo,
