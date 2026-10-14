@@ -36,11 +36,11 @@ export function TalentShell({
       <header className="abt-header">
         <div className="abt-header-inner">
           <div className="inline-flex items-center gap-2 font-display text-base font-semibold tracking-tight">
-            <Link href="/" aria-label="ABTalks home">
+            <Link href="/" aria-label="Klymb AI home">
             <span className="logo-link">
               <Image
                 src="/abtalks-logo.png"
-                alt="ABTalks"
+                alt="Klymb AI"
                 width={300}
                 height={84}
                 priority

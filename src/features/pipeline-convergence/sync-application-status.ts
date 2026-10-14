@@ -82,7 +82,7 @@ function milestoneCopy(
   }
   return {
     title: `${company} has shortlisted you`,
-    body: `${company} has shortlisted your profile${forRole}. The recruiter may contact you on ABTalks soon.`,
+    body: `${company} has shortlisted your profile${forRole}. The recruiter may contact you on Klymb AI soon.`,
   };
 }
 

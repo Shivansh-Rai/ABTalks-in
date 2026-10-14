@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import { PrintButton } from "./print-button";
 
 export const metadata = {
-  title: "Candidate Profile | ABTalks",
+  title: "Candidate Profile | Klymb AI",
   robots: { index: false },
 };
 
@@ -179,7 +179,7 @@ export default async function RecruiterProfilePage({
     profile.assessmentDate ? `Assessment Date: ${profile.assessmentDate}` : null,
     profile.interviewerName ? `Interviewer: ${profile.interviewerName}` : null,
     profile.challengeRound ? `Challenge Round: ${profile.challengeRound}` : null,
-    `ABTalks ID: ${profile.abtalksId}`,
+    `Klymb AI ID: ${profile.abtalksId}`,
   ].filter((part): part is string => !!part);
 
   const scoreCards = hasFullAssessmentScores
@@ -226,7 +226,7 @@ export default async function RecruiterProfilePage({
       <div className="mx-auto my-6 max-w-4xl overflow-hidden rounded-2xl border bg-card shadow-sm print:my-0 print:box-border print:w-full print:rounded-none print:border-0 print:shadow-none">
         {/* Brand bar */}
         <div className="bg-[#02434D] px-6 py-2 text-right text-[11px] print:bg-[#02434D]">
-          <span className="font-display font-bold text-[#AA821D]">AB TALKS</span>
+          <span className="font-display font-bold text-[#AA821D]">Klymb AI</span>
           <span className="text-white/70"> | AI Conversations That Matter</span>
         </div>
 
@@ -435,7 +435,7 @@ export default async function RecruiterProfilePage({
           <section className="border-t print:break-before-page print:text-[11px] print:leading-snug print:[zoom:0.85]">
             <div className="bg-[#03535F] px-6 py-6 text-white print:bg-[#03535F] print:py-3">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em]">
-                <span className="text-[#AA821D]">AB TALKS</span>{" "}
+                <span className="text-[#AA821D]">Klymb AI</span>{" "}
                 <span className="text-white">CANDIDATE ASSESSMENT REPORT</span>
               </p>
               <h2 className="mt-2 font-display text-2xl font-bold">
@@ -452,7 +452,7 @@ export default async function RecruiterProfilePage({
               <div className="mx-6 mt-6 break-inside-avoid rounded-lg border-l-4 border-[#AA821D] bg-[#FFEDB0] px-5 py-4 print:mt-4 print:bg-[#FFEDB0] print:py-2">
                 <p className="text-sm">
                   <span className="font-bold text-[#03535F]">
-                    ABTalks Synergy Score:{" "}
+                    Klymb AI Synergy Score:{" "}
                   </span>
                   <span className="font-bold text-[#AA821D]">
                     {profile.assessmentComposite}
@@ -668,7 +668,7 @@ export default async function RecruiterProfilePage({
                 {rec ? (
                   <section className="break-inside-avoid rounded-xl bg-[#03535F] p-4 text-white print:bg-[#03535F]">
                     <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#AA821D]">
-                      ABTalks Recommendation
+                      Klymb AI Recommendation
                     </p>
                     <p className="mt-1 font-display text-lg font-bold">{rec}</p>
                   </section>
@@ -680,7 +680,7 @@ export default async function RecruiterProfilePage({
 
         <footer className="border-t px-6 py-5 print:break-inside-avoid">
           <p className="text-center text-[11px] tracking-wide text-muted-foreground">
-            ABTalks Coding Challenge &nbsp;·&nbsp; AI Conversations That Matter
+            Klymb AI Coding Challenge &nbsp;·&nbsp; AI Conversations That Matter
             &nbsp;·&nbsp; CONFIDENTIAL — For Hiring Organizations Only
           </p>
         </footer>

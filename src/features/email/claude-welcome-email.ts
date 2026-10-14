@@ -7,15 +7,15 @@ export function claudeWelcomeEmail(input: {
   appUrl: string;
 }): { subject: string; html: string; text: string } {
   const dashboardUrl = `${input.appUrl}/dashboard`;
-  const subject = `Welcome to ABTalks, ${input.fullName} — let's get you started`;
+  const subject = `Welcome to Klymb AI, ${input.fullName} — let's get you started`;
 
   const text = `Hi ${input.fullName},
 
-Welcome to ABTalks, and congratulations on joining the 60-Day Claude AI Challenge.
+Welcome to Klymb AI, and congratulations on joining the 60-Day Claude AI Challenge.
 
 Over the next 60 days you'll work hands-on with AI, build real projects, and document your work in public. Everything you need to begin GitHub setup, posting guidelines, submission criteria, and how standout participants are recognised is in the attached Challenge Guidelines. Please read it carefully before you start; following it is essential for your work to count.
 
-But the 60 days are only the beginning. ABTalks isn't a challenge you finish—it's a community you join. Alongside you are job seekers building their portfolios, founders building companies, and investors looking for exactly the kind of talent that ships in public. The real goal is to build this network together, for the long run.
+But the 60 days are only the beginning. Klymb AI isn't a challenge you finish—it's a community you join. Alongside you are job seekers building their portfolios, founders building companies, and investors looking for exactly the kind of talent that ships in public. The real goal is to build this network together, for the long run.
 
 Here's where to start:
 
@@ -25,7 +25,7 @@ WhatsApp community (your most important step): ${WHATSAPP_URL}
 We look forward to seeing what you build and to having you with us long after Day 60.
 
 Best regards,
-Team ABTalks`;
+Team Klymb AI`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -36,14 +36,14 @@ Team ABTalks`;
 </head>
 <body style="font-family:Inter,Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#353535;margin:0;padding:16px;">
   <p style="margin:0 0 16px;">Hi ${input.fullName},</p>
-  <p style="margin:0 0 16px;">Welcome to ABTalks, and congratulations on joining the 60-Day Claude AI Challenge.</p>
+  <p style="margin:0 0 16px;">Welcome to Klymb AI, and congratulations on joining the 60-Day Claude AI Challenge.</p>
   <p style="margin:0 0 16px;">Over the next 60 days you'll work hands-on with AI, build real projects, and document your work in public. Everything you need to begin GitHub setup, posting guidelines, submission criteria, and how standout participants are recognised is in the attached Challenge Guidelines. Please read it carefully before you start; following it is essential for your work to count.</p>
-  <p style="margin:0 0 16px;">But the 60 days are only the beginning. ABTalks isn't a challenge you finish—it's a community you join. Alongside you are job seekers building their portfolios, founders building companies, and investors looking for exactly the kind of talent that ships in public. The real goal is to build this network together, for the long run.</p>
+  <p style="margin:0 0 16px;">But the 60 days are only the beginning. Klymb AI isn't a challenge you finish—it's a community you join. Alongside you are job seekers building their portfolios, founders building companies, and investors looking for exactly the kind of talent that ships in public. The real goal is to build this network together, for the long run.</p>
   <p style="margin:0 0 8px;">Here's where to start:</p>
   <p style="margin:0 0 4px;">Dashboard: <a href="${dashboardUrl}" style="${LINK_STYLE}">${dashboardUrl}</a></p>
   <p style="margin:0 0 16px;">WhatsApp community (your most important step): <a href="${WHATSAPP_URL}" style="${LINK_STYLE}">${WHATSAPP_URL}</a></p>
   <p style="margin:0 0 16px;">We look forward to seeing what you build and to having you with us long after Day 60.</p>
-  <p style="margin:0 0 16px;">Best regards,<br>Team ABTalks</p>
+  <p style="margin:0 0 16px;">Best regards,<br>Team Klymb AI</p>
 </body>
 </html>`;
 

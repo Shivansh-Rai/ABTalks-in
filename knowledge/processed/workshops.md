@@ -5,7 +5,7 @@ session · is registration open · how do I register for the workshop · was the
 Figma workshop already held · do you run free webinars · weekly workshop ·
 Saturday workshop · upcoming events · past events.
 
-ABTalks runs recurring public workshops. Two distinct workshop formats are documented below. A third name, "Free AI Bootcamp," appears on the live events calendar with an unresolved relationship to one of them — see the note under AI Tools Workshop.
+Klymb AI runs recurring public workshops. Two distinct workshop formats are documented below. A third name, "Free AI Bootcamp," appears on the live events calendar with an unresolved relationship to one of them — see the note under AI Tools Workshop.
 
 ## AI Tools Workshop (recurring format)
 
@@ -33,7 +33,7 @@ Known facts:
 
 ## Related but distinct: Enhance LinkedIn & AI Mock Interview
 
-"Enhance LinkedIn & AI Mock Interview" is a separate ABTalks event — not a
+"Enhance LinkedIn & AI Mock Interview" is a separate Klymb AI event — not a
 workshop, and not a restatement of either workshop above. It ran on 21
 August 2026, 6:00 PM IST, live on YouTube; registration is closed. See
 `events.md`.

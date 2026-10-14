@@ -6,9 +6,9 @@ Answers grouped by who's asking. This supplements the topic files
 here ever conflicts with those files or with `knowledge/metadata/facts.json`,
 the topic files and `facts.json` are authoritative.
 
-## Eligibility — who can join ABTalks programs
+## Eligibility — who can join Klymb AI programs
 
-ABTalks programs are open to college students at any year of study — first
+Klymb AI programs are open to college students at any year of study — first
 year through final year — across any branch or degree (BTech, BE, or
 otherwise), as well as recent graduates and working professionals. There is
 no minimum year-of-study requirement for the 60-Day Coding Challenge, the
@@ -75,14 +75,14 @@ ban. Plagiarism or platform misuse results in a 60-day challenge ban. See
 **Q: How do I join the community?**
 A: Use the "Join now" link on the official website for the WhatsApp
 community (invite links rotate, so there's no fixed URL to give out here).
-Also Discord, LinkedIn, Instagram, YouTube, X — all under `abtalksonai`. See
+Also Discord, LinkedIn, Instagram, YouTube, X — all under `Klymb AI`. See
 `socials-and-contact.md`.
 
-**Q: How do I apply for placements or internships through ABTalks?**
+**Q: How do I apply for placements or internships through Klymb AI?**
 A: Email your resume, cover letter, and anything else relevant (portfolio
 link, GitHub, LinkedIn, project links) to team@abtalks.in. The team reviews
 applications and routes strong profiles to the hiring partner network.
-Openings themselves are also shared inside the ABTalks WhatsApp community,
+Openings themselves are also shared inside the Klymb AI WhatsApp community,
 so it's worth joining if you haven't already.
 
 **Q: Do I need to have finished a program before applying?**
@@ -92,12 +92,12 @@ the network look for.
 
 **Q: What should go in the application email?**
 A: Resume, cover letter, and links that prove work — GitHub, deployed
-projects, LinkedIn build log, ABTalks profile, portfolio site — plus
+projects, LinkedIn build log, Klymb AI profile, portfolio site — plus
 anything else material to the role you're targeting.
 
 ## For recruiters / hiring partners
 
-**Q: What talent does ABTalks produce?**
+**Q: What talent does Klymb AI produce?**
 A: Indian college students and early-career professionals who ship public
 artifacts through the programs described in `programs.md` — daily builds,
 deployed projects, and (for the Claude Challenge capstone) a full versioned
@@ -105,16 +105,16 @@ v1.0.0 release with documentation. See
 `claude-challenge-curriculum.md` for the graduate skills matrix.
 
 **Q: How do I access candidates?**
-A: ABTalks maintains a hiring partner network (100+ hiring partners, per
+A: Klymb AI maintains a hiring partner network (100+ hiring partners, per
 `community.md`). Contact team@abtalks.in to be onboarded. Candidates apply
 by emailing their resume, cover letter, and work links to the same address,
 so profiles arrive pre-curated.
 
 **Q: How do openings get to candidates?**
-A: Openings shared by partners are announced inside the ABTalks WhatsApp
+A: Openings shared by partners are announced inside the Klymb AI WhatsApp
 community. team@abtalks.in handles the intake side.
 
-**Q: What signal does an ABTalks profile give?**
+**Q: What signal does an Klymb AI profile give?**
 A: Consistency (a visible streak across the program's duration), shipping
 ability (deployed URLs, not just repos), and — for Claude Challenge
 graduates — SDLC discipline (versioned releases, docs, retrospectives).
@@ -126,7 +126,7 @@ permanently ban plagiarism across all programs.
 
 ## For working professionals
 
-**Q: Is ABTalks only for students?**
+**Q: Is Klymb AI only for students?**
 A: The 60-Day Claude AI Challenge is open to anyone. The 60-Day Coding
 Challenge is generally described as for college students, but the Claude
 Challenge testimonial roster (`testimonials.md`) includes a 20+ year IT
@@ -144,12 +144,12 @@ AI Cohort assumes roughly 2–4 hours/day for 31 days.
 
 ## For investors / partnership inquiries
 
-The statements below describe how ABTalks presents itself publicly — they
-are ABTalks' own positioning, not independently verified external claims.
+The statements below describe how Klymb AI presents itself publicly — they
+are Klymb AI's own positioning, not independently verified external claims.
 For anything commercial, partnership-related, or beyond what's here, direct
 the person to team@abtalks.in rather than answering further.
 
-**Q: What is ABTalks in one sentence?**
+**Q: What is Klymb AI in one sentence?**
 A: An India-focused, community-first AI upskilling platform that turns
 learners into hireable builders through daily challenges and a hiring
 partner network.

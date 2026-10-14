@@ -26,7 +26,7 @@ import { learnMoreLine, learnMorePage } from "@/lib/chatbot/page-links";
  *   validate -> retrieve -> CONFIDENCE GATE -> generate
  *
  * Nothing reaches a generation provider until retrieval has decided the corpus
- * can actually support an answer. That ordering is what stops "does ABTalks
+ * can actually support an answer. That ordering is what stops "does Klymb AI
  * provide hostel accommodation?" from becoming a fluent, confident yes.
  *
  * `nodejs` runtime: the corpus is read from disk with `fs`.

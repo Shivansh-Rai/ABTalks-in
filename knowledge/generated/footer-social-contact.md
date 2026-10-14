@@ -1,4 +1,4 @@
-# ABTalks Social & Contact Links (live site footer)
+# Klymb AI Social & Contact Links (live site footer)
 
 ## Support email
 team@abtalks.in

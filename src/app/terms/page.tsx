@@ -6,8 +6,8 @@ import { loadLegalMarkdown } from "@/lib/legal";
 import { EcosystemPageHeader } from "@/components/shared/ecosystem-page-header";
 
 export const metadata: Metadata = {
-  title: "Terms of Service · ABTalks",
-  description: "ABTalks Terms of Service",
+  title: "Terms of Service · Klymb AI",
+  description: "Klymb AI Terms of Service",
 };
 
 export default async function TermsPage() {

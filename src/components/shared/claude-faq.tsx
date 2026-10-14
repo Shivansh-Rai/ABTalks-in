@@ -22,27 +22,27 @@ export const CLAUDE_FAQS = [
   {
     question: "Will I receive daily tasks or teaching sessions?",
     answer:
-      "Starting June 1, 2026, you'll receive daily AI-based tasks through the ABTalks platform: Claude AI implementation, prompt engineering, AI productivity, and real-world workflows. You're expected to complete tasks consistently, share learnings on LinkedIn daily, and maintain discipline. Detailed walkthroughs are available on the ABTalks on AI YouTube channel.",
+      "Starting June 1, 2026, you'll receive daily AI-based tasks through the Klymb AI platform: Claude AI implementation, prompt engineering, AI productivity, and real-world workflows. You're expected to complete tasks consistently, share learnings on LinkedIn daily, and maintain discipline. Detailed walkthroughs are available on the Klymb AI on AI YouTube channel.",
   },
   {
     question: "What if I miss a day's task?",
     answer:
-      "If you miss a task, don't worry. ABTalks provides a 5-day submission window, allowing you to complete and submit any missed tasks from the previous five days through the challenge dashboard.",
+      "If you miss a task, don't worry. Klymb AI provides a 5-day submission window, allowing you to complete and submit any missed tasks from the previous five days through the challenge dashboard.",
   },
   {
     question: "Will I receive goodies after completing the challenge?",
     answer:
-      "Yes. Participants who successfully complete the 60-day challenge with consistency, dedication, and daily engagement may receive goodies, rewards, and recognition from the ABTalks team. The challenge is designed to reward commitment and continuous learning.",
+      "Yes. Participants who successfully complete the 60-day challenge with consistency, dedication, and daily engagement may receive goodies, rewards, and recognition from the Klymb AI team. The challenge is designed to reward commitment and continuous learning.",
   },
   {
     question: "Who should I contact if I have an issue with a task?",
     answer:
-      "Reach out to the ABTalks support team(Admins) through the official WhatsApp group. You can also share your query on Discord dicussion group in the 60 Days Claude Challenge Category.",
+      "Reach out to the Klymb AI support team(Admins) through the official WhatsApp group. You can also share your query on Discord dicussion group in the 60 Days Claude Challenge Category.",
   },
   {
     question: "Is there any YouTube channel for the Claude Challenge?",
     answer:
-      "The ABTalks On AI YouTube channel provides detailed task explanations, step-by-step guidance, complete walkthroughs, and concept clarification videos to help you continue progressing smoothly throughout the challenge.",
+      "The Klymb AI On AI YouTube channel provides detailed task explanations, step-by-step guidance, complete walkthroughs, and concept clarification videos to help you continue progressing smoothly throughout the challenge.",
   },
   {
     question: "Will we explore different AI tools during the challenge?",
@@ -137,7 +137,7 @@ export function ClaudeFaqBody() {
             rel="noopener noreferrer"
             className="text-[#03535F] hover:underline"
           >
-            ABTalks on AI YouTube channel
+            Klymb AI on AI YouTube channel
           </a>
           .
         </p>

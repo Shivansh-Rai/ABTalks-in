@@ -20,7 +20,7 @@ export default function WorkshopHeader({ isSignedIn }: { isSignedIn: boolean }) 
           against the left edge. */}
       <div className="abt-header-inner md:justify-end">
         {/* Hamburger (mobile) + logo. From `md` up the shared sidebar carries
-            the ABTalks mark, so the logo is mobile-only here. */}
+            the Klymb AI mark, so the logo is mobile-only here. */}
         <div className="flex items-center gap-2 md:hidden">
           <WorkshopMenuButton />
           <WorkshopLogo />

@@ -111,7 +111,7 @@ export function AdminSidebar() {
           href="/"
           className="block px-4 text-xs font-medium text-[#03535F] hover:underline"
         >
-          ← Back to ABTalks
+          ← Back to Klymb AI
         </Link>
       </div>
     </aside>

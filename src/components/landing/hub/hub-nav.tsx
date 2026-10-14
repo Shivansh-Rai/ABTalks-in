@@ -25,10 +25,10 @@ export function HubNav({ user }: Props) {
   return (
     <div className="hub-navwrap">
       <nav className="hub-nav-pill" aria-label="Primary">
-        <Link href="/" className="hub-nav-logo" aria-label="ABTalks home">
+        <Link href="/" className="hub-nav-logo" aria-label="Klymb AI home">
           <Image
             src="/landing/abtalks-logo-mark.png"
-            alt="ABTalks"
+            alt="Klymb AI"
             width={561}
             height={168}
             priority

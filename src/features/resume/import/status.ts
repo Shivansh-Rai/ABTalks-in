@@ -39,7 +39,7 @@ import { isOutreachEnabled } from "@/features/resume/import/outreach";
 
 /** The attestation an admin confirms before registering imported students. */
 export const CONSENT_ATTESTATION =
-  "These students agreed to ABTalks creating their profile from their résumé and showing it to recruiters.";
+  "These students agreed to Klymb AI creating their profile from their résumé and showing it to recruiters.";
 
 export type ImportRowView = {
   id: string;

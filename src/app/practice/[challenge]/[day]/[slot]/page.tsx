@@ -25,7 +25,7 @@ import {
   getSavedSolution,
 } from "@/repositories/coding-practice";
 
-export const metadata: Metadata = { title: "DSA Practice | ABTalks" };
+export const metadata: Metadata = { title: "DSA Practice | Klymb AI" };
 
 // Submit is a Server Action called from this page: it waits on Judge0.
 export const maxDuration = 30;

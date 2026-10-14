@@ -6,23 +6,22 @@ const useSecureCookies = process.env.NODE_ENV === "production";
 const cookiePrefix = useSecureCookies ? "__Secure-" : "";
 
 /**
- * Host-only cookies split www.abtalks.in and abtalks.in, so a Google callback
- * that lands on the other host cannot decrypt (or even see) the PKCE cookie.
- * Preview / localhost keep host-only cookies.
+ * Every cookie this file names is HOST-ONLY: no `domain` attribute, ever.
+ *
+ * The OAuth-check cookies (PKCE verifier / state / nonce) used to be widened
+ * to the registrable domain, because the apex and www were both live hosts and
+ * a Google callback landing on the other one could not see a host-only cookie.
+ * `app.klymb.ai` is a single canonical host, so the widening has no purpose.
+ *
+ * It would also now be unsafe. `klymb.ai` runs a SEPARATE application, so a
+ * cookie scoped to `.klymb.ai` would be sent to that application — and could
+ * be set by any present or future `*.klymb.ai` subdomain, which is subdomain
+ * session fixation. Do not reintroduce a cookie domain here, and do not add
+ * one to `cookies.sessionToken` below.
+ *
+ * Sharing a session with another klymb.ai host is an authentication
+ * architecture change, not a config tweak: plan 189 §6-A.
  */
-function oauthCookieDomain(): string | undefined {
-  const raw = process.env.AUTH_URL ?? process.env.NEXTAUTH_URL;
-  if (!raw) return undefined;
-  try {
-    const host = new URL(raw).hostname;
-    if (host === "abtalks.in" || host === "www.abtalks.in") return ".abtalks.in";
-  } catch {
-    return undefined;
-  }
-  return undefined;
-}
-
-const cookieDomain = oauthCookieDomain();
 
 /**
  * Plan 154. With email sign-in on, an account can exist without a Google link
@@ -48,7 +47,6 @@ function oauthCheckCookie(name: string) {
       path: "/",
       secure: useSecureCookies,
       maxAge: 60 * 15,
-      ...(cookieDomain ? { domain: cookieDomain } : {}),
     },
   };
 }

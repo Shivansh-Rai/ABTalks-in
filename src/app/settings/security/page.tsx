@@ -13,7 +13,7 @@ import { isEmailLoginEnabled } from "@/lib/feature-flags";
 import { PasswordSettingsForm } from "@/components/settings/password-settings-form";
 
 export const metadata: Metadata = {
-  title: "Password & sign-in | ABTalks",
+  title: "Password & sign-in | Klymb AI",
 };
 
 /**

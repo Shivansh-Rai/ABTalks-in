@@ -7,12 +7,12 @@ certificates · how are winners chosen · what are the prizes · can I join solo
 hackathon.
 
 Source of truth: the live public hackathon page at `/hackathon` (the
-`ABTalks Vibe Code Hackathon`, branded "ViCoDathon" for specific editions).
+`Klymb AI Vibe Code Hackathon`, branded "ViCoDathon" for specific editions).
 This file supersedes the "sourcing gap" note in `vicodathon.md` — the rules,
 deliverables, judging criteria and FAQ below are exactly what the live page
 shows, not inferred detail.
 
-- Event name: ABTalks Vibe Code Hackathon
+- Event name: Klymb AI Vibe Code Hackathon
 - Tagline: "48 hours. No boilerplate. Just you, your ideas, and AI."
 - Cost: free to register and enter
 - Team size: solo, or a team of up to 3 people total
@@ -23,7 +23,7 @@ shows, not inferred detail.
 Registration for the most recent edition (kickoff Friday 7 Aug, 8:00 PM IST)
 is **CLOSED** — it closed Friday, 7 Aug at 6:00 PM IST, and the event has
 finished. There is no open hackathon registration right now. Watch the
-events page (`/ai-workshop/events`) and the ABTalks socials for the next
+events page (`/ai-workshop/events`) and the Klymb AI socials for the next
 edition; do not tell anyone they can still register for the Aug edition.
 
 ## Timeline of the most recent edition (IST)

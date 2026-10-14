@@ -16,7 +16,7 @@ import {
  * signup completion (see utm-actions.ts).
  *
  * "First-touch wins" is the rule: if the cookie is already set, later visits
- * DO NOT overwrite it. That means when a candidate hears about ABTalks from a
+ * DO NOT overwrite it. That means when a candidate hears about Klymb AI from a
  * LinkedIn campaign, wanders off, and later finds us via a Google search
  * before signing up, the LinkedIn attribution survives.
  *

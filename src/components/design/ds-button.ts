@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 /**
  * Primary CTA for light surfaces (dashboard hub, program dashboard) —
- * ABTalks UI Design System v2, clay button.
+ * Klymb AI UI Design System v2, clay button.
  * Apply on `<Link>` / `<a>` via className — never `<Button asChild>`.
  *
  * Tokens: fill Primary Teal `#03535F`, hover Secondary Teal `#076573` with a

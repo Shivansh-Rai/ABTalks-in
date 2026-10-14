@@ -154,10 +154,10 @@ export const SUMMARY_COPY = {
 };
 
 export const ACTIVITY_DISCLAIMER =
-  "These events are what the candidate's browser reported while the assessment page was open: what happened on the page and when, not why. ABTalks does not detect other screens or devices, eye movement, which websites or apps were used, or whether anyone helped, and it does not judge whether a candidate cheated. A browser can be modified to stop reporting, so a missing event is not proof that something didn't happen.";
+  "These events are what the candidate's browser reported while the assessment page was open: what happened on the page and when, not why. Klymb AI does not detect other screens or devices, eye movement, which websites or apps were used, or whether anyone helped, and it does not judge whether a candidate cheated. A browser can be modified to stop reporting, so a missing event is not proof that something didn't happen.";
 
 export const CAMERA_DISCLAIMER =
-  "“Camera on” means the camera on the candidate's device was running. ABTalks doesn't record or see the video and can't tell who, or whether anyone, was in front of it.";
+  "“Camera on” means the camera on the candidate's device was running. Klymb AI doesn't record or see the video and can't tell who, or whether anyone, was in front of it.";
 
 /** Words no activity label, summary label or activity page may use. The two disclaimers are exempt (they negate these). */
 export const BANNED_CLAIM_PATTERN =

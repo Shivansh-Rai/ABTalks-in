@@ -13,7 +13,7 @@ import { findDatabricksEnrollment } from "@/repositories/databricks";
 import { listCurriculumForProgramSlug } from "@/repositories/learning";
 
 export const metadata = {
-  title: "Databricks | ABTalks",
+  title: "Databricks | Klymb AI",
   description:
     "Build a healthcare-claims Lakehouse on Databricks Free Edition in 31 days.",
 };

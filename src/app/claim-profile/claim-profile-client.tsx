@@ -97,7 +97,7 @@ export function ClaimProfileClient({ summary, userEmail, isPreview = false }: Pr
           <Link href="/" className="inline-flex items-center gap-2 focus-visible:outline-none">
             <Image
               src="/abtalks-logo.png"
-              alt="ABTalks"
+              alt="Klymb AI"
               width={130}
               height={36}
               className="h-7 sm:h-8 w-auto object-contain"
@@ -114,7 +114,7 @@ export function ClaimProfileClient({ summary, userEmail, isPreview = false }: Pr
           </div>
 
           <h1 className="mt-4 text-2xl font-extrabold tracking-tight text-stone-950 sm:text-4xl">
-            Welcome to ABTalks, {firstName}!
+            Welcome to Klymb AI, {firstName}!
           </h1>
 
           <p className="mx-auto mt-2.5 max-w-lg text-sm sm:text-base leading-relaxed text-stone-600">

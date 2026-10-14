@@ -232,7 +232,7 @@ export function HireChrome({
             <Menu className="hire-menu-btn__icon" aria-hidden="true" />
           </button>
         )}
-        <Link href="/" className="hire-app__brand" aria-label="ABTalks home">
+        <Link href="/" className="hire-app__brand" aria-label="Klymb AI home">
           <span className="hire-app__logo">
             {/* The same stacked-wordmark swap runs on the desk AND on plain
                 /hire/* pages (requests, jobs, messages, settings, …) so the
@@ -252,7 +252,7 @@ export function HireChrome({
               />
               <Image
                 src="/hire/abtalks-wordmark-dark.png"
-                alt="ABTalks"
+                alt="Klymb AI"
                 width={346}
                 height={81}
                 priority

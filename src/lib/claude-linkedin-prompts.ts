@@ -86,7 +86,7 @@ Cheap cyberpunk effects
 Typography:
 Modern bold sans-serif (Satoshi, Inter, SF Pro style), oversized premium headline.
 Main Headline:
-Day 10 of the 60-Day Claude Challenge by ABTalks ⚡ Here's what I've already built.
+Day 10 of the 60-Day Claude Challenge by Klymb AI ⚡ Here's what I've already built.
 Progress Section — "Completed in just 10 days ✅":
 ✓ Prompt Engineering
 ✓ Context Engineering
@@ -102,9 +102,9 @@ Bottom CTA:
 AI is moving faster than ever. While you're thinking about it, we're already building. Don't get left behind — join now.
 abtalks.in/claude-signup`,
 
-  30: `Halfway Milestone Achievement Poster – 60 Days Claude AI Challenge by ABTalks
+  30: `Halfway Milestone Achievement Poster – 60 Days Claude AI Challenge by Klymb AI
 
-> Create a premium, ultra-realistic achievement poster (1080×1350) celebrating "Halfway Completed – Day 30 of the 60 Days Claude AI Challclaudey ABTalks."
+> Create a premium, ultra-realistic achievement poster (1080×1350) celebrating "Halfway Completed – Day 30 of the 60 Days Claude AI Challclaudey Klymb AI."
 
 Use the uploaded image as the exact face reference. Preserve the person's facial features, hairstyle, age, skin tone, expression, and identity exactly. Only enhance lighting, sharpness, posture, and overall confidence while keeping the face completely photorealistic.
 
@@ -124,7 +124,7 @@ Clean, modern composition with depth and cinematic lighting
 
 Branding (Elegant & Professional):
 
-ABTalks logo
+Klymb AI logo
 
 "60 Days Claude AI Challenge" branding
 
@@ -161,20 +161,20 @@ Subheading: Day 30 of the 60 Days Claude AI Challenge
 
 Footer: Keep Learning • Keep Building • Keep Growing
 
-#60DaysClaudeChallenge #ABTalks
+#60DaysClaudeChallenge #Klymb AI
 
 The final poster should look like a prestigious LinkedIn achievement announcement, comparable to a global AI certification or professional award, with a clean, premium, and inspiring design that is highly shareable on social media.
 
 This should also ask others to join and all the demographics should be accurate like 30 out of 60 days should be half circle and all use claude logo as it is`,
 
-  45: `Create a premium LinkedIn milestone poster (portrait 4:5, 1080×1350) celebrating "45/60 Days Completed" of the ABTalks 60 Days Claude Challenge. This is an IMAGE EDITING task, not an image generation task. Use my uploaded photo exactly as provided. 
+  45: `Create a premium LinkedIn milestone poster (portrait 4:5, 1080×1350) celebrating "45/60 Days Completed" of the Klymb AI 60 Days Claude Challenge. This is an IMAGE EDITING task, not an image generation task. Use my uploaded photo exactly as provided. 
   Do NOT redraw, recreate, beautify, stylize, age, de-age, modify, or regenerate my face, hairstyle, skin tone, facial features, expression, clothing, pose, body proportions, or camera angle. 
   Preserve the original photograph pixel-for-pixel, only remove the background and seamlessly composite the original photo into the poster. Place the unmodified photo on the right with soft blue and purple brush-stroke blending and subtle cinematic rim lighting around the edges only. Use a dark navy-black cosmic background with faint stars, abstract tech textures, 
-  floating particles, and neon blue (#076573) and violet (#076573) glow. Top-left: ABTALKS in bold white brush typography, PRESENTS below, rounded badge reading "60 DAYS CLAUDE CHALLENGE". Center-left: huge brush-stroke "45", "DAYS", glowing violet pill "COMPLETED". Add a premium progress card showing "45/60", "75% Complete", and a circular progress ring. Add the headline "CONSISTENCY TODAY, EXPERTISE TOMORROW.", subtext "Halfway there. 
+  floating particles, and neon blue (#076573) and violet (#076573) glow. Top-left: Klymb AI in bold white brush typography, PRESENTS below, rounded badge reading "60 DAYS CLAUDE CHALLENGE". Center-left: huge brush-stroke "45", "DAYS", glowing violet pill "COMPLETED". Add a premium progress card showing "45/60", "75% Complete", and a circular progress ring. Add the headline "CONSISTENCY TODAY, EXPERTISE TOMORROW.", subtext "Halfway there. 
   The best projects are still ahead! 🚀", elegant quote card with "Small progress every day leads to big transformation.", section title "WHAT WE'RE BUILDING TOGETHER" with five premium icon cards: Real Projects, AI Mastery, Build in Public, Level Up, Amazing Community. Bottom glowing brush-stroke banner with trophy icon reading "45 DAYS OF FOCUS. A LIFETIME OF IMPACT." and subtitle "LET'S FINISH THESE 15 DAYS LIKE LEGENDS. 🔥". Add handwritten script in the top-right saying "Build. Reflect. Grow.". Use modern startup branding, Behance and Dribbble-quality composition, ultra-sharp typography, clean spacing, high contrast, 
   crisp readable text, premium graphic design, no watermark, no logo distortion, preserve the uploaded photograph exactly without changing the person's appearance.`,
 
-  60: `Create a premium LinkedIn achievement poster (portrait 1080×1350, 4:5) celebrating 60/60 Days Completed of the ABTalks 60 Days Claude AI Challenge. This is an IMAGE EDITING task, not image generation.
+  60: `Create a premium LinkedIn achievement poster (portrait 1080×1350, 4:5) celebrating 60/60 Days Completed of the Klymb AI 60 Days Claude AI Challenge. This is an IMAGE EDITING task, not image generation.
 
 Use my uploaded photograph exactly as provided. Do not redraw, regenerate, beautify, stylize, alter, or modify my face, hairstyle, skin tone, facial features, expression, clothing, pose, body proportions, or camera angle. Preserve the original photo pixel-for-pixel. Only remove the background and seamlessly composite it into the poster. Place the photo on the right with subtle blue and violet brush-stroke blending and soft cinematic rim lighting around the edges only.
 
@@ -190,7 +190,7 @@ Branding
 
 Top-left:
 
-ABTALKS
+Klymb AI
 PRESENTS
 Rounded badge: 60 DAYS CLAUDE AI CHALLENGE
 Official Claude logo (undistorted)
@@ -219,7 +219,7 @@ Quote Card
 
 "Consistency beats talent when talent stops showing up."
 
-— ABTalks Community
+— Klymb AI Community
 
 What We Built Together
 
@@ -259,12 +259,12 @@ Build. Learn. Ship. Repeat.
 Bottom glowing banner:
 60 DAYS OF DISCIPLINE. A FUTURE BUILT WITH AI.
 
-THANK YOU FOR BUILDING THIS JOURNEY WITH ABTALKS ❤️
+THANK YOU FOR BUILDING THIS JOURNEY WITH Klymb AI ❤️
 
 Footer:
 KEEP BUILDING • KEEP LEARNING • KEEP SHARING
 
-ABTalks • #60DaysClaudeChallenge
+Klymb AI • #60DaysClaudeChallenge
 
 The final poster should look like a prestigious global AI certification or graduation announcement, with ultra-sharp typography, clean spacing, no watermark, no logo distortion, and the uploaded photograph preserved exactly. Keep the original lighting, exposure, color temperature, skin texture, and facial contrast exactly as in the uploaded photograph. Do not relight the face, increase contrast, sharpen facial details, smooth skin, alter shadows, brighten highlights, or apply beauty-retouching. Any glow or rim lighting must be applied only behind the subject and around the silhouette, never across the face or clothing.`,
 };

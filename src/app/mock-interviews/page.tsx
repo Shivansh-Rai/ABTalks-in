@@ -15,7 +15,7 @@ import type { CatalogueEntry } from "@/features/interview/platform/service";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "AI Mock Interviews | ABTalks",
+  title: "AI Mock Interviews | Klymb AI",
   description:
     "Practise real technical interviews out loud. An AI interviewer asks about your work, follows up on your answers, and gives you an evidence-backed report.",
 };
@@ -80,13 +80,13 @@ export default async function MockInterviewsPage() {
           className="inline-flex items-center gap-1.5 text-[13px] text-[#4B4B4B] transition-colors hover:text-[#000000]"
         >
           <ArrowLeft className="size-3.5" strokeWidth={2} />
-          {signedIn ? "Back to dashboard" : "Back to ABTalks"}
+          {signedIn ? "Back to dashboard" : "Back to Klymb AI"}
         </Link>
 
       {/* ------------------------------------------------------------ hero */}
       <header className="mt-5 max-w-2xl">
         <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#8F8F8F]">
-          ABTalks Practice
+          Klymb AI Practice
         </p>
         <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-[#000000] md:text-4xl">
           AI mock interviews
@@ -122,7 +122,7 @@ export default async function MockInterviewsPage() {
               Sign in to practise
             </Link>
             <span className="text-[13px] text-[#8F8F8F]">
-              Free with any ABTalks account.
+              Free with any Klymb AI account.
             </span>
           </div>
         ) : null}

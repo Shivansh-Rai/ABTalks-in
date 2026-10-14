@@ -147,7 +147,7 @@ export async function notifyCandidateApplicationStatus(input: {
   const { jobTitle, company } = input;
   const body =
     input.status === "REVIEWING"
-      ? `${company} has shortlisted your application for ${jobTitle} and is reviewing it. You can track its status on ABTalks.`
+      ? `${company} has shortlisted your application for ${jobTitle} and is reviewing it. You can track its status on Klymb AI.`
       : input.status === "ACCEPTED"
         ? `${company} has accepted your application for ${jobTitle}. The recruiter will contact you about next steps.`
         : `${company} has decided not to move forward with your application for ${jobTitle}. Thank you for applying.`;

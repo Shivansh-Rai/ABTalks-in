@@ -10,7 +10,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { formatDateIST } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Assessment attempt | ABTalks Admin" };
+export const metadata: Metadata = { title: "Assessment attempt | Klymb AI Admin" };
 
 /**
  * T-265 — what happened to one candidate's assessment.

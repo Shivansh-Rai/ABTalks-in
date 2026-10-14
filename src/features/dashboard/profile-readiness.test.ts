@@ -60,7 +60,7 @@ const education: CandidateDetail["education"][number] = {
 
 const project: CandidateDetail["projects"][number] = {
   id: "p1",
-  title: "ABTalks",
+  title: "Klymb AI",
   description: "A talent platform",
   techStack: ["TypeScript"],
   repoUrl: "https://github.com/abtalks/app",

@@ -54,7 +54,7 @@ export function NewProjectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="hire-app hire-unlock sm:max-w-sm" showCloseButton>
         <DialogHeader>
-          <p className="hire-auth__kicker">ABTalks Hire</p>
+          <p className="hire-auth__kicker">Klymb AI Hire</p>
           <DialogTitle>New project</DialogTitle>
           <DialogDescription>
             A project keeps its own searches, shortlist and assessments —

@@ -3,7 +3,7 @@
 **Version:** 2026-09-14  
 **Effective date:** 2026-09-14
 
-This Cookie Policy explains what cookies and similar technologies ABTalks uses, why, and how you control them. It supplements our [Privacy Policy](/privacy).
+This Cookie Policy explains what cookies and similar technologies Klymb AI uses, why, and how you control them. It supplements our [Privacy Policy](/privacy).
 
 ## 1. What cookies are
 
@@ -13,7 +13,7 @@ We also use a small amount of **browser storage** (`localStorage` / `sessionStor
 
 ## 2. Your choice
 
-The first time you visit ABTalks, we present our cookie banner with three straightforward options:
+The first time you visit Klymb AI, we present our cookie banner with three straightforward options:
 
 | Option | What it does |
 |--------|--------------|
@@ -61,7 +61,7 @@ We do **not** sell personal data. We do **not** use Meta Pixel, cross-site adver
 ## 6. Changing or clearing your choice
 
 - Use the **Manage cookie preferences** button on this page to reopen the preferences modal at any time.
-- You can also delete cookies directly in your browser settings. Clearing the ABTalks cookies will sign you out and cause the chooser to appear again on your next visit.
+- You can also delete cookies directly in your browser settings. Clearing the Klymb AI cookies will sign you out and cause the chooser to appear again on your next visit.
 
 ## 7. Contact
 

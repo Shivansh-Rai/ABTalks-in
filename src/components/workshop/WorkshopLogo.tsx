@@ -5,7 +5,7 @@ export default function WorkshopLogo() {
   return (
     <Link
       href="/"
-      aria-label="ABTalks home"
+      aria-label="Klymb AI home"
       className="wk-logo logo-link group relative inline-flex shrink-0 overflow-hidden rounded-md"
     >
       <style>{`
@@ -30,7 +30,7 @@ export default function WorkshopLogo() {
       `}</style>
       <Image
         src="/abtalks-logo.png"
-        alt="ABTalks"
+        alt="Klymb AI"
         width={300}
         height={84}
         priority

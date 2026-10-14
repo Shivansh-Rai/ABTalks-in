@@ -3,18 +3,18 @@
 **Version:** 2026-09-14  
 **Effective date:** 2026-09-14
 
-These Terms of Service (“Terms”) govern your access to and use of ABTalks websites, apps, and related services (the “Service”), operated under the trading name **ABTalks** (“ABTalks”, “we”, “us”).
+These Terms of Service (“Terms”) govern your access to and use of Klymb AI websites, apps, and related services (the “Service”), operated under the trading name **Klymb AI** (“Klymb AI”, “we”, “us”).
 
 | Field | Detail |
 |---|---|
-| **Registered entity** | ABTalksOnAI |
+| **Registered entity** | Klymb AI |
 | **Entity type** | Sole Proprietorship (Proprietary) |
 | **Enterprise scale** | Micro (Udyam) |
 | **Major activity** | Services |
 | **Industry (NIC)** | 62099 - Other information technology and computer service activities n.e.c. |
 | **Proprietor** | Suman Shukla |
-| **Trading name** | ABTalks |
-| **Unit name** | ABTalksOnAI |
+| **Trading name** | Klymb AI |
+| **Unit name** | Klymb AI |
 | **Registered address** | Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
 | **Udyam registration number** | UDYAM-UP-29-0250625 |
 | **Udyam registration date** | 01 August 2026 |
@@ -60,7 +60,7 @@ Community conduct rules shown in onboarding apply in addition to these Terms.
 
 ## 5. Your content
 
-You retain ownership of content you submit (profile data, GitHub/LinkedIn URLs, code, writeups, hackathon repos, interview responses). You grant ABTalks a worldwide, non-exclusive license to host, process, display, and share that content as needed to operate the Service (including admin review, certificates, leaderboards, and recruiter discoverability for eligible active candidate profiles), and as described in the Privacy Policy.
+You retain ownership of content you submit (profile data, GitHub/LinkedIn URLs, code, writeups, hackathon repos, interview responses). You grant Klymb AI a worldwide, non-exclusive license to host, process, display, and share that content as needed to operate the Service (including admin review, certificates, leaderboards, and recruiter discoverability for eligible active candidate profiles), and as described in the Privacy Policy.
 
 Public URLs you submit (e.g. GitHub, LinkedIn) may be visible to admins and, where applicable, other participants or recruiters.
 
@@ -68,7 +68,7 @@ Public URLs you submit (e.g. GitHub, LinkedIn) may be visible to admins and, whe
 
 Eligible completions may receive certificates. Certificate IDs and recipient names may be **publicly verifiable** at `/verify/[certificateId]`. We may revoke certificates for fraud or Terms violations.
 
-Certificates issued by ABTalks are certificates of **participation and completion only**. They are **not** accredited academic or professional qualifications, confer no academic credit, and are not recognised, approved, or accredited by any university, statutory body, examination authority, or regulator in India or elsewhere. Do not represent them as a degree, diploma, or licensed credential.
+Certificates issued by Klymb AI are certificates of **participation and completion only**. They are **not** accredited academic or professional qualifications, confer no academic credit, and are not recognised, approved, or accredited by any university, statutory body, examination authority, or regulator in India or elsewhere. Do not represent them as a degree, diploma, or licensed credential.
 
 ## 7. Recruiters and talent
 
@@ -76,7 +76,7 @@ Active candidates with eligible, usable profiles are discoverable by authorized 
 
 Candidate protected contact details (specifically personal email address, phone number, and LinkedIn profile URL) remain shielded and are never visible in general recruiter searches. Authorized recruiters access protected contact details through the platform's paid contact unlock mechanism. Unlocking a candidate who has already been unlocked by your organization does not consume credits again (repeat unlocks are free).
 
-ABTalks is not an employment agency or employer, is not a party to any employment relationship, and makes no hiring guarantees. Inclusion in the talent pool, publication of a shared assessment report at `/r/[token]`, and listings on the jobs board are **introductions only**. ABTalks does not screen, vet, endorse, or vouch for any employer, recruiter, or listing, and is not responsible for their conduct, hiring processes, or the accuracy of anything they publish. We do not warrant that you will receive any interview, offer, internship, or employment outcome, and we make no representation about salary, role, or timeline. Any engagement you enter into with an employer is solely between you and them.
+Klymb AI is not an employment agency or employer, is not a party to any employment relationship, and makes no hiring guarantees. Inclusion in the talent pool, publication of a shared assessment report at `/r/[token]`, and listings on the jobs board are **introductions only**. Klymb AI does not screen, vet, endorse, or vouch for any employer, recruiter, or listing, and is not responsible for their conduct, hiring processes, or the accuracy of anything they publish. We do not warrant that you will receive any interview, offer, internship, or employment outcome, and we make no representation about salary, role, or timeline. Any engagement you enter into with an employer is solely between you and them.
 
 Recruiters must use the talent portal only for legitimate recruiting, keep candidate information strictly confidential, and not resell or re-distribute candidate data.
 
@@ -102,11 +102,11 @@ We send **transactional** messages needed to run the Service (sign-in, OTP, regi
 
 ## 10. AI features
 
-Some features use third-party AI (e.g. mission feedback, project grading, voice interview). Outputs may be incomplete or incorrect. AI scores and summaries are **not** sole determinants of employment decisions by ABTalks. Do not submit secrets or highly sensitive personal data in prompts or repos beyond what the feature requires.
+Some features use third-party AI (e.g. mission feedback, project grading, voice interview). Outputs may be incomplete or incorrect. AI scores and summaries are **not** sole determinants of employment decisions by Klymb AI. Do not submit secrets or highly sensitive personal data in prompts or repos beyond what the feature requires.
 
 ## 11. Intellectual property
 
-ABTalks branding, challenge content, curricula, and platform software are owned by ABTalks or its licensors. You may not copy or redistribute them except as allowed by the Service.
+Klymb AI branding, challenge content, curricula, and platform software are owned by Klymb AI or its licensors. You may not copy or redistribute them except as allowed by the Service.
 
 ## 12. Disclaimers
 
@@ -114,11 +114,11 @@ THE SERVICE IS PROVIDED “AS IS” AND “AS AVAILABLE” WITHOUT WARRANTIES OF
 
 ## 13. Limitation of liability
 
-TO THE MAXIMUM EXTENT PERMITTED BY LAW, ABTALKS AND ITS OPERATORS WILL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF DATA, PROFITS, OR OPPORTUNITIES ARISING FROM YOUR USE OF THE SERVICE. OUR AGGREGATE LIABILITY FOR CLAIMS RELATING TO THE SERVICE IS LIMITED TO THE GREATER OF (A) AMOUNTS YOU PAID US FOR THE SERVICE IN THE 12 MONTHS BEFORE THE CLAIM OR (B) INR 5,000.
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, Klymb AI AND ITS OPERATORS WILL NOT BE LIABLE FOR INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF DATA, PROFITS, OR OPPORTUNITIES ARISING FROM YOUR USE OF THE SERVICE. OUR AGGREGATE LIABILITY FOR CLAIMS RELATING TO THE SERVICE IS LIMITED TO THE GREATER OF (A) AMOUNTS YOU PAID US FOR THE SERVICE IN THE 12 MONTHS BEFORE THE CLAIM OR (B) INR 5,000.
 
 ## 14. Indemnity
 
-You agree to indemnify, defend, and hold harmless ABTalks, its operators, employees, and contractors from and against any claim, demand, loss, liability, or expense (including reasonable legal fees) arising out of or relating to: (a) content you submit to the Service; (b) your breach of these Terms or the Community Rules; (c) your infringement of any third party's intellectual property or other rights; or (d) your unlawful or fraudulent use of the Service. This does not limit any rights you have that cannot be waived under applicable law.
+You agree to indemnify, defend, and hold harmless Klymb AI, its operators, employees, and contractors from and against any claim, demand, loss, liability, or expense (including reasonable legal fees) arising out of or relating to: (a) content you submit to the Service; (b) your breach of these Terms or the Community Rules; (c) your infringement of any third party's intellectual property or other rights; or (d) your unlawful or fraudulent use of the Service. This does not limit any rights you have that cannot be waived under applicable law.
 
 ## 15. Termination, account deletion, and data rights
 

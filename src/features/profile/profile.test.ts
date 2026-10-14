@@ -887,7 +887,7 @@ const completeProject = (
   over: Partial<CandidateDetail["projects"][number]> = {},
 ): CandidateDetail["projects"][number] => ({
   id: "p1",
-  title: "ABTalks",
+  title: "Klymb AI",
   description: "A talent platform",
   techStack: ["TypeScript"],
   repoUrl: "https://github.com/abtalks/app",

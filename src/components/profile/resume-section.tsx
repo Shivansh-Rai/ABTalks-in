@@ -242,7 +242,7 @@ export function ResumeSection({ resume }: { resume: ResumeView | null }) {
             </span>
             <span className="pw-file-hint">
               PDF only, up to {MAX_MB} MB. Your file stays private — only you and
-              ABTalks admins can open it.
+              Klymb AI admins can open it.
             </span>
           </span>
           <button type="button" className="pw-file-browse" disabled={busy}>

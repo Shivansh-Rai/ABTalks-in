@@ -310,7 +310,7 @@ async function loadHackathon(opts: TrackLoadOpts): Promise<TrackLoad> {
 /* ── PROFILE: discoverable from profile state alone ───────────────────────── */
 
 /**
- * Everyone whose profile is usable, regardless of ABTalks activity.
+ * Everyone whose profile is usable, regardless of Klymb AI activity.
  *
  * `belowEvidenceFloor` is 0 and `clearsEvidenceFloor` is never called: these
  * candidates have no missions by definition, and the floor has never been an

@@ -552,7 +552,7 @@ export function JobFormClient({
         <div>
           <h1>Write a job</h1>
           <p>
-            Post on ABTalks. Save as a draft — you can publish it when
+            Post on Klymb AI. Save as a draft — you can publish it when
             you&apos;re ready
             {company ? ` as ${company}` : ""}.
           </p>

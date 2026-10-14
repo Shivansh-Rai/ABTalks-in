@@ -10,7 +10,7 @@ import {
 } from "@/lib/analytics/events";
 
 /**
- * The only way ABTalks sends a GA4 event.
+ * The only way Klymb AI sends a GA4 event.
  *
  * Rides on whatever T-252 already put on the page: the `window.gtag` the
  * GA4Loader defines, and the consent choice from the same

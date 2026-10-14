@@ -7,7 +7,7 @@ import {
 import { ClaimProfileClient } from "./claim-profile-client";
 
 export const metadata = {
-  title: "Welcome to ABTalks — Claim Your Profile",
+  title: "Welcome to Klymb AI — Claim Your Profile",
   description: "Review and activate your candidate profile pre-filled from your résumé.",
 };
 

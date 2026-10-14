@@ -2,19 +2,19 @@
 
 This is a question index, not a source of truth. Each question points to the canonical knowledge file that answers it — do not duplicate full answers here; retrieve from the linked file.
 
-## About ABTalks
+## About Klymb AI
 
-- What is ABTalks? → `abtalks.md`
-- Why does ABTalks exist / what's the mission? → `abtalks.md`
-- What does "build in public" / "proof of work" mean on ABTalks? → `abtalks.md`
-- Is ABTalks free? → `abtalks.md`, `programs.md`
-- Who is ABTalks for? → `abtalks.md`
-- Who founded ABTalks? → `anil-bajpai.md`
-- How big is the ABTalks community? → `community.md`
+- What is Klymb AI? → `abtalks.md`
+- Why does Klymb AI exist / what's the mission? → `abtalks.md`
+- What does "build in public" / "proof of work" mean on Klymb AI? → `abtalks.md`
+- Is Klymb AI free? → `abtalks.md`, `programs.md`
+- Who is Klymb AI for? → `abtalks.md`
+- Who founded Klymb AI? → `anil-bajpai.md`
+- How big is the Klymb AI community? → `community.md`
 
 ## Programs
 
-- What programs does ABTalks run? → `programs.md`
+- What programs does Klymb AI run? → `programs.md`
 - What is the 60-Day Coding Challenge? What tracks does it have? → `coding-challenge.md`
 - What is the 60-Day Claude AI Challenge? → `claude-challenge.md`
 - Do I need to tag anyone in my Claude Challenge LinkedIn posts? → `claude-challenge.md`
@@ -26,7 +26,7 @@ This is a question index, not a source of truth. Each question points to the can
 
 ## Workshops and events
 
-- What workshops does ABTalks run? → `workshops.md`
+- What workshops does Klymb AI run? → `workshops.md`
 - What's the difference between the AI Tools Workshop and the Figma × Cursor workshop? → `workshops.md`
 - Is "Free AI Bootcamp" the same as the AI Tools Workshop? → `workshops.md`, `knowledge/metadata/facts.json` (`free-ai-bootcamp-vs-ai-tools-workshop` — unresolved; do not assert an answer either way)
 - When is the next workshop or event? → `events.md` (derive upcoming/past from the date, never from the site's status label)
@@ -35,12 +35,12 @@ This is a question index, not a source of truth. Each question points to the can
 ## Community and contact
 
 - What is the official contact email? → `socials-and-contact.md`
-- What are ABTalks' official social media accounts? → `socials-and-contact.md`
+- What are Klymb AI's official social media accounts? → `socials-and-contact.md`
 - What is the official Instagram handle? → `socials-and-contact.md` (current: `@abtalksonai`; `@abtalks_official` is deprecated)
 
 ## Website
 
-- What sections does the ABTalks website have? → `website.md`
+- What sections does the Klymb AI website have? → `website.md`
 - Where do I register / find the challenge / find the workshop / log in / submit proof of work? → `website.md`
 
 ## By audience

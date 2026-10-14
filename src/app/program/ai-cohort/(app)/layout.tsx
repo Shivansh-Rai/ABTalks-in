@@ -22,10 +22,10 @@ export default async function ProgramAppLayout({
     <div className="theme-abtalks-light theme-abtalks-brand min-h-svh bg-[#F4F4F4] font-content text-black">
       <header className="abt-header">
         <div className="abt-header-inner justify-start md:gap-8">
-          <Link href="/" className="shrink-0" aria-label="ABTalks home">
+          <Link href="/" className="shrink-0" aria-label="Klymb AI home">
             <Image
               src="/abtalks-logo.png"
-              alt="ABTalks"
+              alt="Klymb AI"
               width={160}
               height={42}
               className="h-7 w-auto brightness-0"

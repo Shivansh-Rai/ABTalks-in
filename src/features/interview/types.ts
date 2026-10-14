@@ -84,7 +84,7 @@ export type ResumeExperience = {
 export type ResumeContext = {
   /**
    * False when we only have self-reported profile fields. No parsed resume
-   * exists in ABTalks yet — see docs/plans/066.
+   * exists in Klymb AI yet — see docs/plans/066.
    */
   hasStructuredResume: boolean;
   headline: string | null;

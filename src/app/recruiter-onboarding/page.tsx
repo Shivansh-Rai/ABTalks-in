@@ -7,9 +7,9 @@ import { RecruiterOnboardingWizard } from "@/components/recruiter-onboarding/rec
 import { isEmailLoginEnabled, isRecruiterAuthEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
-  title: "Set up your recruiting workspace | Hire with ABTalks",
+  title: "Set up your recruiting workspace | Hire with Klymb AI",
   description:
-    "Create your ABTalks recruiter workspace in a few short steps: your details, your company and who you're hiring.",
+    "Create your Klymb AI recruiter workspace in a few short steps: your details, your company and who you're hiring.",
 };
 
 /**

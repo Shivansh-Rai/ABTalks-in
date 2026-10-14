@@ -15,11 +15,11 @@ import { isGreeting } from "@/lib/chatbot/text";
  * both silently served wrong answers for months, because a match here means
  * the knowledge base is never consulted:
  *
- *   - a Claude Challenge intent listing tags "@abtalksonai, #abtalks,
+ *   - a Claude Challenge intent listing tags "@abtalksonai, #Klymb AI,
  *     #60DaysOfClaude, #60DaysOfGenAI". The live challenge page and the
  *     official guidelines PDF both say to tag Anthropic, Anil Bajpai and
- *     ABTalksOnAI. Retrieval had the right answer; this overrode it.
- *   - an "is ABTalks free" intent answering "completely free" after the site
+ *     Klymb AI. Retrieval had the right answer; this overrode it.
+ *   - an "is Klymb AI free" intent answering "completely free" after the site
  *     had moved to "most challenges are free; paid cohorts are priced up
  *     front".
  *
@@ -33,12 +33,12 @@ const INTENTS: { regex: RegExp; answer: string }[] = [
   {
     // Careers/recruitment enquiry — an email address, not a fact about a program.
     regex:
-      /\b(how\s*(do\s*i|to)\s*)?(apply|join|work)\s*(for|with|at)\s*(the\s*)?(abtalks\s*)?(team|company|abtalks)\b.*\b(job|role|hiring|career|work)\b|\bwork\s*(for|with)\s*abtalks\b/i,
-    answer: `If you'd like to work with the ABTalks team, email your cover letter, resume and anything else relevant to ${SUPPORT_EMAIL}.`,
+      /\b(how\s*(do\s*i|to)\s*)?(apply|join|work)\s*(for|with|at)\s*(the\s*)?(Klymb AI\s*)?(team|company|Klymb AI)\b.*\b(job|role|hiring|career|work)\b|\bwork\s*(for|with)\s*Klymb AI\b/i,
+    answer: `If you'd like to work with the Klymb AI team, email your cover letter, resume and anything else relevant to ${SUPPORT_EMAIL}.`,
   },
   {
     regex: /\b(contact\s*(email|details)?|email\s*address|support\s*email|reach\s*(you|the\s*team))\b/i,
-    answer: `You can reach the ABTalks team at ${SUPPORT_EMAIL}.`,
+    answer: `You can reach the Klymb AI team at ${SUPPORT_EMAIL}.`,
   },
 ];
 
@@ -68,7 +68,7 @@ export function isThirdPartyDataRequest(input: string): boolean {
 
 export const THIRD_PARTY_DATA_REPLY =
   `I can't look up or share anyone else's account, profile or personal details — that information is private to them. ` +
-  `I can help with anything about ABTalks itself, or you can reach the team at ${SUPPORT_EMAIL}.`;
+  `I can help with anything about Klymb AI itself, or you can reach the team at ${SUPPORT_EMAIL}.`;
 
 /** Menu / navigation commands. UI affordances, never facts. */
 const MENU_COMMANDS =

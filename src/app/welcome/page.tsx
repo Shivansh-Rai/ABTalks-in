@@ -7,7 +7,7 @@ import { WelcomeScreen } from "@/components/candidate-welcome/welcome-screen";
 import { getProfileSummary } from "@/repositories/candidate";
 
 export const metadata: Metadata = {
-  title: "Welcome back | ABTalks",
+  title: "Welcome back | Klymb AI",
 };
 
 // Only same-origin dashboard paths: this screen exists to lead into the

@@ -221,7 +221,7 @@ export function AppFooter() {
             ))}
           </nav>
           <p className="text-center text-xs text-[#8F8F8F]">
-            © {year} ABTalksOnAI. All rights reserved.
+            © {year} Klymb AI. All rights reserved.
           </p>
           <div className="flex items-center justify-start gap-1 md:justify-end">
             {SOCIAL_LINKS.map(({ label, href, icon: Icon }) => (
@@ -262,7 +262,7 @@ export function AppFooter() {
               </Link>
             ))}
           </nav>
-          <span>© {new Date().getFullYear()} ABTalksOnAI</span>
+          <span>© {new Date().getFullYear()} Klymb AI</span>
         </div>
       </footer>
     );
@@ -285,7 +285,7 @@ export function AppFooter() {
               isMarketplace ? "text-white" : "text-foreground",
             )}
           >
-            <span>ABTalks</span>
+            <span>Klymb AI</span>
             <nav
               className={cn(
                 "flex flex-wrap gap-x-4 gap-y-1 text-xs font-sans font-normal",

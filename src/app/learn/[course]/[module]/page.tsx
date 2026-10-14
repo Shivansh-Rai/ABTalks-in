@@ -25,7 +25,7 @@ async function resolve(params: RouteParams["params"]) {
 
 export async function generateMetadata({ params }: RouteParams): Promise<Metadata> {
   const r = await resolve(params);
-  return r ? { title: `${r.mod.title}, ${r.course.title} | ABTalks Learn`, description: r.mod.summary } : {};
+  return r ? { title: `${r.mod.title}, ${r.course.title} | Klymb AI Learn`, description: r.mod.summary } : {};
 }
 
 export default async function CourseModulePage({ params }: RouteParams) {

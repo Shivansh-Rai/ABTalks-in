@@ -174,7 +174,7 @@ async function main() {
   await suite("keeps the approved headline, copy and subject", () => {
     assert(invite.html.includes("<title>Someone looking at your profile would miss this.</title>"), "title kept");
     assert(invite.html.includes("Someone looking at your profile<br>"), "hero line 1");
-    assert(invite.html.includes("Your AB TALKS profile is already taking shape."), "body copy");
+    assert(invite.html.includes("Your Klymb AI profile is already taking shape."), "body copy");
     assert(invite.html.includes("You're closer than you think."), "card title");
     assert(invite.html.includes("Don't let an incomplete profile speak for you."), "closing title");
     assert(invite.html.includes("Your profile. Your skills. Your next opportunity."), "strip");
@@ -210,15 +210,15 @@ async function main() {
     const subjects = (["invite", "invite_reminder", "onboard_welcome", "onboard_reminder"] as const).map(
       (t) => templates.renderOutreachEmail(t, data).subject,
     );
-    assert(subjects[0] === "Asha, update your profile on ABTalks", subjects[0]!);
-    assert(subjects[3] === "Asha, one detail left on your ABTalks profile: phone number", subjects[3]!);
+    assert(subjects[0] === "Asha, update your profile on Klymb AI", subjects[0]!);
+    assert(subjects[3] === "Asha, one detail left on your Klymb AI profile: phone number", subjects[3]!);
     for (const s of subjects) {
       assert(s.startsWith("Asha, "), `no name: ${s}`);
       assert(!/[!🎉🔥]|free|offer|now\b|urgent|limited/i.test(s), `promo words: ${s}`);
       assert(s.length <= 70, `too long: ${s}`);
     }
     const noName = templates.renderOutreachEmail("invite", { ...data, firstName: "" }).subject;
-    assert(noName === "Update your profile on ABTalks", noName);
+    assert(noName === "Update your profile on Klymb AI", noName);
   });
 
   console.log("\nO6 — the other emails");

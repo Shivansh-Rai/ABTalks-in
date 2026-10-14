@@ -43,17 +43,17 @@ export default async function MissionPage() {
             Talent isn&apos;t the problem. Proof is.
           </h1>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-            ABTalks is that bridge, a community run by students, for students,
+            Klymb AI is that bridge, a community run by students, for students,
             founded by Anil Bajpai after watching capable people get overlooked
             and undervalued.
           </p>
         </section>
 
-        {/* Why ABTalks exists */}
+        {/* Why Klymb AI exists */}
         <section className="space-y-6">
           <div className="space-y-3">
             <h2 className="font-display text-2xl font-semibold tracking-tight">
-              Why ABTalks exists
+              Why Klymb AI exists
             </h2>
             <p className="text-base leading-relaxed text-muted-foreground">
               Two real problems, one missing bridge.
@@ -184,7 +184,7 @@ export default async function MissionPage() {
             You&apos;re not doing it alone
           </h2>
           <p className="mt-3 text-base leading-relaxed text-muted-foreground">
-            ABTalks is students lifting each other up. Our Discord runs weekly
+            Klymb AI is students lifting each other up. Our Discord runs weekly
             communication practice and plenty more, with a lot still on the
             way. Show up, do the work in public, and let it speak for you.
           </p>

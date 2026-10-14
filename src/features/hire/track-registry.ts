@@ -154,7 +154,7 @@ export const TRACKS: readonly TrackDescriptor[] = [
     geo: null,
     // No day scale exists here; a day floor would silently empty the result.
     supportsEvidenceDays: false,
-    // Lowest priority: anyone with real ABTalks evidence should show as that
+    // Lowest priority: anyone with real Klymb AI evidence should show as that
     // track's card, not as a bare profile.
     dedupePriority: 10,
     // Not a learning-catalog track — membership is profile state, not a cohort.

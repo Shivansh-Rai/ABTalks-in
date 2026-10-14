@@ -172,7 +172,7 @@ export function toPublicMatch(
   // one in yet, so the decision costs nothing today and would have been expensive
   // to reverse later.
   //
-  // What a recruiter sees is ABTalks' own indicative band, derived from role
+  // What a recruiter sees is Klymb AI's own indicative band, derived from role
   // family and verified evidence, and labelled as ours — see
   // `features/hire/compensation.ts` and COMPENSATION_DISCLAIMER. It never filters
   // anyone out. `compensationDeclared` stays in the shape and stays false: the

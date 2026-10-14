@@ -66,7 +66,7 @@ export function SampleCardNotice({
           onClick={capture}
           className={cn(buttonVariants(), "disabled:opacity-50")}
         >
-          Tell ABTalks I need this
+          Tell Klymb AI I need this
         </button>
       )}
     </div>

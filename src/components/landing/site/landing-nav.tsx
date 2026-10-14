@@ -182,10 +182,10 @@ export function LandingNav({ user, showRecruiterCta = false }: Props) {
     >
       <div className="container">
         <nav className="nav" aria-label="Primary" ref={navRef}>
-          <Link href="/" className="nav__logo" aria-label="ABTalks home">
+          <Link href="/" className="nav__logo" aria-label="Klymb AI home">
             <Image
               src="/landing/abtalks-logo-mark.png"
-              alt="ABTalks"
+              alt="Klymb AI"
               width={561}
               height={168}
               priority

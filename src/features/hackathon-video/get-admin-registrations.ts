@@ -18,7 +18,7 @@ export type AdminVideoRegistration = {
   submissionNotes: string | null;
   submissionUpdatedAtIso: string | null;
   createdAtIso: string;
-  /** When the ABTalks account itself was created. */
+  /** When the Klymb AI account itself was created. */
   accountCreatedAtIso: string;
   /** True when the account was created for VideoThon (see NEW_USER_WINDOW_MS). */
   isNewUser: boolean;
@@ -37,7 +37,7 @@ export type AdminVideoRegistrationsData = {
 export type VideoRegistrationUserType = "all" | "old" | "new";
 
 /**
- * A registrant counts as NEW when their ABTalks account was created at most
+ * A registrant counts as NEW when their Klymb AI account was created at most
  * this long before they registered for VideoThon — i.e. they signed up in
  * order to join. There is no last-login column, so account age at
  * registration time is the signal. Anyone whose account is older is OLD.

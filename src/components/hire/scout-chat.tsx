@@ -1159,7 +1159,7 @@ export function ScoutChat({
       on: spec.employmentType != null,
     },
     {
-      key: "ABtalks Recommended",
+      key: "Klymb AI Recommended",
       on: (spec.evidencePriority?.length ?? 0) > 0 || spoken.abtalks,
     },
   ] as const;
@@ -1193,7 +1193,7 @@ export function ScoutChat({
     Availability: "Remote, hybrid or onsite?",
     Compensation: "What's the budget for this role?",
     "Type of Employment": "Full-time, part-time, internship, contract or freelance?",
-    "ABtalks Recommended": "Should we rank on ABTalks verified evidence first?",
+    "Klymb AI Recommended": "Should we rank on Klymb AI verified evidence first?",
   };
 
   const EMP_FILTERS = [

@@ -13,7 +13,7 @@ import { prismaAttemptStore } from "@/features/assessment-attempts/prisma-store"
 import { formatDateIST, formatDateTimeIST } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Assessments | ABTalks" };
+export const metadata: Metadata = { title: "Assessments | Klymb AI" };
 
 // No score or pass/fail anywhere on this page: the candidate sees "Submitted"
 // only (plan 129, D-1). Whoever sent the assessment sees the result.
@@ -26,7 +26,7 @@ const TABS: { value: Tab; label: string; blurb: string }[] = [
     value: "platform",
     label: "Platform",
     blurb:
-      "Sent by the ABTalks team. Finish before submissions close — an attempt still open then is submitted automatically with the answers you saved.",
+      "Sent by the Klymb AI team. Finish before submissions close — an attempt still open then is submitted automatically with the answers you saved.",
   },
   {
     value: "recruiter",
@@ -160,7 +160,7 @@ export default async function AssessmentsPage({
               Assessments
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-[#626262]">
-              Tests sent to you by ABTalks and by recruiters. Your answers save
+              Tests sent to you by Klymb AI and by recruiters. Your answers save
               as you go, and scores aren&apos;t shown here.
             </p>
           </header>
@@ -235,12 +235,12 @@ function EmptyState({ tab }: { tab: Tab }) {
       </span>
       <p className="font-display text-lg font-semibold">
         {tab === "platform"
-          ? "No assessments from ABTalks yet"
+          ? "No assessments from Klymb AI yet"
           : "No recruiter assessments yet"}
       </p>
       <p className="max-w-sm text-sm text-[#787878]">
         {tab === "platform"
-          ? "When the ABTalks team sends you an assessment, it appears here with when submissions close."
+          ? "When the Klymb AI team sends you an assessment, it appears here with when submissions close."
           : "When a recruiter invites you to one, it appears here and in your notifications."}
       </p>
     </div>

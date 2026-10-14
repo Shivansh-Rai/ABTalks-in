@@ -50,7 +50,7 @@ export function MarketplaceHero() {
           </h1>
           <p className="max-w-md text-base leading-[25px] text-[#626262] sm:text-[17px] sm:leading-7">
             Turn the points you earn from daily tasks, referrals, and proof of
-            work into exclusive ABTalks merchandise.
+            work into exclusive Klymb AI merchandise.
           </p>
         </div>
         <EarningPills />

@@ -7,8 +7,8 @@ import { loadLegalMarkdown } from "@/lib/legal";
 import { EcosystemPageHeader } from "@/components/shared/ecosystem-page-header";
 
 export const metadata: Metadata = {
-  title: "Cookie Policy · ABTalks",
-  description: "How ABTalks uses cookies, and how to change your choice.",
+  title: "Cookie Policy · Klymb AI",
+  description: "How Klymb AI uses cookies, and how to change your choice.",
 };
 
 export default async function CookiesPage() {

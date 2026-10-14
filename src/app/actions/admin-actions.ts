@@ -171,7 +171,7 @@ export async function resetProgressAction(input: {
       const to = target?.email;
       if (to) {
         const appUrl =
-          process.env.NEXT_PUBLIC_APP_URL ?? "https://abtalks.in";
+          process.env.NEXT_PUBLIC_APP_URL ?? "https://app.klymb.ai";
         const firstName =
           identity?.fullName?.trim().split(/\s+/)[0] || "there";
         after(async () => {

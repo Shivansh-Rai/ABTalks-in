@@ -7,7 +7,7 @@ import { SigninScreen } from "@/components/recruiter-onboarding/signin-screen";
 import { isEmailLoginEnabled, isRecruiterAuthEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
-  title: "Recruiter sign-in | ABTalks",
+  title: "Recruiter sign-in | Klymb AI",
   description:
     "Pick up where you left off. Review candidates, track conversations, and keep your hiring pipeline moving.",
 };

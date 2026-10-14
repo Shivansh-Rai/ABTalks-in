@@ -78,7 +78,7 @@ export function PhoneVerifyNudge({ phone, phoneVerified }: Props) {
             Verify your phone number
           </DialogTitle>
           <DialogDescription>
-            Confirm your mobile number so the ABTalks team and recruiters can
+            Confirm your mobile number so the Klymb AI team and recruiters can
             reach you. It only takes a few seconds.
           </DialogDescription>
         </DialogHeader>

@@ -21,7 +21,7 @@ Code Hackathon / ViCodathon series. The live schedule is at
 
 ## Weekly Saturday workshop series (current cadence)
 
-From **1 September 2026** ABTalks runs a **workshop every Saturday**, live on
+From **1 September 2026** Klymb AI runs a **workshop every Saturday**, live on
 YouTube, free. Saturdays with no announced topic yet show on the events
 calendar as "Workshop — TBA", 6:00 PM IST — register to be notified when the
 session opens. Exactly one upcoming event accepts signups at a time.

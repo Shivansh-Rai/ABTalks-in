@@ -73,7 +73,7 @@ export type ScoreBreakdown = {
 export type MatchTier = "STRONG" | "PARTIAL" | "NONE";
 
 /**
- * Everything ABTalks knows about one candidate, with a provenance on every
+ * Everything Klymb AI knows about one candidate, with a provenance on every
  * field — the single object that scoring, the agent's retrieval tools, the
  * match card and admin all read from.
  *

@@ -7,7 +7,7 @@ import { WhoThisIsFor } from "@/components/talent-hunt/who-this-is-for";
 import { COHORT_INDIA_ONBOARDING_KEY } from "@/components/talent-hunt/constants";
 
 export const metadata: Metadata = {
-  title: "AI Cohort Training Program (India) for Working Professionals | ABTalks",
+  title: "AI Cohort Training Program (India) for Working Professionals | Klymb AI",
   description:
     "A 30-day intensive AI cohort for India-based working professionals. 4 core modules, 4 live projects, 1-on-1 mentorship. 50 seats. Apply now.",
 };

@@ -21,7 +21,7 @@ export function RecruiterAuthClosed({ compact = false }: { compact?: boolean }) 
     <div className="mx-auto max-w-md space-y-8 py-4">
       <header className="space-y-2 text-center">
         <p className="text-xs font-medium tracking-wide text-primary uppercase">
-          ABTalks Hire
+          Klymb AI Hire
         </p>
         <h1 className="font-display text-2xl font-bold tracking-tight">
           Not open yet

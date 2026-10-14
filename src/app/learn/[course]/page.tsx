@@ -15,7 +15,7 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ course: string }> }): Promise<Metadata> {
   const parsed = Params.safeParse(await params);
   const course = parsed.success ? getCourse(parsed.data.course) : null;
-  return course ? { title: `${course.title} | ABTalks Learn`, description: course.tagline } : {};
+  return course ? { title: `${course.title} | Klymb AI Learn`, description: course.tagline } : {};
 }
 
 export default async function CourseOverviewPage({ params }: { params: Promise<{ course: string }> }) {

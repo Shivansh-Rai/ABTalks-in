@@ -13,10 +13,10 @@ export async function HackathonHeader() {
   return (
     <header className="abt-header z-50">
       <div className="abt-header-inner">
-        <Link href="/" className="inline-flex shrink-0 items-center" aria-label="ABTalks home">
+        <Link href="/" className="inline-flex shrink-0 items-center" aria-label="Klymb AI home">
           <Image
             src="/abtalks-logo.png"
-            alt="ABTalks"
+            alt="Klymb AI"
             width={300}
             height={84}
             className="logo-image h-7 w-auto"

@@ -281,7 +281,7 @@ suite("a usable profile is enough to be searchable", () => {
   );
   assert(fn.includes('fullName: { not: "" }'), "requires a name");
 
-  // And nothing else. No toggle, no evidence, no ABTalks activity.
+  // And nothing else. No toggle, no evidence, no Klymb AI activity.
   for (const forbidden of [
     "openToWork",
     "enrollment",

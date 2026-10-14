@@ -7,7 +7,7 @@ import { CLAY_CTA } from "@/components/jobs/job-ui";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Messages | ABTalks Hire",
+  title: "Messages | Klymb AI Hire",
 };
 
 /**
@@ -29,7 +29,7 @@ export default async function HireMessagesPage() {
           Messages
         </h1>
         <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
-          Candidates you email from ABTalks reply here. Replies reach you alone,
+          Candidates you email from Klymb AI reply here. Replies reach you alone,
           and you&apos;re notified by email when one arrives.
         </p>
       </div>

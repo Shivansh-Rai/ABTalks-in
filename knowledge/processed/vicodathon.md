@@ -1,6 +1,6 @@
 # ViCodathon (Vibe Code Hackathon)
 
-ViCodathon is ABTalks' branded vibe-coding hackathon, also referred to on the platform generically as the "Vibe Code Hackathon." Treat "Vibe Code Hackathon" as the recurring series name and "ViCodathon" as a specific branded edition of that series.
+ViCodathon is Klymb AI's branded vibe-coding hackathon, also referred to on the platform generically as the "Vibe Code Hackathon." Treat "Vibe Code Hackathon" as the recurring series name and "ViCodathon" as a specific branded edition of that series.
 
 ## ViCodathon 2026 (specific edition)
 

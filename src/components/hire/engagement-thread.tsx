@@ -57,7 +57,7 @@ export function EngagementThread({
               )}
             >
               <p className="mb-0.5 text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                {m.authorRole === "admin" ? "ABTalks team" : "You"} ·{" "}
+                {m.authorRole === "admin" ? "Klymb AI team" : "You"} ·{" "}
                 {m.createdAt.slice(0, 10)}
               </p>
               <p className="leading-relaxed whitespace-pre-wrap">{m.body}</p>

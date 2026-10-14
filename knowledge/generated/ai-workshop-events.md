@@ -1,34 +1,26 @@
 ---
-title: Upcoming Events | ABTalks AI Workshop
-route: /ai-workshop/events
-url: http://localhost:3000/ai-workshop/events
+title: Upcoming Events | Klymb AI Workshop
+route: /workshop/events
+url: https://app.klymb.ai/workshop/events
 source_type: site
-ingested_at: 2026-08-19T11:42:43.623Z
+ingested_at: 2026-10-14T09:55:50.264Z
 ---
 
-# Upcoming Events | ABTalks AI Workshop
+# Upcoming Events | Klymb AI Workshop
 
 # Events
 
-### FREE AI Bootcamp — Live Workshop
+No upcoming events right now
 
-Master ChatGPT, Claude & Gemini in one hands-on live hour — prompt engineering, real workflows, and the tools that 10x your output.
+The next one is being planned — check back soon.
 
-### Figma × Cursor — AI-Powered UI/UX Workshop
+Don't miss the next one.
 
-Design in Figma, ship with Cursor — MCP servers, AI plugins, and a live run from blank canvas to polished screens to working front-end code.
+# Events
 
-### Enhance LinkedIn & AI Mock Interview
+No upcoming events right now
 
-Rebuild your LinkedIn profile so recruiters actually find you, then run live AI mock interviews that grill you and score your answers.
-
-### AI Post & Video Generation
-
-Turn one idea into a week of content — generate scroll-stopping posts, carousels and short-form videos with AI, then edit and schedule them in minutes.
-
-#### More Coming Soon
-
-New live workshops drop regularly. Register above to be the first to know.
+The next one is being planned — check back soon.
 
 Don't miss the next one.
 

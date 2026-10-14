@@ -148,7 +148,7 @@ export async function registerRecruiter(
   }
 
   // A seat is no longer an access grant — registering is. It survives as a
-  // pre-verified company name, so a recruiter ABTalks already spoke to gets the
+  // pre-verified company name, so a recruiter Klymb AI already spoke to gets the
   // name on file rather than whatever they typed into the form.
   const seat = email
     ? await prisma.verifiedRecruiterSeat.findFirst({
