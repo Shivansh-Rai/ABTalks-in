@@ -75,7 +75,7 @@ ban. Plagiarism or platform misuse results in a 60-day challenge ban. See
 **Q: How do I join the community?**
 A: Use the "Join now" link on the official website for the WhatsApp
 community (invite links rotate, so there's no fixed URL to give out here).
-Also Discord, LinkedIn, Instagram, YouTube, X — all under `abtalksonai`. See
+Also Discord, LinkedIn, Instagram, YouTube, X — all under `Klymb AI`. See
 `socials-and-contact.md`.
 
 **Q: How do I apply for placements or internships through Klymb AI?**

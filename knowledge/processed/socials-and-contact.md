@@ -18,7 +18,7 @@ do I contact you · support email · customer care.
 Official public contact and channels, cross-checked against the live site (abtalks.in, checked 2026-08-10):
 - Email: team@abtalks.in
 - Website: abtalks.in
-- LinkedIn: linkedin.com/company/abtalks-on-ai/ (ABTalksOnAI)
+- LinkedIn: linkedin.com/company/abtalks-on-ai/ (Klymb AI)
 - YouTube: @ABTalksOnAI
 - Instagram: @abtalksonai
 - X (Twitter): @abtalksonai (x.com/abtalksonai)

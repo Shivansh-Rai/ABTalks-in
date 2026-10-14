@@ -41,7 +41,7 @@ Flagship products:
 - **Auth:** Google OAuth (single sign-in method site-wide)
 - **Tech stack signal:** Next.js on Vercel (deployment IDs visible in HTML)
 
-**Handle across every social platform:** `abtalksonai` / `@ABTalksOnAI`
+**Handle across every social platform:** `Klymb AI` / `@ABTalksOnAI`
 - Instagram: instagram.com/abtalksonai/
 - LinkedIn: linkedin.com/company/abtalks-on-ai/
 - YouTube: youtube.com/@ABTalksOnAI
@@ -410,7 +410,7 @@ A: 31-Day AI Cohort: ~2–4 hours/day. 60-Day Claude Challenge: varies by task, 
 A: Foul language / harassment → **permanent ban**. Plagiarism or platform misuse → **60-day challenge ban**. Be real, be respectful, ship real work.
 
 **Q: How do I join the community?**
-A: WhatsApp community: chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi. Also Discord, LinkedIn, Instagram, YouTube, X — all under `abtalksonai`.
+A: WhatsApp community: chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi. Also Discord, LinkedIn, Instagram, YouTube, X — all under `Klymb AI`.
 
 **Q: How do I apply for placements or internships through Klymb AI?**
 A: Email your resume, cover letter, and anything else relevant (portfolio link, GitHub, LinkedIn, project links) to **team@abtalks.in**. The team reviews applications and routes strong profiles to the hiring partner network. Openings themselves — internships, full-time roles, freelance briefs — are shared inside the **Klymb AI WhatsApp community** (chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi), so join it if you haven't already, so you don't miss role announcements.
@@ -470,7 +470,7 @@ A: Public roster includes mid-career professionals (Vivek — 20+ years IT leade
 A: An India-focused, community-first AI upskilling platform that turns learners into hireable builders through daily challenges and a curated hiring partner network.
 
 **Q: What's the current stated scale?**
-A: 10,000+ members, 500+ projects, 100+ hiring partners. Four flagship programs live. Community distributed across WhatsApp, Discord, LinkedIn, YouTube, Instagram, X — all under one handle (`abtalksonai`).
+A: 10,000+ members, 500+ projects, 100+ hiring partners. Four flagship programs live. Community distributed across WhatsApp, Discord, LinkedIn, YouTube, Instagram, X — all under one handle (`Klymb AI`).
 
 **Q: What's the business model?**
 A: Free at point of entry across the flagships as of this snapshot; `legal-and-privacy.md` carries the current wording and supersedes this answer. Monetization signals visible today: **hiring partner network** (100+ partners) and **event sponsorships** (Breeth sponsored the last ViCodathon, giving free Pro accounts to all participants).

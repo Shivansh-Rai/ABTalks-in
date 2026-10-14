@@ -15,7 +15,7 @@ Entity details and grievance contacts, published in accordance with India's Digi
 ## Entity details
 
 **Registered entity**
-- ABTalksOnAI
+- Klymb AI
 **Entity type**
 - Sole Proprietorship (Proprietary)
 **Enterprise scale**
@@ -29,7 +29,7 @@ Entity details and grievance contacts, published in accordance with India's Digi
 **Trading name**
 - Klymb AI
 **Unit name**
-- ABTalksOnAI
+- Klymb AI
 **Registered address**
 - Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India
 **Udyam registration number**
@@ -65,7 +65,7 @@ Entity details and grievance contacts, published in accordance with India's Digi
 ## Entity details
 
 **Registered entity**
-- ABTalksOnAI
+- Klymb AI
 **Entity type**
 - Sole Proprietorship (Proprietary)
 **Enterprise scale**
@@ -79,7 +79,7 @@ Entity details and grievance contacts, published in accordance with India's Digi
 **Trading name**
 - Klymb AI
 **Unit name**
-- ABTalksOnAI
+- Klymb AI
 **Registered address**
 - Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India
 **Udyam registration number**

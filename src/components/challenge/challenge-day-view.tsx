@@ -330,7 +330,7 @@ export function ChallengeDayView({
                   href: "https://www.linkedin.com/in/anil-bajpai/",
                 },
                 {
-                  label: "ABTALKSONAI",
+                  label: "Klymb AI",
                   href: "https://www.linkedin.com/company/abtalks-on-ai/",
                 },
               ] as const

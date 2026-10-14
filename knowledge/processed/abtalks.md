@@ -14,11 +14,11 @@ Key facts:
 - trying to focus on evidence-based hiring rather than pure itnerview based hiring.
 - Tagline: "Code consistently. Post publicly. Get noticed." (the live site also presents "Build in public. Grow together." as a tagline)
 - Primary domain: app.klymb.ai (the application). abtalks.in is no longer the
-  app — it now hosts the ABTalksOnAI community site.
+  app — it now hosts the Klymb AI community site.
 - Former name: **ABTalks**. The platform was renamed to **Klymb AI** in
   October 2026. ABTalks and Klymb AI are the same organisation — if someone
   asks about ABTalks, answer about Klymb AI. The registered entity is still
-  ABTalksOnAI and the support address is still team@abtalks.in.
+  Klymb AI and the support address is still team@abtalks.in.
 - Audience: college students, recent graduates, and working professionals in live sessions
 - Cost to participate: free — the Terms state the service is **currently
   provided free of charge**, and Klymb AI does not process payments. The

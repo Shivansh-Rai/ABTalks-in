@@ -18,7 +18,7 @@ import { isGreeting } from "@/lib/chatbot/text";
  *   - a Claude Challenge intent listing tags "@abtalksonai, #Klymb AI,
  *     #60DaysOfClaude, #60DaysOfGenAI". The live challenge page and the
  *     official guidelines PDF both say to tag Anthropic, Anil Bajpai and
- *     ABTalksOnAI. Retrieval had the right answer; this overrode it.
+ *     Klymb AI. Retrieval had the right answer; this overrode it.
  *   - an "is Klymb AI free" intent answering "completely free" after the site
  *     had moved to "most challenges are free; paid cohorts are priced up
  *     front".

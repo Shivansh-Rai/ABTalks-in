@@ -7,14 +7,14 @@ These Terms of Service (“Terms”) govern your access to and use of Klymb AI w
 
 | Field | Detail |
 |---|---|
-| **Registered entity** | ABTalksOnAI |
+| **Registered entity** | Klymb AI |
 | **Entity type** | Sole Proprietorship (Proprietary) |
 | **Enterprise scale** | Micro (Udyam) |
 | **Major activity** | Services |
 | **Industry (NIC)** | 62099 - Other information technology and computer service activities n.e.c. |
 | **Proprietor** | Suman Shukla |
 | **Trading name** | Klymb AI |
-| **Unit name** | ABTalksOnAI |
+| **Unit name** | Klymb AI |
 | **Registered address** | Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
 | **Udyam registration number** | UDYAM-UP-29-0250625 |
 | **Udyam registration date** | 01 August 2026 |

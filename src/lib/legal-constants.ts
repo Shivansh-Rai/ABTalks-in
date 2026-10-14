@@ -33,7 +33,7 @@ export type LegalDocKind = "terms" | "privacy" | "cookies";
  */
 export const LEGAL_ENTITY = {
   /** Udyam / certificate: NAME OF ENTERPRISE */
-  name: "ABTalksOnAI",
+  name: "Klymb AI",
   /** Udyam: Owner Name */
   proprietor: "Suman Shukla",
   /** Type of Organisation — Proprietary */
@@ -41,7 +41,7 @@ export const LEGAL_ENTITY = {
   /** Public trading / brand name */
   tradingName: "Klymb AI",
   /** Unit name on Udyam certificate */
-  unitName: "ABTalksOnAI",
+  unitName: "Klymb AI",
   /** Micro / Small / Medium classification on Udyam */
   enterpriseScale: "Micro",
   /** MAJOR ACTIVITY */
