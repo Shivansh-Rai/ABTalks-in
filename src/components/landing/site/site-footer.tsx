@@ -44,7 +44,7 @@ export function SiteFooter({
       </div>
 
       <div className="container footer__legal">
-        <span>© ABTalksOnAI {year} All rights reserved.</span>
+        <span>© Klymb AI {year} All rights reserved.</span>
        
       </div>
     </footer>

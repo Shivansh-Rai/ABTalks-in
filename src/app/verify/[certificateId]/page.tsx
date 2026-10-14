@@ -36,7 +36,7 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { certificateId } = await params;
   return {
-    title: `Verify certificate ${certificateId.toUpperCase()} · ABTalks`,
+    title: `Verify certificate ${certificateId.toUpperCase()} · Klymb AI`,
     robots: { index: false, follow: false },
   };
 }
@@ -62,7 +62,7 @@ export default async function VerifyCertificatePage({ params }: PageProps) {
           </CardHeader>
           <CardContent className="flex justify-center">
             <Link href="/" className={cn(buttonVariants({ variant: "outline" }))}>
-              Go to ABTalks
+              Go to Klymb AI
             </Link>
           </CardContent>
         </Card>
@@ -152,7 +152,7 @@ export default async function VerifyCertificatePage({ params }: PageProps) {
             </div>
 
             <p className="text-center text-xs text-muted-foreground">
-              Issued by ABTalks · {APP_HOST}
+              Issued by Klymb AI · {APP_HOST}
             </p>
           </CardContent>
         </Card>

@@ -3,7 +3,7 @@
 **Version:** 2026-09-14  
 **Effective date:** 2026-09-14
 
-This Privacy Policy explains how **ABTalks** (“we”, “us”) collects, uses, shares, and protects personal data when you use our Service. It is designed around our actual product practices and India’s Digital Personal Data Protection Act, 2023 (DPDP), with disclosures relevant to US-facing cohort and program features.
+This Privacy Policy explains how **Klymb AI** (“we”, “us”) collects, uses, shares, and protects personal data when you use our Service. It is designed around our actual product practices and India’s Digital Personal Data Protection Act, 2023 (DPDP), with disclosures relevant to US-facing cohort and program features.
 
 **Contact for privacy / data rights:** [team@abtalks.in](mailto:team@abtalks.in)  
 You can also submit a request in-product at [/privacy/requests](/privacy/requests).
@@ -14,7 +14,7 @@ You can also submit a request in-product at [/privacy/requests](/privacy/request
 
 ## 1. Who we are - Data Fiduciary identification
 
-> **In plain English:** We are ABTalksOnAI, a sole proprietorship. We decide why and how your data is used for this Service. You can contact our Grievance Officer at team@abtalks.in.
+> **In plain English:** We are Klymb AI (registered as ABTalksOnAI), a sole proprietorship. We decide why and how your data is used for this Service. You can contact our Grievance Officer at team@abtalks.in.
 
 We are the **Data Fiduciary** for the personal data described in this Policy.
 
@@ -26,7 +26,7 @@ We are the **Data Fiduciary** for the personal data described in this Policy.
 | **Major activity** | Services |
 | **Industry (NIC)** | 62099 - Other information technology and computer service activities n.e.c. |
 | **Proprietor** | Suman Shukla |
-| **Trading name** | ABTalks |
+| **Trading name** | Klymb AI |
 | **Unit name** | ABTalksOnAI |
 | **Registered address** | Crossing Republic, Ghaziabad, Uttar Pradesh 201016, India |
 | **Udyam registration number** | UDYAM-UP-29-0250625 |
@@ -34,7 +34,7 @@ We are the **Data Fiduciary** for the personal data described in this Policy.
 | **Date of incorporation** | 25 July 2026 |
 | **Contact** | [team@abtalks.in](mailto:team@abtalks.in) |
 
-ABTalks operates learning challenges, workshops, hackathons, an AI cohort program, and related recruiter/community features at our websites (including app.klymb.ai and related domains).
+Klymb AI operates learning challenges, workshops, hackathons, an AI cohort program, and related recruiter/community features at our websites (including app.klymb.ai and related domains).
 
 ### 1.1 Grievance Officer
 
@@ -98,7 +98,7 @@ We **acknowledge grievances within 24 hours** of receipt and aim to **resolve th
 - **Phone verification (MSG91).** If you use phone/OTP verification, your browser loads a script from `verify.msg91.com` in order to run the verification widget. That provider may set its own cookies or browser storage under its domain, governed by its own privacy policy. The script loads only when you actually use phone verification.
 - **Video embeds (YouTube).** All video embeds use the privacy-extended `youtube-nocookie.com` domain, which does not set advertising cookies. On program mission pages and the video library, videos are **click-to-load**: nothing is requested from Google until you press play, and the video’s preview thumbnail is fetched from YouTube only if you enable Referral Attribution & Media in your cookie preferences. On challenge day pages the tutorial player loads together with the page, so Google is contacted when you open that page.
 
-**Google Analytics 4.** We use Google Analytics 4 (property "ABTalks Production" under Google account "ABTalksOnAI") to measure aggregate usage of the Service - page views, sign-ups, submissions and similar counts. GA4 loads **only** on the production Service and **only** when you enable Analytics & Performance consent (e.g. by choosing **Accept all** or enabling it in **Preferences**). If you choose **Necessary only**, or before you have chosen, the Google Analytics script is not loaded at all and **no request is made to any Google endpoint** (`googletagmanager.com` or `google-analytics.com`). When loaded under partial consent, advertising-cookie and ad-personalisation signals are marked as denied via Google **Consent Mode v2** - only the analytics measurement signal is granted. We do not send your email, phone, name, free-text notes, referral codes, or any internal record ID to GA; IP addresses are anonymised at the platform level. GA retains data for **14 months**. Changing your choice from enabled back to **Necessary only** reloads the page so the analytics script is fully unloaded - future collection stops immediately, in this and every later tab. Events Google has already recorded are **not** deleted; those age out on GA's 14-month retention window.
+**Google Analytics 4.** We use Google Analytics 4 (property "Klymb AI Production" under Google account "ABTalksOnAI") to measure aggregate usage of the Service - page views, sign-ups, submissions and similar counts. GA4 loads **only** on the production Service and **only** when you enable Analytics & Performance consent (e.g. by choosing **Accept all** or enabling it in **Preferences**). If you choose **Necessary only**, or before you have chosen, the Google Analytics script is not loaded at all and **no request is made to any Google endpoint** (`googletagmanager.com` or `google-analytics.com`). When loaded under partial consent, advertising-cookie and ad-personalisation signals are marked as denied via Google **Consent Mode v2** - only the analytics measurement signal is granted. We do not send your email, phone, name, free-text notes, referral codes, or any internal record ID to GA; IP addresses are anonymised at the platform level. GA retains data for **14 months**. Changing your choice from enabled back to **Necessary only** reloads the page so the analytics script is fully unloaded - future collection stops immediately, in this and every later tab. Events Google has already recorded are **not** deleted; those age out on GA's 14-month retention window.
 
 We do not use PostHog, Meta Pixel, cross-site advertising trackers, or any third-party analytics SDK beyond Google Analytics 4 as described above. If that changes, we will update this Policy and add the relevant category to the cookie choice above.
 
@@ -146,7 +146,7 @@ At signup (and on other registration funnels) we show a checkbox offering occasi
 
 > **In plain English:** For optional things (newsletter, optional cookies) we ask for your consent. For core service (account, day unlocks, candidate profile and discoverability, grading) we process data because it is needed to provide what you asked for.
 
-Under India’s DPDP framework and related rules, we process personal data where we have a lawful basis. In practice for ABTalks that means:
+Under India’s DPDP framework and related rules, we process personal data where we have a lawful basis. In practice for Klymb AI that means:
 
 1. **Consent** - where we ask you to agree before optional processing. Examples: acceptance of Terms/Privacy and age confirmation at signup; interview recording notice; newsletter as presented at signup; optional cookie categories in our preference center. You may withdraw consent for optional processing as described in §10; withdrawal does not undo processing already lawfully completed.  
 2. **Necessary for the Service you request** - processing that is needed to create and run your account, deliver the track or event you registered for, authenticate you, enable candidate profile discoverability for recruiters on the talent platform, prevent abuse, issue certificates you earned, and respond to support or rights requests. Without this processing we cannot provide those features.  
@@ -230,7 +230,7 @@ The Service is for users **18+**. We do not knowingly collect data from children
 Subject to applicable law, you may exercise the following rights:
 
 - **Self-service account deletion** - you can delete your account yourself immediately with no admin approval required. Deletion immediately closes your account and begins erasure and anonymization of personal identifiers.
-- **Data export & access** - you can request and export a copy of your personal data held on ABTalks, including a summary of processing activities and categories of recipients.
+- **Data export & access** - you can request and export a copy of your personal data held on Klymb AI, including a summary of processing activities and categories of recipients.
 - **Correction** - correct inaccurate data, and complete or update incomplete profile details (you can also edit your profile directly in-app).
 - **Withdrawal of consent** - withdraw consent for optional processing (e.g. newsletter marketing, optional cookies via the preference center). Withdrawal does not affect lawful processing already completed.
 - **Grievance redressal (DPDP §13)** - you may raise a grievance with our Grievance Officer (§1.1) about our handling of your data or your rights request, regardless of whether you have used any other remedy. We acknowledge within **24 hours** and aim to resolve within **15 days**. If you are not satisfied with our response, you may escalate to the **Data Protection Board of India**.
@@ -256,7 +256,7 @@ Before starting a voice interview, you will see an in-product notice that the se
 
 > **In plain English:** US applications may include visa/work-auth category for cohort fit. Admins see it; it is not on public pages.
 
-US-facing applications may collect visa or work-authorization category and related professional information to evaluate cohort fit. That data is stored with our application backend (currently Supabase) and accessible to ABTalks admins - not published on public pages.
+US-facing applications may collect visa or work-authorization category and related professional information to evaluate cohort fit. That data is stored with our application backend (currently Supabase) and accessible to Klymb AI admins - not published on public pages.
 
 ---
 

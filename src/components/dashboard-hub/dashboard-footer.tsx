@@ -128,7 +128,7 @@ export function DashboardFooter() {
             ))}
           </nav>
           <p className="mt-2 text-xs text-[#A5A5A5]">
-            © {new Date().getFullYear()} ABTalksOnAI
+            © {new Date().getFullYear()} Klymb AI
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
