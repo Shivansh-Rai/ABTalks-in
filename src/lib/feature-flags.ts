@@ -247,3 +247,25 @@ export function isHireProPreviewEnabled(): boolean {
 export function isVirtualCandidatesEnabled(): boolean {
   return process.env.HIRE_VIRTUAL_CANDIDATES === "true";
 }
+
+/**
+ * Plan 191, TEMPORARY: the launch one-pager is the home page.
+ *
+ * On unless `LANDING_ONE_PAGER=false`. Default-on deliberately — production
+ * needed no new variable to get the page, and setting it to "false" in Vercel
+ * restores the full marketing landing and unhides the recruiter product with
+ * no code change. Two things read it:
+ *
+ *   - `src/app/page.tsx` renders `LaunchOnePager` instead of `LandingPage`,
+ *     and stops routing recruiter accounts to /hire (which middleware would
+ *     bounce back to /, an infinite redirect).
+ *   - `middleware.ts` redirects /hire, /talent and /recruiter-onboarding to /
+ *     for everyone except admins. It CANNOT import this file (edge bundle), so
+ *     it reads `process.env.LANDING_ONE_PAGER` by hand — keep the two in step.
+ *
+ * Nothing is deleted while this is on. Remove the flag and its two call sites
+ * when the hide is over.
+ */
+export function isLaunchOnePagerEnabled(): boolean {
+  return process.env.LANDING_ONE_PAGER !== "false";
+}
