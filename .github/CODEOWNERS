@@ -270,3 +270,15 @@
 /src/features/hackathon-video/                      @byteninjaa0
 /src/components/hackathon/                          @byteninjaa0
 /src/components/admin/hackathon-master-filters.tsx  @byteninjaa0
+
+# ------------------------------------------------------------------------------
+# 13. Landing / marketing surfaces (owner: @byteninjaa0, plan 191)
+#
+# CLAUDE.md puts UI/UX, the design system, information architecture and product
+# flows with Sohail (they were Shallika's). These paths only ever matched the
+# `*` default above, which made the home page look ownerless in this file even
+# though it was not. Listed explicitly, per CLAUDE.md rule 13.
+# ------------------------------------------------------------------------------
+/src/app/page.tsx                                   @byteninjaa0
+/src/components/landing/                            @byteninjaa0
+/src/features/landing/                              @byteninjaa0

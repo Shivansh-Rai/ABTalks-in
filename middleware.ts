@@ -231,9 +231,51 @@ export default auth((req) => {
       exactProtectedPaths.includes(pathname));
   const isAuthPage = pathname === "/login";
 
+  /**
+   * Plan 191, TEMPORARY: the recruiter product is hidden while the launch
+   * one-pager is the home page. Nothing is deleted — /hire, /talent and
+   * /recruiter-onboarding are all still on disk and still work; this only
+   * stops the public and candidates from reaching them, including by typed
+   * URL, because the one-pager advertises no recruiter side at all.
+   *
+   * Read from `process.env` by hand. This duplicates
+   * `isLaunchOnePagerEnabled()` in `src/lib/feature-flags.ts` on purpose:
+   * middleware must not import from `@/lib/*` — doing so blows the 1 MB Edge
+   * bundle limit, the same reason the consent constants above are duplicated.
+   * Keep the two in sync. `LANDING_ONE_PAGER=false` lifts both halves.
+   *
+   * Admins are exempt so the desk stays reachable in production; /admin and
+   * /admin/hire are untouched either way.
+   */
+  const launchOnePager = process.env.LANDING_ONE_PAGER !== "false";
+  const isRecruiterSurface =
+    pathname === "/hire" ||
+    pathname.startsWith("/hire/") ||
+    pathname === "/talent" ||
+    pathname.startsWith("/talent/") ||
+    pathname === "/recruiter-onboarding" ||
+    pathname.startsWith("/recruiter-onboarding/");
+  const isAdminSession =
+    req.auth?.user?.isAdmin === true ||
+    (req.auth?.user as { role?: string } | undefined)?.role === "ADMIN";
+  const recruiterHidden = launchOnePager && isRecruiterSurface && !isAdminSession;
+
   let response: NextResponse;
 
-  if (isProtected && !isLoggedIn) {
+  // First, ahead of the session gate: a signed-out visitor to /hire must land
+  // on the home page, not on /talent/login — a recruiter door that is itself
+  // hidden right now.
+  if (recruiterHidden) {
+    response = withTracking(
+      NextResponse.redirect(new URL("/", req.nextUrl)),
+      ref,
+      src,
+      alreadyAttributed,
+      consent,
+      hasAttributionCookies,
+      requestId,
+    );
+  } else if (isProtected && !isLoggedIn) {
     // Send people to their own door. A signed-out recruiter opening a
     // bookmarked /hire used to land on the candidate's Google button, which is
     // the whole complaint this change exists to fix.
