@@ -10,7 +10,7 @@ export const SUPPORT_EMAIL = "team@abtalks.in";
 
 export const FALLBACK_MESSAGE =
   `I couldn't find enough information about that. ` +
-  `You can contact the ABTalks team at ${SUPPORT_EMAIL} and they'll help you directly.`;
+  `You can contact the Klymb AI team at ${SUPPORT_EMAIL} and they'll help you directly.`;
 
 /**
  * Shown when retrieval SUCCEEDED but every generation provider failed.
@@ -39,17 +39,17 @@ export const RETRIEVAL_ERROR_MESSAGE =
   `Sorry something went wrong while I was searching just now. ` +
   `Please try again in a moment. If it keeps happening, email ${SUPPORT_EMAIL}.`;
 
-export const SYSTEM_PROMPT = `You are the ABTalks Help Assistant, the support assistant on the ABTalks website.
+export const SYSTEM_PROMPT = `You are the Klymb AI Help Assistant, the support assistant on the Klymb AI website.
 
 GROUNDING — this is absolute:
-- Answer ONLY from the ABTalks context provided below. It is the sole authority.
-- Never use general world knowledge to fill a gap in ABTalks information.
+- Answer ONLY from the Klymb AI context provided below. It is the sole authority.
+- Never use general world knowledge to fill a gap in Klymb AI information.
 - Never invent dates, prices, eligibility rules, links, names, tags, statistics, prizes or program details. If the context does not state it, say you don't have it and point to ${SUPPORT_EMAIL}.
-- Never state a fact "by analogy" from a different ABTalks program. Programs have different rules.
+- Never state a fact "by analogy" from a different Klymb AI program. Programs have different rules.
 
 SOURCES AND CONFLICTS — in precedence order, highest first:
 1. The LIVE FACTS block below. Computed from the running site at the moment of this question: today's date, which event is next, what is accepting registrations, whether the hackathon is open. It is never stale.
-2. Context lines marked [verified: ...] — hand-checked ABTalks knowledge.
+2. Context lines marked [verified: ...] — hand-checked Klymb AI knowledge.
 3. Lines marked [live site ...] — captured from the public website on the date shown.
 4. Lines marked [older snapshot ...] — superseded by any of the above.
 - When any two conflict, the higher one wins. In particular: if a retrieved document names a date or calls something "upcoming" and the LIVE FACTS block disagrees, the LIVE FACTS block is right and the document is out of date. Say what the live block says, and do not mention that the sources disagreed.
@@ -108,7 +108,7 @@ ${liveFacts}
 
 Today's date: ${today}
 ${live}
-ABTalks context:
+Klymb AI context:
 <context>
 ${context}
 </context>`;
@@ -131,9 +131,9 @@ export function buildClarifyMessage(topics: string[]): string {
     certificates: "certificates",
     "voice-interview": "the AI voice interview",
     "hiring-and-recruiters": "hiring and recruiters",
-    programs: "ABTalks programs",
-    homepage: "ABTalks generally",
-    abtalks: "ABTalks generally",
+    programs: "Klymb AI programs",
+    homepage: "Klymb AI generally",
+    abtalks: "Klymb AI generally",
   };
 
   const options = topics

@@ -45,12 +45,12 @@ export async function sendWorkshopConfirmationEmail(
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Your ABTalks workshop registration</title>
+  <title>Your Klymb AI workshop registration</title>
 </head>
 <body style="margin:0;padding:0;background-color:#ffffff;">
   <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#353535;font-size:15px;line-height:1.6;">
     <p style="margin:0 0 16px;">Hi ${esc(firstName)},</p>
-    <p style="margin:0 0 16px;">Your registration for the ABTalks workshop is confirmed. Here are the details:</p>
+    <p style="margin:0 0 16px;">Your registration for the Klymb AI workshop is confirmed. Here are the details:</p>
     <p style="margin:0 0 16px;">
       Date: ${esc(webinarDate)}<br>
       Time: ${esc(webinarTime)}<br>
@@ -60,9 +60,9 @@ export async function sendWorkshopConfirmationEmail(
     <p style="margin:0 0 16px;">It is a hands-on session, so join from a laptop if you can.</p>
     ${whatsappHtml}
     <p style="margin:0 0 24px;">If you can no longer attend, just reply to this email.</p>
-    <p style="margin:0 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:0 0 24px;">Thanks,<br>The Klymb AI team</p>
     <p style="margin:0;font-size:12px;color:#8A8A8A;border-top:1px solid #E9E9E9;padding-top:16px;">
-      You received this email because you registered for an ABTalks workshop with this address.
+      You received this email because you registered for an Klymb AI workshop with this address.
     </p>
   </div>
 </body>
@@ -70,7 +70,7 @@ export async function sendWorkshopConfirmationEmail(
 
   const text = `Hi ${firstName},
 
-Your registration for the ABTalks workshop is confirmed. Here are the details:
+Your registration for the Klymb AI workshop is confirmed. Here are the details:
 
 Date: ${webinarDate}
 Time: ${webinarTime}
@@ -83,15 +83,15 @@ ${whatsappText}
 If you can no longer attend, just reply to this email.
 
 Thanks,
-The ABTalks team
+The Klymb AI team
 
 ---
-You received this email because you registered for an ABTalks workshop with this address.`;
+You received this email because you registered for an Klymb AI workshop with this address.`;
 
   const result = await sendEmail({
     to: email,
     toName: name,
-    subject: `Your ABTalks workshop registration is confirmed for ${webinarDate}`,
+    subject: `Your Klymb AI workshop registration is confirmed for ${webinarDate}`,
     html,
     text,
     kind: "workshop.confirmation",

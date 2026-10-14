@@ -62,11 +62,11 @@ export function DashboardHeader({
           <Link
             href="/dashboard"
             className="inline-flex h-8 shrink-0 items-center md:hidden"
-            aria-label="ABTalks dashboard"
+            aria-label="Klymb AI dashboard"
           >
             <Image
               src="/abtalks-logo.png"
-              alt="ABTalks"
+              alt="Klymb AI"
               width={120}
               height={32}
               className="block h-6 w-auto brightness-0"

@@ -56,7 +56,7 @@ type Props = {
 };
 
 /**
- * Workshop nav column. The sidebar is the shared ABTalks `DashboardSidebar` —
+ * Workshop nav column. The sidebar is the shared Klymb AI `DashboardSidebar` —
  * the same one `/dashboard`, `/marketplace` and `/hackathon` render — so this
  * route can't drift from the rest of the app.
  *

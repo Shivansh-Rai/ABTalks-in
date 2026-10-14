@@ -12,7 +12,7 @@ import { AssessmentPresetPicker, type PresetSummary } from "./preset-picker";
 type SendableCandidate = { candidateRef: string; label: string; jobRole: string };
 
 /**
- * Plan 185 — the two halves of the /hire/create-test landing: the ABTalks
+ * Plan 185 — the two halves of the /hire/create-test landing: the Klymb AI
  * template picker and, under it, the blank builder.
  *
  * They are one component only so that "Import from JSON", which sits in the

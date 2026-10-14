@@ -9,7 +9,7 @@ import type { InterviewBlueprintKey } from "@/features/interview/cohort-eligibil
  * SCREEN 2 — Expectations & Consent.
  *
  * Clean, approachable. NOT a legal document.
- * Uses existing AB Talks design tokens.
+ * Uses existing Klymb AI design tokens.
  */
 export function StageConsent({
   blueprint,

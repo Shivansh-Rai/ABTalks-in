@@ -47,14 +47,14 @@ export const TESTIMONIALS: Testimonial[] = [
     org: "IMS Noida",
     photo: "/testimonials/nandika-sharma.webp",
     quote:
-      "More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. ABTalks didn't just teach me AI, it empowered me to build the future with it.",
+      "More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. Klymb AI didn't just teach me AI, it empowered me to build the future with it.",
   },
   {
     name: "Komal Goswami",
     org: "MPGI Kanpur",
     photo: "/testimonials/komal-goswami.webp",
     quote:
-      "Joining the ABTalks 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.",
+      "Joining the Klymb AI 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.",
   },
   {
     name: "Yashaswani Singh",

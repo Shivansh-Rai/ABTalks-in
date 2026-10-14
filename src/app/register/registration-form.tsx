@@ -177,7 +177,7 @@ export function RegistrationForm({
           );
         }
       }
-      toast.success("Welcome to ABTalks!");
+      toast.success("Welcome to Klymb AI!");
       // Wherever they were headed before Google sent them here — the hackathon
       // dashboard, the hub, a track — carried through as `next`.
       router.push(nextPath);

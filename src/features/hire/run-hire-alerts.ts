@@ -20,7 +20,7 @@ export type HireAlertsResult = {
  *
  * Deliberately NOT instrumented for GA4 (T-253).
  *
- * This runs on a Vercel cron with no browser and no viewer. ABTalks sends GA4
+ * This runs on a Vercel cron with no browser and no viewer. Klymb AI sends GA4
  * events one way only — `window.gtag`, loaded by the T-252 GA4Loader and gated
  * on the recipient's own consent cookie (src/lib/analytics/use-track.ts). None
  * of that exists here. Reaching GA from this function would mean adding the
@@ -137,13 +137,13 @@ Top matches: ${names}
 
 Open: ${process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "https://abtalksapp.vercel.app"}/hire/${req.id}
 
-— ABTalks Scout
+— Klymb AI Scout
 `;
       const html = `<p>Hi${req.recruiter.name ? ` ${escapeHtml(req.recruiter.name)}` : ""},</p>
 <p>Scout found <strong>${search.data.matches.length}</strong> verified candidate(s) for <strong>${escapeHtml(req.title)}</strong>.</p>
 <p>Top matches: ${escapeHtml(names)}</p>
 <p><a href="${process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "https://abtalksapp.vercel.app"}/hire/${req.id}">Open your Scout search</a></p>
-<p>— ABTalks Scout</p>`;
+<p>— Klymb AI Scout</p>`;
 
       const sent = await sendEmail({
         to,

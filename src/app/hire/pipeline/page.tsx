@@ -7,7 +7,7 @@ import {
 } from "@/components/hire/pipeline/pipeline-board";
 
 export const metadata: Metadata = {
-  title: "Pipeline | Hire with ABTalks",
+  title: "Pipeline | Hire with Klymb AI",
   description:
     "Move candidates through the nine stages of your hiring pipeline. Every change persists across refresh, sign-out and device.",
 };

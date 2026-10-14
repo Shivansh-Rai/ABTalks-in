@@ -183,7 +183,7 @@ const GO_RE = stackTokenRe("go");
 const GO_VERB_RE =
   /\b(?:to|let'?s|lets|will|would|can|could|should|must|gonna|we|i|you|pls|please)\s+go\b|\bgo(?:-to|\s+(?:to|ahead|with|for|back|through|over|on|live|out|into|up|and\s+(?:find|get|search|see|look)))\b/g;
 
-// ─── Availability / compensation / ABtalks (unchanged from the composer) ─────
+// ─── Availability / compensation / Klymb AI (unchanged from the composer) ─────
 
 const AVAILABILITY_RE =
   /\b(remote|remotely|hybrid|onsite|on-site|wfh|immediate|notice|available|full[-\s]?time|contract|intern(ship)?|part[-\s]?time)\b/;

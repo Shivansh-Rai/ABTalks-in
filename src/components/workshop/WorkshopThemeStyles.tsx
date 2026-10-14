@@ -121,7 +121,7 @@ export default function WorkshopThemeStyles() {
         background-attachment: fixed;
       }
 
-      /* No dark variant: ABTalks UI Design System v2 is light-only. */
+      /* No dark variant: Klymb AI UI Design System v2 is light-only. */
 
       /* ---------- colour utilities ----------
          Two-class specificity (0,2,0) so they win over a bare Tailwind

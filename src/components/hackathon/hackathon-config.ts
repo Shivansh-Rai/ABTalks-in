@@ -1,6 +1,6 @@
 export const HACKATHON = {
   eventId: "vicodathon-2-2026",
-  name: "ABTalks Vibe Code Hackathon",
+  name: "Klymb AI Vibe Code Hackathon",
   tagline: "48 hours. No boilerplate. Just you, your ideas, and AI.",
   // Manual kill switch (cutover / emergency). Time gate is registrationClosesUtc.
   // Postponed 2026-09-24: this event is on hold while we run the Video Editors

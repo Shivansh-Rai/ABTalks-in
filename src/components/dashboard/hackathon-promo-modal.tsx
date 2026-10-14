@@ -129,7 +129,7 @@ export function HackathonPromoModal() {
             </span>
 
             <h2 className="mt-3.5 font-display text-[22px] font-extrabold leading-[1.15] tracking-tight text-white">
-              ABTalks{" "}
+              Klymb AI{" "}
               <span
                 style={{
                   background: "linear-gradient(120deg,#03535F,#076573)",

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/db";
 import { HireProjectsList } from "@/components/hire/hire-projects-list";
 
 export const metadata: Metadata = {
-  title: "Search history | ABTalks Hire",
+  title: "Search history | Klymb AI Hire",
 };
 
 /**

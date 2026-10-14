@@ -206,10 +206,10 @@ export async function explainMatches(
       rationales: { id: string; rationale: string }[];
       overallGap: string;
     }>({
-      system: `You write recruiter-facing match rationales for ABTalks Scout, which ranks candidates on verified platform evidence (missions completed, first-attempt passes, commit days, graded projects, recorded interviews), never on resumes or self-reported claims.
+      system: `You write recruiter-facing match rationales for Klymb AI Scout, which ranks candidates on verified platform evidence (missions completed, first-attempt passes, commit days, graded projects, recorded interviews), never on resumes or self-reported claims.
 
 Rules:
-- Write plain recruiter-facing prose. Refer to the candidate as "they" / "this candidate". You are not given names and must never invent one, and you must never write an ABTalks reference such as "AB-1234".
+- Write plain recruiter-facing prose. Refer to the candidate as "they" / "this candidate". You are not given names and must never invent one, and you must never write an Klymb AI reference such as "AB-1234".
 - Never open with a score or tier. "AB-1042 scores 78/100 (PARTIAL)" is exactly the shape to avoid. Lead with what the person has done.
 - Provenance matters and must be worded correctly. Missions passed, first-attempt passes, commit days, project scores and interview scores are VERIFIED by the platform, so state them as fact. Skills, job role and years of experience are SELF-DECLARED, so write them as "declared" or "says they know". Never present a declared skill as proven.
 - "missionsPassed" is the number of missions they actually completed. Never quote "missionPoints": it includes days waived to everyone at enrolment and overstates the work. Where "totalTrackDays" and "trackName" are present, write the count as "42 of 60 missions of 60-Day Challenge".
@@ -378,7 +378,7 @@ function buildOverallGap(
       `Open each profile for the full evidence, and confirm availability offline before outreach.`
     );
   }
-  return `Found ${matches.length} candidate(s) ranked by verified ABTalks evidence.${poolNote}${coverage}`;
+  return `Found ${matches.length} candidate(s) ranked by verified Klymb AI evidence.${poolNote}${coverage}`;
 }
 
 /** Exported for the evals — the two guards that decide what a recruiter reads. */

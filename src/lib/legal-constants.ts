@@ -39,7 +39,7 @@ export const LEGAL_ENTITY = {
   /** Type of Organisation — Proprietary */
   entityType: "Sole Proprietorship (Proprietary)",
   /** Public trading / brand name */
-  tradingName: "ABTalks",
+  tradingName: "Klymb AI",
   /** Unit name on Udyam certificate */
   unitName: "ABTalksOnAI",
   /** Micro / Small / Medium classification on Udyam */

@@ -471,7 +471,7 @@ export function buildContentFromPresets(ids: string[]): ContentInput | null {
     subheading:
       chosen.length === 1
         ? chosen[0].content.subheading
-        : "Combined from ABTalks templates.",
+        : "Combined from Klymb AI templates.",
     instructions: "Answer every question.",
     durationMinutes,
     passMarkPercent: 60,

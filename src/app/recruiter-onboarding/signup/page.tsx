@@ -7,7 +7,7 @@ import { RecruiterOnboardingWizard } from "@/components/recruiter-onboarding/rec
 import { isEmailLoginEnabled, isRecruiterAuthEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
-  title: "Create a recruiter account | ABTalks",
+  title: "Create a recruiter account | Klymb AI",
   description:
     "Find top talent, manage your hiring pipeline, and connect with the right candidates, all from one recruiter dashboard.",
 };

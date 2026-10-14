@@ -30,7 +30,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * T-266 — one page that tells ABTalks support the truth about a recruiter.
+ * T-266 — one page that tells Klymb AI support the truth about a recruiter.
  *
  * Server Component, read-only apart from the disable/restore control that
  * already exists on the recruiter list (`RecruiterAccountOps`, client). Every

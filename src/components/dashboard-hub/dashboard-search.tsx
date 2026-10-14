@@ -153,8 +153,8 @@ export function DashboardSearch({ items }: DashboardSearchProps) {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={onKeyDown}
-          placeholder="Search ABTalks"
-          aria-label="Search ABTalks"
+          placeholder="Search Klymb AI"
+          aria-label="Search Klymb AI"
           role="combobox"
           aria-autocomplete="list"
           aria-expanded={showPanel}

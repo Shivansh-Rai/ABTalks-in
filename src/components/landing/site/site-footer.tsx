@@ -13,10 +13,10 @@ export function SiteFooter({
     <footer className="footer">
       <div className="container footer__grid">
         <div className="footer__brand">
-          <Link href="/" className="footer__logo" aria-label="ABTalks home">
+          <Link href="/" className="footer__logo" aria-label="Klymb AI home">
             <Image
               src="/landing/abtalks-logo-mark.png"
-              alt="ABTalks"
+              alt="Klymb AI"
               width={561}
               height={168}
             />

@@ -75,7 +75,7 @@ export type AttemptRow = {
   endReason: AssessmentEndReason | null;
   assessment: {
     status: "DRAFT" | "PUBLISHED" | "ARCHIVED";
-    /** Plan 166: PLATFORM = sent by ABTalks admins, RECRUITER = by a recruiter. */
+    /** Plan 166: PLATFORM = sent by Klymb AI admins, RECRUITER = by a recruiter. */
     source: AssessmentSource;
     /** Plan 166: PLATFORM only. The assessment closes at this instant. */
     closesAt: Date | null;

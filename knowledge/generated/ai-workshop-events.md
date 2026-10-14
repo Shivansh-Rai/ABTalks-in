@@ -1,12 +1,12 @@
 ---
-title: Upcoming Events | ABTalks Workshop
+title: Upcoming Events | Klymb AI Workshop
 route: /workshop/events
 url: https://app.klymb.ai/workshop/events
 source_type: site
 ingested_at: 2026-10-14T09:55:50.264Z
 ---
 
-# Upcoming Events | ABTalks Workshop
+# Upcoming Events | Klymb AI Workshop
 
 # Events
 

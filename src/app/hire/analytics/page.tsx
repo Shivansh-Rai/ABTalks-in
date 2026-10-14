@@ -5,7 +5,7 @@ import { getRecruiterAnalytics } from "@/features/hire/recruiter-analytics";
 import { RecruiterAnalyticsLoader } from "@/components/hire/recruiter-analytics-loader";
 
 export const metadata: Metadata = {
-  title: "Analytics | Hire with ABTalks",
+  title: "Analytics | Hire with Klymb AI",
   description: "Company-scoped hiring funnel metrics and project performance.",
 };
 

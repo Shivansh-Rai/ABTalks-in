@@ -19,7 +19,7 @@ import { LEGAL_ENTITY } from "@/lib/legal-constants";
  * (`getWorkspaceCreditOverview`); nothing on this page is a demo value.
  *
  * Deliberately not a purchase surface. More credits are requested from
- * ABTalks by email; bigger plans are shown as Coming Soon with no numbers.
+ * Klymb AI by email; bigger plans are shown as Coming Soon with no numbers.
  */
 export const dynamic = "force-dynamic";
 
@@ -27,7 +27,7 @@ const TYPE_LABEL: Record<CreditHistoryRow["type"], string> = {
   GRANT_ONBOARDING: "Free plan credits",
   PURCHASE: "Credits added",
   UNLOCK_CONTACT: "Contact unlock",
-  ADMIN_ADJUSTMENT: "Adjustment by ABTalks",
+  ADMIN_ADJUSTMENT: "Adjustment by Klymb AI",
   REFUND: "Refund",
 };
 
@@ -50,7 +50,7 @@ const LEVEL_COPY: Record<
 };
 
 const CONTACT_HREF = `mailto:${LEGAL_ENTITY.email}?subject=${encodeURIComponent(
-  "Request for more ABTalks Hire credits",
+  "Request for more Klymb AI Hire credits",
 )}`;
 
 export default async function HireCreditsPage() {
@@ -108,7 +108,7 @@ export default async function HireCreditsPage() {
           <strong>{warning.title}</strong>
           <p>{warning.body}</p>
           <a href={CONTACT_HREF}>
-            Contact ABTalks at {LEGAL_ENTITY.email} for more credits
+            Contact Klymb AI at {LEGAL_ENTITY.email} for more credits
           </a>
         </div>
       ) : null}
@@ -158,7 +158,7 @@ export default async function HireCreditsPage() {
         <div className="hire-creditsx__side">
           <section className="hire-creditsx__card" aria-labelledby="more-h">
             <p className="hire-creditsx__kicker">Need more credits?</p>
-            <h2 id="more-h">Contact ABTalks</h2>
+            <h2 id="more-h">Contact Klymb AI</h2>
             <p>
               Email us and we will add credits to your account. There is no
               online purchase yet.

@@ -1,12 +1,12 @@
 ---
-title: 60-Day Coding Challenge | ABTalks
+title: 60-Day Coding Challenge | Klymb AI
 route: /challenges
 url: https://app.klymb.ai/challenges
 source_type: site
 ingested_at: 2026-10-14T09:55:47.939Z
 ---
 
-# 60-Day Coding Challenge | ABTalks
+# 60-Day Coding Challenge | Klymb AI
 
 # 60 Days. One task a day.A portfolio that speaks.
 
@@ -35,11 +35,11 @@ Top portfolios get exclusive visibility to our network of tech recruiters.
 
 ## Community rules
 
-ABTalks is a place to grow with serious learners. Read these carefully.
+Klymb AI is a place to grow with serious learners. Read these carefully.
 
 ### Foul Language or Harassment
 
-Any abusive language, harassment, or harmful messaging will lead to permanent ban from ABTalks.
+Any abusive language, harassment, or harmful messaging will lead to permanent ban from Klymb AI.
 
 ### Cheating or Platform Misuse
 
@@ -76,11 +76,11 @@ Top portfolios get exclusive visibility to our network of tech recruiters.
 
 ## Community rules
 
-ABTalks is a place to grow with serious learners. Read these carefully.
+Klymb AI is a place to grow with serious learners. Read these carefully.
 
 ### Foul Language or Harassment
 
-Any abusive language, harassment, or harmful messaging will lead to permanent ban from ABTalks.
+Any abusive language, harassment, or harmful messaging will lead to permanent ban from Klymb AI.
 
 ### Cheating or Platform Misuse
 

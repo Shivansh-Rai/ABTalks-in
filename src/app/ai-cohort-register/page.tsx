@@ -6,7 +6,7 @@ import { WhatYouWillBuild } from "@/components/talent-hunt/what-you-will-build";
 import { WhoThisIsFor } from "@/components/talent-hunt/who-this-is-for";
 
 export const metadata: Metadata = {
-  title: "AI Cohort Training Program for Working Professionals | ABTalks",
+  title: "AI Cohort Training Program for Working Professionals | Klymb AI",
   description:
     "A 30-day intensive AI cohort for USA-based working professionals. 4 core modules, 4 live projects, 1-on-1 mentorship. 50 seats. Apply now.",
 };

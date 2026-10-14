@@ -16,7 +16,7 @@ import { findSnowflakeEnrollment } from "@/repositories/snowflake";
 import { listCurriculumForProgramSlug } from "@/repositories/learning";
 
 export const metadata = {
-  title: "Snowflake Data & AI Engineering | ABTalks",
+  title: "Snowflake Data & AI Engineering | Klymb AI",
   description: "Build a governed Data + AI lakehouse on Snowflake in 15 days.",
 };
 

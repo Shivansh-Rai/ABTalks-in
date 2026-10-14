@@ -132,7 +132,7 @@ export default async function AdminAnalyticsPage({
           </h2>
           <p className="text-sm text-muted-foreground">
             Registrations, submissions, domain distribution and submission hours
-            for the ABTalks platform.
+            for the Klymb AI platform.
           </p>
         </div>
         <AnalyticsRangeFilter value={range} />

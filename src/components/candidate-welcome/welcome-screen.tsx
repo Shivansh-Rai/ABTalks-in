@@ -2,7 +2,7 @@ import "./welcome-screen.css";
 
 /*
  * Candidate welcome interstitial between sign-in and the dashboard
- * (Figma Abtalks node 1899:777). Server Component: the only motion is the
+ * (Figma Klymb AI node 1899:777). Server Component: the only motion is the
  * CSS ellipse loop, so it ships no client JavaScript. Geometry and effects
  * are documented in welcome-screen.css.
  *

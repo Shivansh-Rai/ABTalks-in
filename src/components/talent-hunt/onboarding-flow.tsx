@@ -90,10 +90,10 @@ export function CohortRegisterOnboardingFlow({
       <header className="abt-header z-10 shrink-0 gap-3">
         <div className="abt-header-inner">
           <div className="flex min-w-0 items-center gap-3">
-            <Link href="/" aria-label="ABTalks home" className="logo-link">
+            <Link href="/" aria-label="Klymb AI home" className="logo-link">
               <Image
                 src="/abtalks-logo.png"
-                alt="ABTalks"
+                alt="Klymb AI"
                 width={300}
                 height={84}
                 priority

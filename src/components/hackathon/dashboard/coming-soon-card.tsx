@@ -8,7 +8,7 @@ export function ComingSoonCard() {
         New Hackathon Coming Soon
       </h1>
       <p className="mt-3 text-sm leading-relaxed text-[#626262]">
-        The next ABTalks hackathon will be announced here and across ABTalks.
+        The next Klymb AI hackathon will be announced here and across Klymb AI.
         Stay tuned.
       </p>
     </section>

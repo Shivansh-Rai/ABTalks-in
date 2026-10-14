@@ -71,7 +71,7 @@ const MOCK_MODULES = [
 /**
  * REPORT SCREEN — Professional assessment report.
  *
- * Uses AB Talks design tokens. Shows overall score, competency breakdown,
+ * Uses Klymb AI design tokens. Shows overall score, competency breakdown,
  * module performance, strengths, improvements, and expandable evidence.
  */
 export function StageCohortResult({

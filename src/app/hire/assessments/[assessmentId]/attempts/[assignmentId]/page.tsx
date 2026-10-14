@@ -21,7 +21,7 @@ import { AttemptAnswersReview } from "@/components/hire/assessment/attempt-answe
 import { formatDateTimeIST } from "@/lib/date-utils";
 
 type Props = { params: Promise<{ assessmentId: string; assignmentId: string }> };
-export const metadata: Metadata = { title: "Candidate attempt | ABTalks Hire" };
+export const metadata: Metadata = { title: "Candidate attempt | Klymb AI Hire" };
 
 const TILE_KINDS: IntervalKind[] = [
   "FULLSCREEN",

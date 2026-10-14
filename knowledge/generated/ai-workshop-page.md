@@ -1,12 +1,12 @@
 ---
-title: ABTalks | Live Workshops
+title: Klymb AI | Live Workshops
 route: /workshop
 url: https://app.klymb.ai/workshop
 source_type: site
 ingested_at: 2026-10-14T09:55:49.717Z
 ---
 
-# ABTalks | Live Workshops
+# Klymb AI | Live Workshops
 
 # The next workshop is on its way
 

@@ -1,4 +1,4 @@
-# ABTalks Homepage — Current Live Content ("/")
+# Klymb AI Homepage — Current Live Content ("/")
 
 Reflects the redesigned homepage. Where this file and older notes disagree
 about stats, cohort names or pricing wording, this file wins.
@@ -28,18 +28,18 @@ about stats, cohort names or pricing wording, this file wins.
 - **Claude Challenge** (`/claude-signup`) — 60 days building with Claude;
   prompt engineering through real projects; daily public builds.
 
-## Is ABTalks free? Cost, fees, pricing and paid cohorts
+## Is Klymb AI free? Cost, fees, pricing and paid cohorts
 
 The homepage FAQ says: **most challenges are free to join. Paid cohorts are
 always priced up front**, and anyone placed through the recruiter network
 **never pays a placement fee**.
 
-So the accurate answer to "is ABTalks free?" is: the community and the
+So the accurate answer to "is Klymb AI free?" is: the community and the
 flagship challenges — the 60-Day Coding Challenge, the 60-Day Claude AI
 Challenge, the 31-Day AI Cohort, the hackathon and the public workshops —
 are free to join, and there is never a placement fee. Not every future
 cohort is guaranteed free; any paid cohort states its price up front before
-you sign up. Do not claim that absolutely everything on ABTalks is free
+you sign up. Do not claim that absolutely everything on Klymb AI is free
 forever.
 
 ## Who it is for

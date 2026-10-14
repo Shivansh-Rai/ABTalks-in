@@ -203,7 +203,7 @@ export function StrictModeChecklist({
 
       <div className="hire-cand-assess-recorded">
         <h2>What&apos;s recorded</h2>
-        <p>While you take this assessment, ABTalks records the time of each of these:</p>
+        <p>While you take this assessment, Klymb AI records the time of each of these:</p>
         <ul>
           <li>Leaving and returning to fullscreen</li>
           <li>

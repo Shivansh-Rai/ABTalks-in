@@ -525,7 +525,7 @@ export default async function ProfilePage({
       <div className="border-t px-4 py-6">
         <h2 className="font-display text-base font-semibold">Delete account</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          This removes your data from ABTalks and cannot be undone.
+          This removes your data from Klymb AI and cannot be undone.
         </p>
         <div className="mt-3">
           <DeleteOwnAccountDialog />

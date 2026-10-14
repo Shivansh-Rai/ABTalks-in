@@ -43,7 +43,7 @@ export default async function AdminVideothonParticipantsPage({
 
   const stats = [
     { label: "Registered", value: data.total },
-    { label: "New to ABTalks", value: data.newUserCount },
+    { label: "New to Klymb AI", value: data.newUserCount },
     { label: "Existing users", value: data.existingUserCount },
     { label: "Learners", value: data.learnerCount },
     { label: "Working", value: data.workingCount },
@@ -86,7 +86,7 @@ export default async function AdminVideothonParticipantsPage({
           <HackathonMasterFilters />
         </Suspense>
         <p className="text-xs text-muted-foreground">
-          NEW = ABTalks account created within 24 hours before registering for{" "}
+          NEW = Klymb AI account created within 24 hours before registering for{" "}
           {VIDEOTHON.name} (joined for it). OLD = account already existed.
         </p>
       </div>

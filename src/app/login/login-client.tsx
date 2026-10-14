@@ -72,9 +72,9 @@ function messageForAuthError(error: string | undefined): string | null {
   if (!error) return null;
   switch (error) {
     case "OAuthAccountNotLinked":
-      return "That Google account's email is already used by another ABTalks login. Sign in with the original method, or use a different Google account.";
+      return "That Google account's email is already used by another Klymb AI login. Sign in with the original method, or use a different Google account.";
     case "RecruiterAccount":
-      return "That email belongs to a recruiter account. Sign in at ABTalks Hire instead.";
+      return "That email belongs to a recruiter account. Sign in at Klymb AI Hire instead.";
     case "AccessDenied":
       return "Sign-in was cancelled. Please try again.";
     case "Configuration":

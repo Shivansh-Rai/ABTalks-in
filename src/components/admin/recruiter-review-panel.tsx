@@ -829,7 +829,7 @@ export function RecruiterReviewPanel({ studentId, studentName, review }: Props) 
         <TabsContent value="assessment" className="space-y-4 pt-4">
           <Card>
             <CardHeader>
-              <CardTitle>ABTalks assessment scores</CardTitle>
+              <CardTitle>Klymb AI assessment scores</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 sm:grid-cols-3">
@@ -850,7 +850,7 @@ export function RecruiterReviewPanel({ studentId, studentName, review }: Props) 
                 />
               </div>
               <p className="text-sm font-medium">
-                ABTalks Assessment Score:{" "}
+                Klymb AI Assessment Score:{" "}
                 {assessmentComposite != null
                   ? `${assessmentComposite} / 300`
                   : "— / 300"}
@@ -949,7 +949,7 @@ export function RecruiterReviewPanel({ studentId, studentName, review }: Props) 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="abtalksId">ABTalks ID</Label>
+                  <Label htmlFor="abtalksId">Klymb AI ID</Label>
                   <Input
                     id="abtalksId"
                     value={abtalksId}

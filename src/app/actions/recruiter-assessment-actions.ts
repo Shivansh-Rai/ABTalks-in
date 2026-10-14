@@ -182,7 +182,7 @@ function assessmentNotifier(): AssessmentNotifier {
         recipientUserId,
         primaryEntityId: assessmentId,
         title: "You have a new assessment to take",
-        body: "A recruiter on ABTalks has invited you to an assessment. Open it to read the instructions before you start.",
+        body: "A recruiter on Klymb AI has invited you to an assessment. Open it to read the instructions before you start.",
         href: candidateAssessmentHref(assignmentId),
         metadata: { assessmentId, assignmentId },
       });

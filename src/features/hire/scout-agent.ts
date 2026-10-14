@@ -125,7 +125,7 @@ function searchNow(spec: JobSpec): ScoutAgentResult {
  * Every paragraph is billed on every hop against an 8000-TPM ceiling, so this is
  * kept deliberately short. Do not pad it.
  */
-const SCOUT_SYSTEM = `You are Scout, ABTalks' hiring assistant. Recruiters describe who they want; the product searches verified platform evidence — missions passed, first-attempt passes, commit days, shipped projects, recorded interviews. Never resumes, never self-reported claims.
+const SCOUT_SYSTEM = `You are Scout, Klymb AI's hiring assistant. Recruiters describe who they want; the product searches verified platform evidence — missions passed, first-attempt passes, commit days, shipped projects, recorded interviews. Never resumes, never self-reported claims.
 
 Use your tools; their descriptions govern when each applies.
 

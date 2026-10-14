@@ -99,10 +99,10 @@ export function OnboardingClient() {
       <div className="relative z-10 flex min-h-svh flex-col">
         <header className="abt-header shrink-0">
           <div className="abt-header-inner">
-            <Link href="/" aria-label="ABTalks home" className="logo-link">
+            <Link href="/" aria-label="Klymb AI home" className="logo-link">
               <Image
                 src="/abtalks-logo.png"
-                alt="ABTalks"
+                alt="Klymb AI"
                 width={300}
                 height={84}
                 priority

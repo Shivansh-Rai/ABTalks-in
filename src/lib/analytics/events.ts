@@ -1,6 +1,6 @@
 /**
  * T-253 — the GA4 event vocabulary and the PII filter that stands between
- * ABTalks and Google Analytics.
+ * Klymb AI and Google Analytics.
  *
  * Plain module: no React, no `"use client"`, no `next/headers`, no `window`.
  * Every decision here is a pure function of its arguments, so the tests can

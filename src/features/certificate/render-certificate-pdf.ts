@@ -182,11 +182,11 @@ export async function renderCertificatePdf(input: {
     });
   }
 
-  pdfDoc.setTitle(`ABTalks Certificate — ${certificateId}`);
-  pdfDoc.setAuthor("ABTalks");
+  pdfDoc.setTitle(`Klymb AI Certificate — ${certificateId}`);
+  pdfDoc.setAuthor("Klymb AI");
   pdfDoc.setSubject(`${CERTIFICATE_TYPES[input.type].title} Certificate`);
   pdfDoc.setKeywords([certificateId]);
-  pdfDoc.setProducer("ABTalks");
+  pdfDoc.setProducer("Klymb AI");
 
   if (debugGrid) {
     drawCalibrationGrid(page, boldFont);

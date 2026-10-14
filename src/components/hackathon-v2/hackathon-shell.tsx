@@ -20,7 +20,7 @@ type Props = {
 };
 
 /**
- * Hackathon landing shell. The nav column is the shared ABTalks
+ * Hackathon landing shell. The nav column is the shared Klymb AI
  * `DashboardSidebar` — same one `/dashboard`, `/jobs` and `/profile` render —
  * so this route can't drift from the rest of the app. Only the header is
  * local, because it carries the hackathon registration CTA.

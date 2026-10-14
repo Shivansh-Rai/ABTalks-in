@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ assignmentId: string }> };
 
-export const metadata: Metadata = { title: "Assessment | ABTalks" };
+export const metadata: Metadata = { title: "Assessment | Klymb AI" };
 
 export default async function AssessmentAttemptPage({ params }: Props) {
   const session = await auth();
@@ -62,7 +62,7 @@ export default async function AssessmentAttemptPage({ params }: Props) {
           <>
             {loaded.data.closesAt && loaded.data.status !== "SUBMITTED" ? (
               <p className="mb-4 text-sm text-muted-foreground">
-                From ABTalks · Submissions close {formatDateTimeIST(loaded.data.closesAt)}. If you&apos;ve
+                From Klymb AI · Submissions close {formatDateTimeIST(loaded.data.closesAt)}. If you&apos;ve
                 started and it&apos;s still open when submissions close, the answers you
                 saved are submitted automatically.
               </p>

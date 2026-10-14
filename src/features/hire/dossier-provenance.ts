@@ -4,7 +4,7 @@
  *
  * The three categories are not cosmetic. A shortlist that presents a
  * self-typed skill list and a server-verified mission pass in the same
- * typeface is making a claim ABTalks cannot stand behind. Every field on a
+ * typeface is making a claim Klymb AI cannot stand behind. Every field on a
  * dossier carries one of these, the card renders them differently, and the
  * rationale writer may only quote VERIFIED and DERIVED figures as fact.
  *
@@ -17,7 +17,7 @@ export type Provenance =
   /** The person typed it about themselves. Skills, job role, education,
    *  years of experience, links. True or not, we did not test it. */
   | "DECLARED"
-  /** ABTalks computed it from the two above. Role family, working languages,
+  /** Klymb AI computed it from the two above. Role family, working languages,
    *  evidence tier, the indicative salary band. */
   | "DERIVED";
 
@@ -30,9 +30,9 @@ export type Fact<T> = {
 };
 
 export const PROVENANCE_LABEL: Record<Provenance, string> = {
-  VERIFIED: "Verified by ABTalks",
+  VERIFIED: "Verified by Klymb AI",
   DECLARED: "Self-declared",
-  DERIVED: "ABTalks estimate",
+  DERIVED: "Klymb AI estimate",
 };
 
 /** Short badge text for a card, where the full label does not fit. */

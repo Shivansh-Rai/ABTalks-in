@@ -1,12 +1,12 @@
 ---
-title: ABTalks
+title: Klymb AI
 route: /
 url: https://app.klymb.ai/
 source_type: site
 ingested_at: 2026-10-14T09:55:47.229Z
 ---
 
-# ABTalks
+# Klymb AI
 
 Interview
 
@@ -36,7 +36,7 @@ For the candidates
 
 The Bridge
 
-## ABTalks
+## Klymb AI
 
 We run the programs, score the work, and match evidence to requirements. Profiles move only when the candidate releases them.
 
@@ -114,9 +114,9 @@ Don't just take our word for it. See what our members have to say about their ex
 
 “From exploring AI concepts to building production-ready projects, every challenge strengthened my technical skills and encouraged me to think like an engineer. Today AI isn't just something I learn. It's a tool I use to solve meaningful problems.”
 
-“More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. ABTalks didn't just teach me AI, it empowered me to build the future with it.”
+“More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. Klymb AI didn't just teach me AI, it empowered me to build the future with it.”
 
-“Joining the ABTalks 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.”
+“Joining the Klymb AI 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.”
 
 “What started as curiosity about AI soon became a daily habit of learning, building, and improving. More than technical skills, I gained a growth mindset: the confidence to embrace new technologies and keep learning every day.”
 
@@ -132,9 +132,9 @@ Don't just take our word for it. See what our members have to say about their ex
 
 “From exploring AI concepts to building production-ready projects, every challenge strengthened my technical skills and encouraged me to think like an engineer. Today AI isn't just something I learn. It's a tool I use to solve meaningful problems.”
 
-“More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. ABTalks didn't just teach me AI, it empowered me to build the future with it.”
+“More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. Klymb AI didn't just teach me AI, it empowered me to build the future with it.”
 
-“Joining the ABTalks 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.”
+“Joining the Klymb AI 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.”
 
 “What started as curiosity about AI soon became a daily habit of learning, building, and improving. More than technical skills, I gained a growth mindset: the confidence to embrace new technologies and keep learning every day.”
 
@@ -202,7 +202,7 @@ For the candidates
 
 The Bridge
 
-## ABTalks
+## Klymb AI
 
 We run the programs, score the work, and match evidence to requirements. Profiles move only when the candidate releases them.
 
@@ -280,9 +280,9 @@ Don't just take our word for it. See what our members have to say about their ex
 
 “From exploring AI concepts to building production-ready projects, every challenge strengthened my technical skills and encouraged me to think like an engineer. Today AI isn't just something I learn. It's a tool I use to solve meaningful problems.”
 
-“More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. ABTalks didn't just teach me AI, it empowered me to build the future with it.”
+“More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. Klymb AI didn't just teach me AI, it empowered me to build the future with it.”
 
-“Joining the ABTalks 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.”
+“Joining the Klymb AI 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.”
 
 “What started as curiosity about AI soon became a daily habit of learning, building, and improving. More than technical skills, I gained a growth mindset: the confidence to embrace new technologies and keep learning every day.”
 
@@ -298,9 +298,9 @@ Don't just take our word for it. See what our members have to say about their ex
 
 “From exploring AI concepts to building production-ready projects, every challenge strengthened my technical skills and encouraged me to think like an engineer. Today AI isn't just something I learn. It's a tool I use to solve meaningful problems.”
 
-“More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. ABTalks didn't just teach me AI, it empowered me to build the future with it.”
+“More than just creating projects, I learned the art of prompt engineering: how to give clear instructions and solve complex problems step by step. Klymb AI didn't just teach me AI, it empowered me to build the future with it.”
 
-“Joining the ABTalks 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.”
+“Joining the Klymb AI 60-Day Claude AI Challenge transformed my AI journey. I mastered prompt engineering, learned to build smarter with AI, and gained the confidence to solve real-world problems.”
 
 “What started as curiosity about AI soon became a daily habit of learning, building, and improving. More than technical skills, I gained a growth mindset: the confidence to embrace new technologies and keep learning every day.”
 

@@ -13,9 +13,9 @@ import { auth } from "@/auth";
 import { listPublicEvents } from "@/repositories/workshop";
 
 export const metadata: Metadata = {
-  title: "Upcoming Events | ABTalks Workshop",
+  title: "Upcoming Events | Klymb AI Workshop",
   description:
-    "All upcoming ABTalks live workshops and events — UI/UX design, AI tools, agents, content, SaaS, data and careers.",
+    "All upcoming Klymb AI live workshops and events — UI/UX design, AI tools, agents, content, SaaS, data and careers.",
 };
 
 export default async function WorkshopEventsPage() {

@@ -48,7 +48,7 @@ export function WelcomeSlide() {
         transition={{ delay: 0.5, duration: 0.5 }}
         className="mt-2 text-xs text-muted-foreground md:text-sm"
       >
-        By Anil Bajpai&apos;s ABTalks community.
+        By Anil Bajpai&apos;s Klymb AI community.
       </motion.p>
     </motion.div>
   );

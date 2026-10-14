@@ -20,7 +20,7 @@ import { cn } from "@/lib/utils";
  * Only mounted where contact is already shared, but that is a courtesy: the
  * server refuses anyone without contact access, whatever this renders.
  *
- * The candidate receives a real email and replies on ABTalks, so the dialog
+ * The candidate receives a real email and replies on Klymb AI, so the dialog
  * says so. A recruiter who expects replies in their own inbox would otherwise
  * wait for mail that is not coming.
  *
@@ -83,7 +83,7 @@ export function OutreachComposeDialog({
       const reason = (emailFailureReason ?? "unknown reason").replace(/\.+$/, "");
       const notice =
         emailStatus === "FAILED" || emailStatus === "SKIPPED"
-          ? `Saved on ABTalks, but the email didn't send: ${reason}. The candidate will still see it in their ABTalks messages.`
+          ? `Saved on Klymb AI, but the email didn't send: ${reason}. The candidate will still see it in their Klymb AI messages.`
           : null;
       if (notice) toast.warning("Message saved — email not sent");
       else toast.success("Message sent");
@@ -108,10 +108,10 @@ export function OutreachComposeDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="hire-app hire-unlock sm:max-w-md" showCloseButton>
           <DialogHeader>
-            <p className="hire-auth__kicker">ABTalks Hire</p>
+            <p className="hire-auth__kicker">Klymb AI Hire</p>
             <DialogTitle>Email {candidateLabel}</DialogTitle>
             <DialogDescription>
-              They get this by email and reply on ABTalks. Replies come back to
+              They get this by email and reply on Klymb AI. Replies come back to
               you alone, in Messages.
             </DialogDescription>
           </DialogHeader>

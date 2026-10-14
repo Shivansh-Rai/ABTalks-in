@@ -60,7 +60,7 @@ function issueField(path: PropertyKey | undefined): AuthField | undefined {
 
 const NOT_AVAILABLE = "Email sign-in isn't available yet.";
 const RECRUITER_ACCOUNT_MESSAGE =
-  "This email belongs to a recruiter account. Sign in at ABTalks Hire instead.";
+  "This email belongs to a recruiter account. Sign in at Klymb AI Hire instead.";
 const GOOGLE_ONLY_MESSAGE = "This account signs in with Google only.";
 const SEND_FAILED = "Could not send a code. Try again.";
 

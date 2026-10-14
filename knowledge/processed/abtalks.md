@@ -1,21 +1,27 @@
-# ABTalks
+# Klymb AI
 
-People also ask this as: what is ABTalks · tell me about AB Talks · what
-exactly is this community · what does ABTalks do · what is this website ·
-who is ABTalks for · is ABTalks free · how does ABTalks work · learn daily
-build showcase get hired.
+People also ask this as: what is Klymb AI · tell me about Klymb AI · what
+exactly is this community · what does Klymb AI do · what is this website ·
+who is Klymb AI for · is Klymb AI free · how does Klymb AI work · learn daily
+build showcase get hired · what is ABTalks · what is ab talks · abtalks ·
+who runs abtalks · is ABTalks the same as Klymb AI · did ABTalks change its name.
 
 ## Identity
 
-ABTalks is an India-first build-in-public community and talent network for students and early-career builders.
+Klymb AI is an India-first build-in-public community and talent network for students and early-career builders.
 
 Key facts:
 - trying to focus on evidence-based hiring rather than pure itnerview based hiring.
 - Tagline: "Code consistently. Post publicly. Get noticed." (the live site also presents "Build in public. Grow together." as a tagline)
-- Primary domain: abtalks.in
+- Primary domain: app.klymb.ai (the application). abtalks.in is no longer the
+  app — it now hosts the ABTalksOnAI community site.
+- Former name: **ABTalks**. The platform was renamed to **Klymb AI** in
+  October 2026. ABTalks and Klymb AI are the same organisation — if someone
+  asks about ABTalks, answer about Klymb AI. The registered entity is still
+  ABTalksOnAI and the support address is still team@abtalks.in.
 - Audience: college students, recent graduates, and working professionals in live sessions
 - Cost to participate: free — the Terms state the service is **currently
-  provided free of charge**, and ABTalks does not process payments. The
+  provided free of charge**, and Klymb AI does not process payments. The
   homepage phrases it as "most challenges are free to join; paid cohorts are
   always priced up front", and nobody placed through the recruiter network
   pays a placement fee. See `legal-and-privacy.md`.
@@ -23,7 +29,7 @@ Key facts:
 
 ## Mission / why it exists
 
-ABTalks turns visible, dated work into proof that recruiters can inspect in a browser. The premise is that consistent, publicly-dated work is a stronger, more inspectable signal of skill than a private credential or resume line alone.
+Klymb AI turns visible, dated work into proof that recruiters can inspect in a browser. The premise is that consistent, publicly-dated work is a stronger, more inspectable signal of skill than a private credential or resume line alone.
 
 ## Philosophy / build-in-public model
 
@@ -31,7 +37,7 @@ The core operating loop is: learn daily, build and showcase, then get hired. Par
 
 ## Proof-of-work concept
 
-"Proof of work" on ABTalks means a public, dated, externally-verifiable trail of what a participant built and learned:
+"Proof of work" on Klymb AI means a public, dated, externally-verifiable trail of what a participant built and learned:
 - A GitHub repository (for the Claude Challenge, a dedicated repo organized `Day1/` … `Day60/`) showing real commits over time
 - LinkedIn posts describing what was built, key learnings, and a demo/screenshot
 - Tracked streaks and completion counts that make consistency visible
@@ -54,7 +60,7 @@ See `community.md` for more detail.
 
 ## Synergy Points (SP)
 
-Synergy Points (often abbreviated as **SP**) are the community reward system on ABTalks. They are designed to recognize and reward consistency and community growth.
+Synergy Points (often abbreviated as **SP**) are the community reward system on Klymb AI. They are designed to recognize and reward consistency and community growth.
 - **How they are earned:** Participants earn SP primarily by submitting their daily challenge tasks (earning up to 15 SP per day: 5 base points + 5 for attaching a GitHub repo + 5 for attaching a LinkedIn post) and by referring friends to join the platform (earning 3 SP per successful signup).
 - **How they are used:** Accumulated Synergy Points can be redeemed in the **Marketplace** (`/marketplace`) for various rewards, goodies, or special opportunities.
 - **Important note:** SP is not a currency, has no cash value, and cannot be exchanged for money.
@@ -75,7 +81,7 @@ Synergy Points (often abbreviated as **SP**) are the community reward system on 
 
 ## Platform Mechanics
 
-ABTalks has several core platform mechanics that apply across the challenges:
+Klymb AI has several core platform mechanics that apply across the challenges:
 - **Leaderboard**: The global leaderboard is ranked primarily by **Days Completed** (highest to lowest), followed by **Current Streak** (highest to lowest), then **Longest Streak** (highest to lowest), and finally by **Start Date** (earliest to latest).
 - **Quizzes**: Only the current week's quiz is available to participants, based on their total days completed.
 - **Referrals**: Every participant has a unique 6-character referral code. When someone signs up using this code, the referrer instantly earns 3 Synergy Points (SP).

@@ -13,7 +13,7 @@ import type { CatalogueEntry } from "@/features/interview/platform/service";
  * arrives as plain data from the Server Component, and it holds no interview
  * logic of any kind.
  *
- * Palette is the ABTalks interview palette, taken from
+ * Palette is the Klymb AI interview palette, taken from
  * `components/program/cohort-interview-card.tsx` so the two interview surfaces
  * read as one product: #03535F primary, #EEF6F6 card, #E7F2F3 accent,
  * #197E23 available, #E0E0E0 border.

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/admin-auth";
 import { listTalentProjectsForAdmin } from "@/features/admin/inspect-talent-project";
 
-export const metadata: Metadata = { title: "Talent projects | ABTalks Admin" };
+export const metadata: Metadata = { title: "Talent projects | Klymb AI Admin" };
 
 function formatWhen(d: Date): string {
   return d.toLocaleString("en-IN", {

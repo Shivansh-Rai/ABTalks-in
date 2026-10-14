@@ -1,12 +1,12 @@
 ---
-title: AI Cohort Training Program for Working Professionals | ABTalks
+title: AI Cohort Training Program for Working Professionals | Klymb AI
 route: /ai-cohort-register
 url: https://app.klymb.ai/ai-cohort-register
 source_type: site
 ingested_at: 2026-10-14T09:55:51.016Z
 ---
 
-# AI Cohort Training Program for Working Professionals | ABTalks
+# AI Cohort Training Program for Working Professionals | Klymb AI
 
 # AI Cohort Training Program for Working Professionals
 

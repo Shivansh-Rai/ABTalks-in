@@ -20,7 +20,7 @@ import { isChatbotEnabled } from "@/lib/feature-flags";
 import "./globals.css";
 
 /*
- * ABTalks UI Design System v2: two families only.
+ * Klymb AI UI Design System v2: two families only.
  *   Inter  — body and UI (self-hosted, 400/500/600/700)
  *   Outfit — headings (300/400/500/600/700)
  * The retired display, serif, mono and seven-segment faces are no longer loaded.
@@ -57,7 +57,7 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "ABTalks",
+  title: "Klymb AI",
   description: "Build your coding habit. Get discovered.",
 };
 

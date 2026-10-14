@@ -275,7 +275,7 @@ export function AccomplishmentsSection({
         <div className="pw-verified-copy">
           <h3 className="pw-sub-title">Verified Accomplishments</h3>
           <p className="pw-sub-text">
-            Your accomplishments as seen on ABTalks. 
+            Your accomplishments as seen on Klymb AI. 
           </p>
         </div>
         <Link href="/achievements" className="pw-btn-action pw-btn-quiet">

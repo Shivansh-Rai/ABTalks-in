@@ -285,7 +285,7 @@ export function AppFooter() {
               isMarketplace ? "text-white" : "text-foreground",
             )}
           >
-            <span>ABTalks</span>
+            <span>Klymb AI</span>
             <nav
               className={cn(
                 "flex flex-wrap gap-x-4 gap-y-1 text-xs font-sans font-normal",

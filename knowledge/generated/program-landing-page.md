@@ -1,12 +1,12 @@
 ---
-title: AI Cohort — ABTalks
+title: AI Cohort — Klymb AI
 route: /program/ai-cohort
 url: https://app.klymb.ai/program/ai-cohort
 source_type: site
 ingested_at: 2026-10-14T09:55:51.862Z
 ---
 
-# AI Cohort — ABTalks
+# AI Cohort — Klymb AI
 
 # AI Cohort
 

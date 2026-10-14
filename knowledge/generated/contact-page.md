@@ -1,12 +1,12 @@
 ---
-title: Contact · ABTalks
+title: Contact · Klymb AI
 route: /contact
 url: https://app.klymb.ai/contact
 source_type: site
 ingested_at: 2026-10-14T09:55:52.853Z
 ---
 
-# Contact · ABTalks
+# Contact · Klymb AI
 
 # Contact
 
@@ -27,7 +27,7 @@ Entity details and grievance contacts, published in accordance with India's Digi
 **Proprietor**
 - Suman Shukla
 **Trading name**
-- ABTalks
+- Klymb AI
 **Unit name**
 - ABTalksOnAI
 **Registered address**
@@ -77,7 +77,7 @@ Entity details and grievance contacts, published in accordance with India's Digi
 **Proprietor**
 - Suman Shukla
 **Trading name**
-- ABTalks
+- Klymb AI
 **Unit name**
 - ABTalksOnAI
 **Registered address**

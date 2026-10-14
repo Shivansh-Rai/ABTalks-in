@@ -1,7 +1,7 @@
 # Socials and Contact
 
 People also ask this as: what's your Instagram · do you have Discord · where
-can I join the community · social media handles · how do I follow ABTalks ·
+can I join the community · social media handles · how do I follow Klymb AI ·
 YouTube channel · LinkedIn page · Twitter · X handle · WhatsApp group · how
 do I contact you · support email · customer care.
 

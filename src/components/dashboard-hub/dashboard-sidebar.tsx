@@ -273,7 +273,7 @@ export function DashboardSidebar({
         >
           <Image
             src="/abtalks-logo.png"
-            alt="ABTalks"
+            alt="Klymb AI"
             width={120}
             height={32}
             className="block h-7 w-auto brightness-0"
@@ -318,7 +318,7 @@ export function DashboardSidebar({
           <Link
             href="/dashboard"
             onClick={onNavigate}
-            aria-label="ABTalks dashboard"
+            aria-label="Klymb AI dashboard"
             className="relative block h-6 w-[28px] overflow-hidden"
           >
             <Image

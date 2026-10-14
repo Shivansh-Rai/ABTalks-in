@@ -59,11 +59,11 @@ export function EcosystemPageHeader({ className }: Props) {
           <Link
             href="/"
             className="logo-link focus-spark shrink-0"
-            aria-label="ABTalks home"
+            aria-label="Klymb AI home"
           >
             <Image
               src="/abtalks-logo.png"
-              alt="ABTalks"
+              alt="Klymb AI"
               width={300}
               height={84}
               priority

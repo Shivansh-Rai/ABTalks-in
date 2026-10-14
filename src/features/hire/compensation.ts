@@ -2,7 +2,7 @@ import type { RoleFamily } from "@/features/hire/role-family";
 import type { MatchTier } from "@/features/hire/types";
 
 /**
- * What ABTalks thinks the role pays — never what the candidate asked for.
+ * What Klymb AI thinks the role pays — never what the candidate asked for.
  *
  * No member of the platform has ever filled in a salary expectation
  * (`CandidatePreference.expectedSalary*` is empty), so a shortlist that shows a number
@@ -23,7 +23,7 @@ export type CompensationBand = {
 
 /** The one sentence this band may ever be shown under. */
 export const COMPENSATION_DISCLAIMER =
-  "ABTalks indicative band, from role and verified evidence — not the candidate's ask.";
+  "Klymb AI indicative band, from role and verified evidence — not the candidate's ask.";
 
 type ExperienceBand = "0-1" | "2-3" | "4-6" | "7+";
 

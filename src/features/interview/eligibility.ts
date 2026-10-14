@@ -64,7 +64,7 @@ export function computeEligibility(
     if (eligibleSubmissionIds.length < INTERVIEW_MIN_COMPLETED_DAYS) {
       return {
         state: "locked",
-        reason: `Complete ${INTERVIEW_MIN_COMPLETED_DAYS} challenge days to unlock your AB Talks interview.`,
+        reason: `Complete ${INTERVIEW_MIN_COMPLETED_DAYS} challenge days to unlock your Klymb AI interview.`,
         completedDays: eligibleSubmissionIds.length,
         needed: INTERVIEW_MIN_COMPLETED_DAYS,
       };

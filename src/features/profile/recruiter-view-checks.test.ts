@@ -170,7 +170,7 @@ suite("collapses a moderation stop into one neutral row, no detail, no fix", () 
   assert(out.rows[0]?.fixLabel === null, "platform row must offer no fix button");
   assert(
     out.headline ===
-      "You are not appearing in recruiter search, and the reason is on ABTalks' side.",
+      "You are not appearing in recruiter search, and the reason is on Klymb AI's side.",
     `unexpected headline: ${out.headline}`,
   );
 });
@@ -196,7 +196,7 @@ suite("never phrases a platform gate as something the candidate did", () => {
   const out = view(f);
   const platform = out.rows.find((r) => r.id === "platform-hold");
   assert(Boolean(platform), "platform row expected");
-  assert(/managed by ABTalks/i.test(platform!.detail), "must name ABTalks as owner");
+  assert(/managed by Klymb AI/i.test(platform!.detail), "must name Klymb AI as owner");
   assert(
     /not something you can change/i.test(platform!.detail),
     "must say the candidate cannot change it",

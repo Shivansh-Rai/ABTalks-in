@@ -197,7 +197,7 @@ export function candidateSummaryLine(s: SummaryInput): string {
   } else if (missions) {
     parts.push(`They have completed ${missions}.`);
   } else if (verifiedEvidenceFacts(s).length > 0) {
-    parts.push(`Verified on ABTalks: ${joinList(verifiedEvidenceFacts(s))}.`);
+    parts.push(`Verified on Klymb AI: ${joinList(verifiedEvidenceFacts(s))}.`);
   }
 
   return parts.join(" ");
@@ -220,7 +220,7 @@ export function candidateSummaryDetail(s: SummaryInput): string {
 
   const facts = verifiedEvidenceFacts(s);
   if (facts.length > 0) {
-    parts.push(`On ABTalks they have ${joinList(facts)}.`);
+    parts.push(`On Klymb AI they have ${joinList(facts)}.`);
   }
 
   const languages = (s.workingLanguages ?? [])
@@ -253,7 +253,7 @@ export function cleanRecruiterCopy(raw: string | null | undefined): string {
     .filter((s) => !/^Ranked on\b/i.test(s))
     .filter(
       (s) =>
-        !/^No verified ABTalks evidence\b/i.test(s) &&
+        !/^No verified Klymb AI evidence\b/i.test(s) &&
         !/\bhas not declared\b/i.test(s),
     )
     .join(" ")

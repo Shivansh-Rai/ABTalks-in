@@ -196,7 +196,7 @@ function QuestionCard({ q }: { q: AttemptQuestionDetail }) {
           )}
           {q.uploadDestinationUrl ? (
             <p className="text-xs text-[#8F8F8F]">
-              The recruiter asked for the file at {q.uploadDestinationUrl}. ABTalks
+              The recruiter asked for the file at {q.uploadDestinationUrl}. Klymb AI
               stores no files — the answer is the candidate&apos;s own link.
             </p>
           ) : null}

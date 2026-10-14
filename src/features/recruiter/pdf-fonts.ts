@@ -2,7 +2,7 @@ import path from "node:path";
 import { Font } from "@react-pdf/renderer";
 
 /**
- * ABTalks UI Design System v2 in the recruiter PDF: Outfit headings, Inter body.
+ * Klymb AI UI Design System v2 in the recruiter PDF: Outfit headings, Inter body.
  * Read from disk next to the certificate templates (public/), the same way
  * features/certificate/template-source.ts loads its artwork. WOFF, because
  * react-pdf does not read WOFF2.

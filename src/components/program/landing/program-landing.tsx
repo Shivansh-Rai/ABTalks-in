@@ -279,7 +279,7 @@ export function ProgramLanding({ cta }: { cta: Cta }) {
           <Link href="/" className="inline-block">
             <Image
               src="/abtalks-logo.png"
-              alt="ABTalks"
+              alt="Klymb AI"
               width={202}
               height={53}
               className="h-9 w-auto md:h-10"

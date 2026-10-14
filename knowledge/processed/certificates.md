@@ -1,4 +1,4 @@
-# ABTalks Certificates — Eligibility, Claiming, Verification
+# Klymb AI Certificates — Eligibility, Claiming, Verification
 
 People also ask this as: how do I get my certificate · where is my
 certificate · can I download my Claude cert · do I get a cert after
@@ -8,20 +8,20 @@ certificate is real · certificate ID · my certificate was revoked · my name
 is wrong on the certificate · do hackathon participants get certificates ·
 does the coding challenge give a certificate.
 
-Covers every ABTalks certificate: who gets one, how to claim it, where to
+Covers every Klymb AI certificate: who gets one, how to claim it, where to
 download it, and how anyone (recruiter, college, employer) can verify it.
 
 ## Which programs issue certificates
 
-ABTalks currently issues two kinds of certificate:
+Klymb AI currently issues two kinds of certificate:
 
 - **60-Day Claude AI Challenge** — "Certificate of Completion", subtitle "Claude AI Mastery Track". Self-serve: it is issued automatically once you qualify.
-- **ViCoDathon 2026 hackathon** — "ViCoDathon 2026", subtitle "India's AI Vibe Coding Hackathon". Issued by the ABTalks team in a batch after the event.
+- **ViCoDathon 2026 hackathon** — "ViCoDathon 2026", subtitle "India's AI Vibe Coding Hackathon". Issued by the Klymb AI team in a batch after the event.
 
 The 60-Day Coding Challenge (AI / DS / SE tracks) gives **completion
 recognition and a public portfolio** rather than an automatically issued
 PDF certificate — the core outcome there is visible proof of work
-(GitHub + LinkedIn) on your ABTalks profile.
+(GitHub + LinkedIn) on your Klymb AI profile.
 
 Cohort and workshop certificate types exist in the platform but are not
 being issued automatically today. If you attended an AI Cohort or a
@@ -29,12 +29,12 @@ workshop and need a certificate, email team@abtalks.in.
 
 ## What a certificate is — and is not
 
-Certificates issued by ABTalks are certificates of **participation and
+Certificates issued by Klymb AI are certificates of **participation and
 completion only**. They are **not accredited academic or professional
 qualifications**, carry no academic credit, and are not recognised or
 accredited by any university, statutory body, examination authority or
 regulator. Do not present one as a degree, diploma or licensed credential.
-ABTalks may revoke a certificate for fraud or a Terms violation.
+Klymb AI may revoke a certificate for fraud or a Terms violation.
 
 Four different things get confused with each other — keep them apart:
 
@@ -44,23 +44,23 @@ Four different things get confused with each other — keep them apart:
 - **Completion recognition** — being recognised as having finished, without
   an auto-issued PDF. This is what the 60-Day Coding Challenge gives.
 - **Proof of work / portfolio** — your public GitHub and LinkedIn trail plus
-  your ABTalks profile. Every program produces this.
+  your Klymb AI profile. Every program produces this.
 - **Award recognition** — hackathon placement (Winner, 2nd, 3rd, Top 5),
   which is a separate extra certificate on its own artwork.
 
 ## Certificates are always free
 
-ABTalks never charges to issue, unlock, release, or verify a certificate.
-Every ABTalks program is free to participate in. If anyone asks you for
+Klymb AI never charges to issue, unlock, release, or verify a certificate.
+Every Klymb AI program is free to participate in. If anyone asks you for
 money to release a certificate, it is a scam — do not pay, and forward the
 message to team@abtalks.in.
 
 ## How to claim a certificate (step by step)
 
-1. Sign in to ABTalks at `/login` with the same account you used for the
+1. Sign in to Klymb AI at `/login` with the same account you used for the
    challenge or hackathon.
 2. Make sure your **full name is filled in on your profile** (`/profile`).
-   The certificate prints your ABTalks profile full name exactly as saved.
+   The certificate prints your Klymb AI profile full name exactly as saved.
    If it is blank you will see "Complete your profile name before claiming
    your certificate."
 3. Go to **`/achievements`** ("Your Achievements"). You can also reach it
@@ -100,12 +100,12 @@ the public verification page.
   members alike.
 - It records your team name (or "Solo entry") and the problem brief your
   team built against.
-- These are issued in a batch by the ABTalks team after judging, not
+- These are issued in a batch by the Klymb AI team after judging, not
   instantly on submission. Once issued, they show up on `/achievements`
   exactly like any other certificate.
 - **Award certificates:** separate, extra certificates for **Winner, 2nd
   place, 3rd place and Top 5**, each on its own artwork, issued by the
-  ABTalks team to the placing teams. An award certificate is issued **in
+  Klymb AI team to the placing teams. An award certificate is issued **in
   addition to** the participation certificate, so a winner has two entries
   on their achievements page. ViCoDathon award certificates carry a date of
   issue of 14 August 2026.
@@ -133,7 +133,7 @@ case-sensitive when you type them into the verification URL.
   Scanning the QR opens the verification page directly.
 - Or visit **`https://abtalks.in/verify/<CERTIFICATE-ID>`** — for example
   `https://abtalks.in/verify/ABT-CC-7K3PQ`.
-- The verification page is **public — no login or ABTalks account needed**.
+- The verification page is **public — no login or Klymb AI account needed**.
 - A valid certificate shows: "Verified Certificate", recipient name,
   credential title, issue date, certificate ID, status, plus the track /
   days completed / longest streak (challenge) or team and brief
@@ -159,10 +159,10 @@ without asking you for the PDF.
 **Q: I finished the challenge but `/achievements` shows nothing.**
 A: Check that you actually have a Day 60 submission and at least 50 days
 completed — both are required. If both are true, email team@abtalks.in with
-the email address on your ABTalks account.
+the email address on your Klymb AI account.
 
 **Q: The name on my certificate is wrong / missing.**
-A: The certificate uses the full name on your ABTalks profile. Update it at
+A: The certificate uses the full name on your Klymb AI profile. Update it at
 `/profile`. If a certificate was already issued with the wrong name, email
 team@abtalks.in to have it re-issued.
 

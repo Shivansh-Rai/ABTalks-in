@@ -7,7 +7,7 @@ import { getAdminActionDetail } from "@/features/admin/get-admin-actions-feed";
 import { requireAdmin } from "@/lib/admin-auth";
 import { formatDateTimeIST } from "@/lib/date-utils";
 
-export const metadata: Metadata = { title: "Audit entry | ABTalks Admin" };
+export const metadata: Metadata = { title: "Audit entry | Klymb AI Admin" };
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

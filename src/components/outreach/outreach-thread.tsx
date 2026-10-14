@@ -38,7 +38,7 @@ function deliveryLine(m: ThreadViewMessage): string | null {
       return "Sending email…";
     case "FAILED":
     case "SKIPPED":
-      return `Not emailed: ${(m.emailFailureReason ?? "unknown reason").replace(/\.+$/, "")}. Visible to them in their ABTalks messages.`;
+      return `Not emailed: ${(m.emailFailureReason ?? "unknown reason").replace(/\.+$/, "")}. Visible to them in their Klymb AI messages.`;
     default:
       return null;
   }
