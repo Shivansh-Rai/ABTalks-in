@@ -59,8 +59,12 @@ function issueField(path: PropertyKey | undefined): AuthField | undefined {
 }
 
 const NOT_AVAILABLE = "Email sign-in isn't available yet.";
+/**
+ * #713: deliberately does not say "recruiter". This page is public, and naming
+ * the account type told anyone which addresses belong to recruiters.
+ */
 const RECRUITER_ACCOUNT_MESSAGE =
-  "This email belongs to a recruiter account. Sign in at ABTalks Hire instead.";
+  "This account already exists. Sign in with the method you used to create it.";
 const GOOGLE_ONLY_MESSAGE = "This account signs in with Google only.";
 const SEND_FAILED = "Could not send a code. Try again.";
 
@@ -76,11 +80,10 @@ async function clientRateLimit(): Promise<{ ok: true } | { ok: false; message: s
  * password from either door (`password-reset`).
  *
  * `candidate-login` to an unknown address is a signup and gets a code. A
- * recruiter address is told where to go, whichever purpose it asked for —
- * recruiter sign-in already says which addresses are registered, so this
- * reveals nothing new, and the candidate door must neither open a recruiter
- * account nor rewrite its password. Admin and frozen accounts get the same
- * answer as everyone else and no email.
+ * recruiter address is refused whichever purpose it asked for — the candidate
+ * door must neither open a recruiter account nor rewrite its password — with
+ * a message that does not name the account type (#713). Admin and frozen
+ * accounts get the same answer as everyone else and no email.
  *
  * `password-reset` always answers the same way, whether or not a code was
  * sent, so it cannot be used to learn who has an account.

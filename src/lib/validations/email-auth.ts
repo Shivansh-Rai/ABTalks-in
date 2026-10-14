@@ -98,7 +98,8 @@ export function signInErrorMessage(
     case SIGN_IN_ERROR.rateLimited:
       return "Too many sign-in attempts. Wait 15 minutes and try again, or sign in with an emailed code.";
     case SIGN_IN_ERROR.recruiterAccount:
-      return "This is a recruiter account. Sign in at ABTalks Hire instead.";
+      // #713: never name the account type on a public sign-in page.
+      return "This account already exists. Sign in with the method you used to create it.";
     case SIGN_IN_ERROR.notRecruiter:
       return "This account isn't registered as a recruiter.";
     default:
