@@ -1,5 +1,8 @@
 import { Domain, EnrollmentStatus } from "@prisma/client";
-import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import {
+  HACKATHON_EVENT_LABELS,
+  hackathonEventLabel,
+} from "@/components/hackathon/hackathon-config";
 import { prisma } from "@/lib/db";
 import { listCandidateProfiles } from "@/repositories/candidate";
 import { listChallengePeRows } from "@/repositories/enrollment-state";
@@ -12,7 +15,23 @@ type Input = {
   status?: "ALL" | "ACTIVE" | "COMPLETED";
   sortBy?: "recent" | "days" | "streak" | "referrals";
   track?: StudentTrack;
+  /** Hackathon event id, or "ALL". Ignored for challenge rows. */
+  event?: string;
 };
+
+/**
+ * Rows sort by join date, so without an event filter the first page is always
+ * the newest event — a member of an earlier hackathon could never be browsed
+ * to. Only known ids narrow; anything else means "ALL".
+ */
+export function parseStudentEvent(raw: string | undefined): string {
+  if (raw && raw in HACKATHON_EVENT_LABELS) return raw;
+  return "ALL";
+}
+
+function hackathonEventWhere(event: string | undefined) {
+  return event && event !== "ALL" ? { eventId: event } : {};
+}
 
 export type StudentDomainCounts = Record<
   "ALL" | "SE" | "DS" | "AI" | "CLAUDE",
@@ -37,6 +56,8 @@ export type AdminStudentRow = {
   userType: string;
   affiliation: string;
   referralCount: number;
+  /** Which hackathon event this row came from; null for challenge rows. */
+  eventLabel: string | null;
 };
 
 function includeHackathonRows(input: {
@@ -82,8 +103,8 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
     wantHackathon
       ? prisma.hackathonParticipant.findMany({
           where: {
-            eventId: HACKATHON.eventId,
             user: { deletedAt: null },
+            ...hackathonEventWhere(input.event),
             ...(q
               ? {
                 OR: [
@@ -102,9 +123,12 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
               : {}),
           },
           orderBy: { createdAt: "desc" },
-          take: 100,
+          // Over-fetch: the per-user dedupe below can drop rows, and the final
+          // slice still needs 100 to fill.
+          take: 200,
           select: {
             id: true,
+            eventId: true,
             userId: true,
             fullName: true,
             email: true,
@@ -121,10 +145,20 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
       : Promise.resolve([]),
   ]);
 
+  // `@@unique([eventId, userId])` allows one row per event per person, so
+  // someone who joined both hackathons comes back twice. Rows arrive
+  // `createdAt desc`, so keeping the first occurrence keeps their latest event.
+  const seenHackathonUsers = new Set<string>();
+  const dedupedHackathonRows = hackathonRows.filter((row) => {
+    if (seenHackathonUsers.has(row.userId)) return false;
+    seenHackathonUsers.add(row.userId);
+    return true;
+  });
+
   const userIds = [
     ...new Set([
       ...enrollmentRows.map((row) => row.userId),
-      ...hackathonRows.map((row) => row.userId),
+      ...dedupedHackathonRows.map((row) => row.userId),
     ]),
   ];
 
@@ -174,10 +208,11 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
               ? (identity.organization ?? "-")
               : (identity?.college ?? "-"),
           referralCount: countMap.get(row.userId) ?? 0,
+          eventLabel: null,
         },
       ];
     }),
-    ...hackathonRows.map((row) => {
+    ...dedupedHackathonRows.map((row) => {
       const entryType = row.team.entryType === "SOLO" ? "SOLO" : "TEAM";
       return {
         track: "HACKATHON" as const,
@@ -195,6 +230,7 @@ export async function getStudents(input: Input): Promise<AdminStudentRow[]> {
         userType: "STUDENT",
         affiliation: row.college || "-",
         referralCount: countMap.get(row.userId) ?? 0,
+        eventLabel: hackathonEventLabel(row.eventId),
       };
     }),
   ];
@@ -268,6 +304,7 @@ export async function getStudentTrackCounts(input?: {
   search?: string;
   domain?: Input["domain"];
   status?: Input["status"];
+  event?: string;
 }): Promise<StudentTrackCounts> {
   const q = input?.search?.trim();
   const domainFilter =
@@ -286,11 +323,15 @@ export async function getStudentTrackCounts(input?: {
       domains: domainFilter ? [domainFilter] : undefined,
       searchName: q || undefined,
     }),
+    // Distinct users, not rows: the list dedupes people who joined more than
+    // one hackathon, so the header total has to dedupe the same way.
     hackathonAllowed
-      ? prisma.hackathonParticipant.count({
+      ? prisma.hackathonParticipant
+        .groupBy({
+          by: ["userId"],
           where: {
-            eventId: HACKATHON.eventId,
             user: { deletedAt: null },
+            ...hackathonEventWhere(input?.event),
             ...(q
               ? {
                 OR: [
@@ -309,6 +350,7 @@ export async function getStudentTrackCounts(input?: {
               : {}),
           },
         })
+        .then((rows) => rows.length)
       : Promise.resolve(0),
   ]);
 
