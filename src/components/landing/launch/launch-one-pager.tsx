@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import type { LandingUser } from "@/features/landing/get-landing-state";
 import { LandingUserMenu } from "@/components/landing/landing-user-menu";
+import { Wordmark } from "@/components/shared/wordmark";
 import { WHATSAPP_INVITE } from "@/components/landing/site/landing-content";
 import { LaunchCountdown } from "./launch-countdown";
 import {
@@ -19,8 +19,9 @@ import "./launch.css";
  * Plan 191, TEMPORARY — the launch one-pager that stands in for the full
  * marketing landing while `LANDING_ONE_PAGER` is on.
  *
- * Server Component. It reuses `landing.css` for the ABTalks tokens and button
- * classes (hence the `.abtalks-landing` wrapper) and adds only its own layout
+ * Server Component. It reuses `landing.css` for the brand tokens and button
+ * classes (hence the `.abtalks-landing` wrapper, still the shared landing
+ * wrapper's class name after the Klymb AI rename) and adds only its own layout
  * on top, so nothing in `components/landing/site/**` had to change to put this
  * page up — flip the flag off and that landing is back, untouched.
  *
@@ -47,14 +48,8 @@ export function LaunchOnePager({
 
       <header className="launch__nav">
         <div className="container launch__nav-inner">
-          <Link href="/" className="launch__logo" aria-label="ABTalks home">
-            <Image
-              src="/landing/abtalks-logo-mark.png"
-              alt="ABTalks"
-              width={561}
-              height={168}
-              priority
-            />
+          <Link href="/" className="launch__logo" aria-label="Klymb AI home">
+            <Wordmark size="lg" />
           </Link>
 
           {user ? (
@@ -146,7 +141,7 @@ export function LaunchOnePager({
       <footer className="launch__footer">
         <div className="container launch__footer-inner">
           <span className="launch__copy">
-            © ABTalksOnAI {year} All rights reserved.
+            © Klymb AI {year} All rights reserved.
           </span>
           <ul className="launch__footer-links">
             {LAUNCH_FOOTER_LINKS.map((link) => (
