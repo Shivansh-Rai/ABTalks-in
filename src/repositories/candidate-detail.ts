@@ -556,6 +556,15 @@ function runInTransaction<T>(fn: (tx: Tx) => Promise<T>): Promise<T> {
   return writeClient().$transaction(fn, { maxWait: 10000, timeout: 20000 });
 }
 
+/**
+ * Runs inside a section write's own transaction, after the rows are written.
+ *
+ * The Platform Admin edit path (`admin-hire-profile-actions.ts`) passes one so
+ * its audit row commits with the change it describes: a throw here rolls the
+ * write back too. The candidate's own saves pass nothing.
+ */
+export type SectionWriteHook = (tx: Tx) => Promise<void>;
+
 export type BasicInfoWrite = {
   fullName: string;
   phone: string | null;
@@ -627,6 +636,7 @@ export type EducationWrite = {
 export async function saveEducation(
   userId: string,
   rows: readonly EducationWrite[],
+  afterWrite?: SectionWriteHook,
 ): Promise<void> {
   await runInTransaction(async (tx) => {
     await ensureCandidateProfile(tx, userId);
@@ -651,6 +661,7 @@ export async function saveEducation(
         })),
       });
     }
+    await afterWrite?.(tx);
   });
 }
 
@@ -677,6 +688,7 @@ export async function saveExperience(
   userId: string,
   rows: readonly ExperienceWrite[],
   hasNoWorkExperience = false,
+  afterWrite?: SectionWriteHook,
 ): Promise<void> {
   const now = new Date();
   await runInTransaction(async (tx) => {
@@ -716,6 +728,7 @@ export async function saveExperience(
       },
       select: { userId: true },
     });
+    await afterWrite?.(tx);
   });
 }
 
@@ -950,6 +963,7 @@ export type SkillClaimWrite = {
 export async function saveSkillClaims(
   userId: string,
   claims: readonly SkillClaimWrite[],
+  afterWrite?: SectionWriteHook,
 ): Promise<void> {
   await runInTransaction(async (tx) => {
     await ensureCandidateProfile(tx, userId);
@@ -1010,7 +1024,46 @@ export async function saveSkillClaims(
       await tx.candidateSkill.deleteMany({ where: { id: { in: dropIds } } });
     }
 
+    await afterWrite?.(tx);
   });
   // A claimed skill is the other half of a usable profile.
   await ensureDiscoveryRecordAfterProfileSave(userId);
+}
+
+/**
+ * Every skill row a candidate has, and whether it carries evidence.
+ *
+ * `hasEvidence` reads the evidence rows themselves as well as the two caches,
+ * the same three signals `saveSkillClaims` uses to decide a row must survive a
+ * withdrawn claim. A row with evidence is never an admin-editable claim.
+ */
+export type SkillClaimEvidenceRow = {
+  skillId: string;
+  name: string;
+  claimedByCandidate: boolean;
+  hasEvidence: boolean;
+};
+
+export async function listSkillClaimEvidence(
+  userId: string,
+): Promise<SkillClaimEvidenceRow[]> {
+  const rows = await prisma.candidateSkill.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      skillId: true,
+      claimedByCandidate: true,
+      verified: true,
+      evidenceCount: true,
+      skill: { select: { name: true } },
+      _count: { select: { evidence: true } },
+    },
+  });
+  return rows.map((row) => ({
+    skillId: row.skillId,
+    name: row.skill.name,
+    claimedByCandidate: row.claimedByCandidate,
+    hasEvidence:
+      row.verified || row.evidenceCount > 0 || row._count.evidence > 0,
+  }));
 }

@@ -77,6 +77,7 @@
 /src/app/actions/hire-request-actions.ts            @byteninjaa0
 /src/app/actions/hire-unlock-actions.ts             @byteninjaa0
 /src/app/actions/hire-view-actions.ts               @byteninjaa0
+/src/app/actions/admin-hire-profile-actions.ts      @byteninjaa0
 /src/app/actions/recruiter-assessment-actions.ts    @byteninjaa0
 /src/app/actions/recruiter-auth-actions.ts          @byteninjaa0
 /src/app/actions/recruiter-job-actions.ts           @byteninjaa0

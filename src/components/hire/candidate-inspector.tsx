@@ -82,6 +82,22 @@ import {
   type InspectorTrackEvidence,
   type InspectorWorkHistory,
 } from "@/app/actions/hire-view-actions";
+import {
+  changeCandidateSkillClaimAction,
+  deleteCandidateEducationEntryAction,
+  deleteCandidateExperienceEntryAction,
+  loadAdminInspectorProfileAction,
+  updateCandidateEducationFieldAction,
+  updateCandidateExperienceFieldAction,
+  type AdminInspectorProfile,
+} from "@/app/actions/admin-hire-profile-actions";
+import { useHireAuth } from "@/components/hire/hire-auth-provider";
+import {
+  AdminEducationList,
+  AdminExperienceEntry,
+  AdminSelfDeclaredSkills,
+  type DateFormat,
+} from "@/components/hire/inspector-admin-sections";
 import type { SelfReportedExternalLink } from "@/features/hire/self-reported-links";
 import type { RevealedContact } from "@/features/hire/unlock-contact";
 
@@ -135,6 +151,9 @@ function jobSpan(row: InspectorWorkHistory["rows"][number]): string {
   if (!from && !to) return "";
   return from && to ? `${from} – ${to}` : from || to;
 }
+
+/** Handed to the Platform Admin editors so they print dates the way this panel does. */
+const DATE_FORMAT: DateFormat = { months: MONTH_SHORT, monthYear };
 
 function monthYearFromIso(iso: string): string {
   const d = new Date(iso);
@@ -388,6 +407,115 @@ export function CandidateInspector({
   const [verifiedSkills, setVerifiedSkills] = useState<
     InspectorSkillEvidenceItem[] | null
   >(null);
+
+  // Platform Admin only: the stable user id, full education rows and the
+  // self-declared claims the edit controls need. Null for everyone else, and
+  // every edit control below is rendered only when this is set. That is
+  // presentation; each action checks `requireAdmin()` itself.
+  const { isAdmin } = useHireAuth();
+  const adminCanEdit = isAdmin && !sample && !preview;
+  // Kept with the candidate it was loaded for, so a profile is never shown
+  // (or edited) against a different card.
+  const [adminLoaded, setAdminLoaded] = useState<{
+    candidateRef: string;
+    profile: AdminInspectorProfile | null;
+  } | null>(null);
+  const adminProfile =
+    adminCanEdit && adminLoaded?.candidateRef === match.candidateRef
+      ? adminLoaded.profile
+      : null;
+
+  useEffect(() => {
+    if (!adminCanEdit) return;
+    let alive = true;
+    void (async () => {
+      const result = await loadAdminInspectorProfileAction({
+        candidateRef: match.candidateRef,
+      });
+      if (alive && result.ok) {
+        setAdminLoaded({
+          candidateRef: match.candidateRef,
+          profile: result.data,
+        });
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [adminCanEdit, match.candidateRef]);
+
+  function updateAdminProfile(patch: Partial<AdminInspectorProfile>) {
+    setAdminLoaded((prev) =>
+      prev?.profile ? { ...prev, profile: { ...prev.profile, ...patch } } : prev,
+    );
+  }
+
+  function toggleJob(id: string) {
+    setOpenJobs((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  /**
+   * A refused edit may mean the candidate saved in the meantime, which gives
+   * every row a new id. Show what is stored now, so the next attempt can land.
+   */
+  async function reloadEditableSections() {
+    const [history, admin] = await Promise.all([
+      loadInspectorWorkHistoryAction({ candidateRef: match.candidateRef }),
+      loadAdminInspectorProfileAction({ candidateRef: match.candidateRef }),
+    ]);
+    if (history.ok) setWorkHistory(history.data);
+    if (admin.ok) {
+      setAdminLoaded({
+        candidateRef: match.candidateRef,
+        profile: admin.data,
+      });
+    }
+  }
+
+  /** One admin edit: run it, show the stored result, say how it went. */
+  async function runAdminEdit<T>(
+    call: Promise<{ ok: true; data: T } | { ok: false; message: string }>,
+    apply: (data: T) => void,
+    done: string,
+  ): Promise<boolean> {
+    try {
+      const result = await call;
+      if (!result.ok) {
+        toast.error(result.message);
+        void reloadEditableSections();
+        return false;
+      }
+      apply(result.data);
+      toast.success(done);
+      return true;
+    } catch {
+      toast.error("Could not save. Please try again.");
+      return false;
+    }
+  }
+
+  function applyExperience(rows: InspectorWorkHistory["rows"]) {
+    // A save replaces every row, so each comes back with a new id. Open
+    // descriptions are carried across by position.
+    const before = workHistory?.rows ?? [];
+    setOpenJobs((prev) => {
+      const next = new Set<string>();
+      if (before.length !== rows.length) return next;
+      before.forEach((row, i) => {
+        if (prev.has(row.id)) next.add(rows[i]!.id);
+      });
+      return next;
+    });
+    setWorkHistory((prev) => ({
+      hasNoWorkExperience: prev?.hasNoWorkExperience ?? false,
+      rows,
+    }));
+  }
 
   useEffect(() => {
     rememberEvidence([match]);
@@ -1267,6 +1395,44 @@ export function CandidateInspector({
             <p className="hire-profile__meta">Loading experience…</p>
           ) : jobs.length > 0 ? (
             jobs.map((job) => {
+              // Platform Admin: the same row with a pencil beside each field.
+              if (adminProfile) {
+                const userId = adminProfile.userId;
+                return (
+                  <AdminExperienceEntry
+                    key={job.id}
+                    job={job}
+                    tile={monogram(job.companyName || job.title)}
+                    span={jobSpan(job)}
+                    employmentTypes={adminProfile.vocab.employmentTypes}
+                    dates={DATE_FORMAT}
+                    open={openJobs.has(job.id)}
+                    onToggle={() => toggleJob(job.id)}
+                    onEdit={(edit) =>
+                      runAdminEdit(
+                        updateCandidateExperienceFieldAction({
+                          userId,
+                          rowId: job.id,
+                          edit,
+                        }),
+                        (data) => applyExperience(data.experience),
+                        "Saved",
+                      )
+                    }
+                    onRemove={() =>
+                      runAdminEdit(
+                        deleteCandidateExperienceEntryAction({
+                          userId,
+                          rowId: job.id,
+                        }),
+                        (data) => applyExperience(data.experience),
+                        "Entry removed",
+                      )
+                    }
+                  />
+                );
+              }
+
               // Plan 165: a résumé description is a multi-paragraph block, and
               // four jobs turned this section into a wall of text between
               // "Experience" and "Education". The role is what a recruiter
@@ -1337,14 +1503,7 @@ export function CandidateInspector({
                         className="hire-profile__job-head"
                         aria-expanded={open}
                         aria-controls={panelId}
-                        onClick={() =>
-                          setOpenJobs((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(job.id)) next.delete(job.id);
-                            else next.add(job.id);
-                            return next;
-                          })
-                        }
+                        onClick={() => toggleJob(job.id)}
                       >
                         <span className="hire-profile__job-headings">{head}</span>
                         {/* aria-hidden: `aria-expanded` on the button is what
@@ -1405,6 +1564,42 @@ export function CandidateInspector({
                 </div>
               </div>
             </div>
+            {/* Platform Admin only. A recruiter sees the declared level above
+                and never the institution, so the full rows are loaded by an
+                admin-only action and rendered nowhere else. */}
+            {adminProfile ? (
+              <div className="hire-profile__group">
+                <p className="hire-profile__group-h">Education records</p>
+                <AdminEducationList
+                  rows={adminProfile.education}
+                  vocab={adminProfile.vocab}
+                  dates={DATE_FORMAT}
+                  onEdit={(rowId, edit) =>
+                    runAdminEdit(
+                      updateCandidateEducationFieldAction({
+                        userId: adminProfile.userId,
+                        rowId,
+                        edit,
+                      }),
+                      (data) =>
+                        updateAdminProfile({ education: data.education }),
+                      "Saved",
+                    )
+                  }
+                  onRemove={(rowId) =>
+                    runAdminEdit(
+                      deleteCandidateEducationEntryAction({
+                        userId: adminProfile.userId,
+                        rowId,
+                      }),
+                      (data) =>
+                        updateAdminProfile({ education: data.education }),
+                      "Entry removed",
+                    )
+                  }
+                />
+              </div>
+            ) : null}
           </div>
 
           <div data-section="skills" className="hire-profile__block">
@@ -1438,7 +1633,35 @@ export function CandidateInspector({
                 (s) => !verifiedMap.has(s.trim().toLowerCase()),
               );
 
+              // Platform Admin: the self-declared claims as stored, each with
+              // its own controls, in place of the names on the search card.
+              // The Evidence-backed group below is the recruiter's, untouched.
+              const adminSelfDeclared = adminProfile ? (
+                <AdminSelfDeclaredSkills
+                  skills={adminProfile.selfDeclaredSkills}
+                  isHit={(name) => skillHighlighted(name, needles)}
+                  onChange={(change) =>
+                    runAdminEdit(
+                      changeCandidateSkillClaimAction({
+                        userId: adminProfile.userId,
+                        change,
+                      }),
+                      (data) =>
+                        updateAdminProfile({
+                          selfDeclaredSkills: data.selfDeclaredSkills,
+                        }),
+                      change.kind === "add"
+                        ? "Skill added"
+                        : change.kind === "remove"
+                          ? "Skill removed"
+                          : "Skill updated",
+                    )
+                  }
+                />
+              ) : null;
+
               if (
+                !adminSelfDeclared &&
                 evidenceBacked.length === 0 &&
                 selfDeclared.length === 0
               ) {
@@ -1476,7 +1699,8 @@ export function CandidateInspector({
                       </ul>
                     </div>
                   )}
-                  {selfDeclared.length > 0 && (
+                  {adminSelfDeclared}
+                  {!adminSelfDeclared && selfDeclared.length > 0 && (
                     <div className="hire-profile__group">
                       <p className="hire-profile__group-h">Self-declared</p>
                       <ul className="hire-profile__chips">
