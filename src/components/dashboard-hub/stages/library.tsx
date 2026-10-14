@@ -85,12 +85,30 @@ function Row({ id, row, items }: { id: string; row: { title: string; sub: string
   const frame = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLUListElement>(null);
   const [offset, setOffset] = useState(0);
+  // How far the strip can move. 0 = every tile already fits, so no arrows.
+  const [max, setMax] = useState(0);
 
-  const page = (dir: 1 | -1) => {
+  // Re-measured on resize (window, sidebar toggle, tiles loading), and the
+  // offset is pulled back if the row no longer reaches that far.
+  useEffect(() => {
     const f = frame.current;
     const st = strip.current;
     if (!f || !st) return;
-    const max = Math.max(0, st.scrollWidth - f.clientWidth);
+    const measure = () => {
+      const next = Math.max(0, st.scrollWidth - f.clientWidth);
+      setMax(next);
+      setOffset((o) => Math.min(o, next));
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(f);
+    ro.observe(st);
+    return () => ro.disconnect();
+  }, [items.length]);
+
+  const page = (dir: 1 | -1) => {
+    const f = frame.current;
+    if (!f) return;
     setOffset((o) => Math.min(max, Math.max(0, o + dir * f.clientWidth * 0.85)));
   };
 
@@ -110,7 +128,8 @@ function Row({ id, row, items }: { id: string; row: { title: string; sub: string
           ))}
         </ul>
         {offset > 0 ? <EdgeButton side="left" onClick={() => page(-1)} /> : null}
-        <EdgeButton side="right" onClick={() => page(1)} />
+        {/* 1px slack: sub-pixel widths can leave a phantom overflow. */}
+        {offset < max - 1 ? <EdgeButton side="right" onClick={() => page(1)} /> : null}
       </div>
     </div>
   );
