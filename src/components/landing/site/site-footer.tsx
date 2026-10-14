@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { FOOTER_COLUMNS } from "./landing-content";
+import { Wordmark } from "@/components/shared/wordmark";
 
 export function SiteFooter({
   showRecruiterCta = false,
@@ -13,13 +13,8 @@ export function SiteFooter({
     <footer className="footer">
       <div className="container footer__grid">
         <div className="footer__brand">
-          <Link href="/" className="footer__logo" aria-label="ABTalks home">
-            <Image
-              src="/landing/abtalks-logo-mark.png"
-              alt="ABTalks"
-              width={561}
-              height={168}
-            />
+          <Link href="/" className="footer__logo" aria-label="Klymb AI home">
+            <Wordmark size="lg" />
           </Link>
         </div>
 
@@ -44,7 +39,7 @@ export function SiteFooter({
       </div>
 
       <div className="container footer__legal">
-        <span>© ABTalksOnAI {year} All rights reserved.</span>
+        <span>© Klymb AI {year} All rights reserved.</span>
        
       </div>
     </footer>

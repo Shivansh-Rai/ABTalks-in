@@ -520,6 +520,29 @@ it is *not* solved.
 - **Local dev:** Google OAuth (if configured) AND Credentials (email + plaintext password).
 - Dev credentials login always navigates **same-origin** (ignores the `AUTH_URL` host in `result.url`) so LAN/phone testing works; local `AUTH_URL` is optional when `trustHost` is on. `allowedDevOrigins` auto-includes LAN IPv4s so Next 16 serves `/_next` on the Network URL.
 
+### Canonical host and cookie scope (plan 189)
+- Production host is **`app.klymb.ai`**. `abtalks.in` / `www.abtalks.in` are
+  kept alive as a path-preserving 308, configured on the Vercel domain (NOT in
+  `next.config.ts` `redirects()`, which match paths and not hosts).
+- **Every cookie this app sets is host-only — no `domain` attribute.**
+  `auth.config.ts` used to widen the Auth.js OAuth-check cookies (PKCE / state
+  / nonce) to `.abtalks.in` to bridge the old apex/www split; that function is
+  deleted. `app.klymb.ai` is one canonical host, so the widening had no purpose
+  — and `klymb.ai` runs a **separate application**, so a `.klymb.ai` cookie
+  would reach it and could be set by any `*.klymb.ai` subdomain (subdomain
+  session fixation). Never reintroduce a cookie domain. Sharing a session with
+  another klymb.ai host is an auth-architecture change, not a config tweak.
+- `middleware.ts`'s `expireOAuthCheckCookies` is host-only too, one
+  `Set-Cookie` per name. It used to loop over `[undefined, ".abtalks.in"]`
+  intending to clear both scopes, but `NextResponse.cookies.set` keys by NAME,
+  so the second iteration overwrote the first and the host-only variant was
+  never emitted — measured on the live deploy: 12 names in
+  `OAUTH_CHECK_COOKIE_NAMES`, 12 headers out, every one `Domain=.abtalks.in`.
+  It had therefore never cleared a host-only cookie, the only case it exists
+  for now that nothing sets a cookie domain.
+- The cutover signed every user out: a host-only session cookie cannot cross
+  domains, and widening it was not an option. Expected, not a bug.
+
 ### Auth.js v5 split config
 - `src/auth.config.ts` — minimal, edge-safe (no Prisma, no `@/lib/*`). Used by middleware.
 - `src/auth.ts` — PrismaAdapter + real Credentials authorize. Used everywhere else.
@@ -746,8 +769,12 @@ them.
 - `DATABASE_URL` — Neon pooled connection
 - `DIRECT_URL` — Neon direct connection (migrations; added to fix deploy lock timeouts)
 - `AUTH_SECRET` — random hex, no fallback
-- `AUTH_URL` / `NEXTAUTH_URL` — site URL (optional locally when `trustHost` is on)
-- `NEXT_PUBLIC_APP_URL` — same as AUTH_URL
+- `AUTH_URL` / `NEXTAUTH_URL` — site URL, `https://app.klymb.ai` in production
+  (optional locally when `trustHost` is on)
+- `NEXT_PUBLIC_APP_URL` — same as AUTH_URL. **Inlined at build time**, so a
+  change needs a redeploy, not a restart. ~14 modules fall back to a hard-coded
+  `https://abtalks.in` when it is unset, so an unset value degrades quietly
+  rather than erroring — see plan 189 §3.
 - `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET`
 - `ADMIN_EMAILS` — comma-separated admin emails. **Seed-time only** since plan
   169: read by `prisma/scripts/seed-admin.ts` to create the first grant in a

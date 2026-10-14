@@ -6,7 +6,7 @@ import "@/app/hackathon/_styles/hackathon-v2.css";
 
 /**
  * Hackathon app routes (dashboard, submission redirect). Same shell as the
- * `/hackathon` landing — the shared ABTalks `DashboardSidebar` plus the
+ * `/hackathon` landing — the shared Klymb AI `DashboardSidebar` plus the
  * hackathon header — so a participant never loses the app navigation.
  * Auth gating stays in each page; this layout only renders chrome.
  */

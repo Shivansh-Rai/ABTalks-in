@@ -143,7 +143,7 @@ export default async function RegisterPage({ searchParams }: PageProps) {
         <Card className="w-full max-w-2xl border-border/60 shadow-md">
           <CardHeader className="space-y-2">
             <CardTitle className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
-              Create Your Profile on ABTalks
+              Create Your Profile on Klymb AI
             </CardTitle>
             {/* Track-neutral: this page is now the shared door for the
                 challenge, the hackathon and the cohort funnels alike. */}

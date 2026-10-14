@@ -4,9 +4,9 @@ import { LEGAL_ENTITY } from "@/lib/legal";
 import { EcosystemPageHeader } from "@/components/shared/ecosystem-page-header";
 
 export const metadata: Metadata = {
-  title: "Contact · ABTalks",
+  title: "Contact · Klymb AI",
   description:
-    "ABTalks entity details, Grievance Officer, and how to reach us about your data.",
+    "Klymb AI entity details, Grievance Officer, and how to reach us about your data.",
 };
 
 type Row = { label: string; value: string; href?: string };

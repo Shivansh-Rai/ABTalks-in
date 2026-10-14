@@ -144,7 +144,7 @@ export const EVENT_TYPE_REGISTRY: Record<string, EventTypeConfig> = {
   // Sent from features/notification/admin-action-notify.ts.
   "account.admin_update": {
     key: "account.admin_update",
-    label: "Account update from ABTalks",
+    label: "Account update from Klymb AI",
     priority: "important",
     suppressionExempt: true,
     emailExempt: true,

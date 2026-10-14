@@ -215,7 +215,7 @@ export async function loadRecruiterIdentities(
       // headline reads "AI Engineer with 2+ years building production-grade AI
       // applications for enterprise clients" while both of their experience rows
       // say "Software Engineer" — so their desk card announced them as an AI
-      // Engineer in ABTalks' own voice, while the detail panel (which reads the
+      // Engineer in Klymb AI's own voice, while the detail panel (which reads the
       // experience table) called them a Software Engineer. Two surfaces, one
       // person, two different jobs, and the card's version happened to match the
       // recruiter's search term, which makes the platform look like it is

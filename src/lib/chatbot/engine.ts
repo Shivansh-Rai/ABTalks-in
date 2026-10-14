@@ -149,7 +149,7 @@ export function confidenceFor(
   // Some real questions are built entirely from function words — "what do you
   // guys actually do" has no content token left after stop-word removal. The
   // lexical side has no opinion there, and scoring that as zero coverage
-  // refused a perfectly ordinary question about what ABTalks is. When there is
+  // refused a perfectly ordinary question about what Klymb AI is. When there is
   // nothing to measure lexically, the semantic signal decides alone.
   if (hasNoContentTerms(query)) {
     const semanticOnly = topSimilarity === null ? 0 : similarityFactor(topSimilarity);

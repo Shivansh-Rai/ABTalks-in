@@ -126,7 +126,7 @@ export function QuestionEditor({
       aria-label={`Question ${index + 1}`}
     >
       {locked ? (
-        <span className="hire-assess-q__badge">Provided by ABTalks</span>
+        <span className="hire-assess-q__badge">Provided by Klymb AI</span>
       ) : null}
       <div className="hire-assess-q__head">
         <span className="hire-assess-q__num" aria-hidden="true">
@@ -339,7 +339,7 @@ export function QuestionEditor({
             placeholder="https://drive.google.com/…"
           />
           <span className="hire-assess-hint">
-            ABTalks does not store files. Candidates open this link, upload
+            Klymb AI does not store files. Candidates open this link, upload
             there, and paste their own link back as the answer.
           </span>
         </label>

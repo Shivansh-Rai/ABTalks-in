@@ -111,7 +111,7 @@ function MilestoneRow({
 
       {!state.taken && !state.unlocked && (
         // Was a purple PNG padlock, which was the one element on this card that
-        // did not belong to the ABTalks palette. A lucide icon in the brand
+        // did not belong to the Klymb AI palette. A lucide icon in the brand
         // orange also scales crisply and drops an image request.
         <div
           className="flex size-[56px] shrink-0 items-center justify-center rounded-[12px] bg-[#E7F2F3] sm:size-[64px]"

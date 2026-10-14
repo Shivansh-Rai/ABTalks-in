@@ -1,5 +1,5 @@
 /**
- * Maps ABTalks cookie choices onto Google Consent Mode v2 signals.
+ * Maps Klymb AI cookie choices onto Google Consent Mode v2 signals.
  *
  * Plain module — no `"server-only"`, no `next/headers` — so client callers
  * (the GA4 loader) and server callers (T-253 emit sites) can share one

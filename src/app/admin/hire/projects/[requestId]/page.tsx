@@ -8,7 +8,7 @@ import { TalentProjectInspector } from "@/components/admin/talent-project-inspec
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Talent project | ABTalks Admin" };
+export const metadata: Metadata = { title: "Talent project | Klymb AI Admin" };
 
 type Props = { params: Promise<{ requestId: string }> };
 

@@ -5,7 +5,7 @@ import { HUB_CARD_CTA_CLASS, HUB_CARD_HOVER_CLASS } from "@/components/dashboard
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Learn | ABTalks",
+  title: "Learn | Klymb AI",
   description: "Free, in-depth technical courses with interactive diagrams.",
 };
 

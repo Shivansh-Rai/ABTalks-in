@@ -28,7 +28,7 @@ import { isDayLockBypassEnabled } from "@/lib/feature-flags";
 import { cn } from "@/lib/utils";
 import { getPracticeProgress } from "@/repositories/coding-practice";
 
-export const metadata: Metadata = { title: "DSA Practice | ABTalks" };
+export const metadata: Metadata = { title: "DSA Practice | Klymb AI" };
 
 type Props = { params: Promise<{ challenge: string }> };
 

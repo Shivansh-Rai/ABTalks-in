@@ -418,7 +418,7 @@ export function AssessmentBuilder({
   }
 
   // ---- Plan 185: import from JSON ------------------------------------------
-  // Never on a locked ABTalks preset (it would swap out the locked questions)
+  // Never on a locked Klymb AI preset (it would swap out the locked questions)
   // or on a sent platform assessment (its questions may already be answered).
   const canImport = !presetLocked && !sent;
   // Embedded, the landing shows the control beside "Start from blank" instead
@@ -474,7 +474,7 @@ export function AssessmentBuilder({
   useImperativeHandle(ref, () => ({ importContent }));
 
   // ---- Plan 185: the recruiter's own templates ------------------------------
-  // Not while customizing an ABTalks preset: a template's questions are
+  // Not while customizing an Klymb AI preset: a template's questions are
   // editable, so saving one there would unlock the locked questions.
   const showTemplateActions = canSaveTemplate && !platform && !presetLocked;
 

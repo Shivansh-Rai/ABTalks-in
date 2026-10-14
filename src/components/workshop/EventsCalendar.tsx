@@ -333,7 +333,7 @@ function NavButton({ dir, onClick }: { dir: -1 | 1; onClick: () => void }) {
 }
 
 /**
- * Month-grid calendar of every ABTalks activity — workshops, the hackathon,
+ * Month-grid calendar of every Klymb AI activity — workshops, the hackathon,
  * and the challenge / cohort start days. Figma node 1:192.
  *
  * `events` arrives from the server parent — the schedule lives in the database

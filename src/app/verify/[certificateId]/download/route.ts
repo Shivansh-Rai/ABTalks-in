@@ -40,7 +40,7 @@ export async function GET(
   }
 
   const base =
-    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "https://abtalks.in";
+    process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ?? "https://app.klymb.ai";
   const verifyUrl = `${base}/verify/${cert.certificateId}`;
 
   const searchParams = new URL(req.url).searchParams;

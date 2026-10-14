@@ -12,7 +12,7 @@ import { RecruiterProfileForm } from "@/components/hire/recruiter-profile-form";
 import { DeleteRecruiterAccountDialog } from "@/components/hire/delete-recruiter-account-dialog";
 
 export const metadata: Metadata = {
-  title: "Settings | ABTalks Hire",
+  title: "Settings | Klymb AI Hire",
 };
 
 /**

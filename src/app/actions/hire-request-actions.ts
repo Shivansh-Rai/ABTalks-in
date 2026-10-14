@@ -32,7 +32,7 @@ const requireRegisteredRecruiter = requireRegisteredRecruiterAction;
 /**
  * Ask to be introduced to one candidate.
  *
- * The recruiter never sees who this is — the request is how ABTalks stays in
+ * The recruiter never sees who this is — the request is how Klymb AI stays in
  * the loop, and how the candidate keeps a say in being contacted at all.
  */
 export async function placeEngagementRequestAction(

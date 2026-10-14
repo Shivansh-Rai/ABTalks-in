@@ -53,7 +53,7 @@ export type IssueResult =
  * Create a code for an email.
  *
  * The gate depends on what they are doing. Registration is open — anyone can
- * apply, and the ABTalks team decides afterwards — so the only thing checked is
+ * apply, and the Klymb AI team decides afterwards — so the only thing checked is
  * that they have not already registered. Signing in is the opposite: it needs a
  * registration to exist, because there is nothing to sign in to otherwise.
  */

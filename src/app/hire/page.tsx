@@ -6,7 +6,7 @@ import { isHireProPreviewEnabled, isVirtualCandidatesEnabled } from "@/lib/featu
 import { ScoutChat } from "@/components/hire/scout-chat";
 
 export const metadata: Metadata = {
-  title: "Scout | Hire with ABTalks",
+  title: "Scout | Hire with Klymb AI",
   description:
     "Describe the role. Scout matches candidates by verified platform evidence — not resumes.",
 };

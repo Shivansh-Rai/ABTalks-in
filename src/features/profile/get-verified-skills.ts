@@ -6,7 +6,7 @@ import { getChallengeProgressStats } from "@/repositories/progress";
 import { listChallengePeRows } from "@/repositories/enrollment-state";
 
 /**
- * ABTalks Verified Skills — derived from curriculum + completion.
+ * Klymb AI Verified Skills — derived from curriculum + completion.
  *
  *   LearningProgram (curriculum)
  *     → ProgramSkill (which core skills it teaches)

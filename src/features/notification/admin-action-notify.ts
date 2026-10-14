@@ -46,55 +46,55 @@ function copyFor(
     case "progress_reset":
       return {
         title: "Your challenge progress was reset",
-        body: "An ABTalks admin reset your 60-Day Challenge progress. You can start again from Day 1 on your dashboard.",
+        body: "An Klymb AI admin reset your 60-Day Challenge progress. You can start again from Day 1 on your dashboard.",
         href: "/dashboard",
       };
     case "ready_for_interview":
       return notice.ready
         ? {
             title: "You are marked ready for interviews",
-            body: "An ABTalks admin marked your profile as ready for interviews.",
+            body: "An Klymb AI admin marked your profile as ready for interviews.",
             href: "/dashboard",
           }
         : {
             title: "Your ready-for-interview status was removed",
-            body: "An ABTalks admin removed the ready-for-interview mark from your profile.",
+            body: "An Klymb AI admin removed the ready-for-interview mark from your profile.",
             href: "/dashboard",
           };
     case "removed_from_challenge":
       return {
         title: "You were removed from the 60-Day Challenge",
-        body: "An ABTalks admin removed you from the 60-Day Challenge. If you think this is a mistake, reply to this email.",
+        body: "An Klymb AI admin removed you from the 60-Day Challenge. If you think this is a mistake, reply to this email.",
         href: "/dashboard",
       };
     case "synergy_granted":
       return {
         title: `You received ${notice.points} synergy points`,
-        body: `An ABTalks admin added ${notice.points} synergy points to your account.`,
+        body: `An Klymb AI admin added ${notice.points} synergy points to your account.`,
         href: "/dashboard",
       };
     case "account_restored":
       return {
-        title: "Your ABTalks account has been restored",
+        title: "Your Klymb AI account has been restored",
         body: "Your account is active again and you can sign in as usual.",
         href: "/login",
       };
     case "account_secured":
       return {
-        title: "You were signed out of ABTalks on all devices",
-        body: "For your security, an ABTalks admin signed your account out everywhere. Sign in again to continue. If you did not expect this, reply to this email.",
+        title: "You were signed out of Klymb AI on all devices",
+        body: "For your security, an Klymb AI admin signed your account out everywhere. Sign in again to continue. If you did not expect this, reply to this email.",
         href: "/login",
       };
     case "account_disabled":
       return {
-        title: "Your ABTalks account has been disabled",
-        body: "An ABTalks admin disabled your account, so you can no longer sign in. If you think this is a mistake, reply to this email.",
+        title: "Your Klymb AI account has been disabled",
+        body: "An Klymb AI admin disabled your account, so you can no longer sign in. If you think this is a mistake, reply to this email.",
         href: "",
       };
     case "account_deleted":
       return {
-        title: "Your ABTalks account has been deleted",
-        body: "An ABTalks admin deleted your account and the personal data linked to it. If you think this is a mistake, reply to this email.",
+        title: "Your Klymb AI account has been deleted",
+        body: "An Klymb AI admin deleted your account and the personal data linked to it. If you think this is a mistake, reply to this email.",
         href: "",
       };
   }
@@ -121,9 +121,9 @@ async function sendDirect(
   <h2 style="color: #000000; margin: 16px 0 8px;">${escapeHtml(copy.title)}</h2>
   <p style="color: #353535;">${escapeHtml(copy.body)}</p>
   <hr style="border: none; border-top: 1px solid #E9E9E9; margin: 24px 0;" />
-  <p style="color: #A5A5A5; font-size: 12px;">This is a service message about your ABTalks account.</p>
+  <p style="color: #A5A5A5; font-size: 12px;">This is a service message about your Klymb AI account.</p>
 </div>`;
-  const text = `Hi ${greetingName},\n\n${copy.title}\n\n${copy.body}\n\n---\nThis is a service message about your ABTalks account.`;
+  const text = `Hi ${greetingName},\n\n${copy.title}\n\n${copy.body}\n\n---\nThis is a service message about your Klymb AI account.`;
 
   const result = await sendEmail({
     to,

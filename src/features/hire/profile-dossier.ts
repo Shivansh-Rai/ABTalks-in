@@ -15,7 +15,7 @@ import type { CandidateDossier, EvidenceCoverage } from "@/features/hire/types";
  * other reason.
  *
  * This is the track that makes discoverability derive from profile state alone.
- * Everyone here has zero ABTalks activity by construction: no cohort, no
+ * Everyone here has zero Klymb AI activity by construction: no cohort, no
  * challenge, no hackathon, no missions, no interview. That is not a defect to
  * be papered over, so every evidence figure below is an honest zero rather than
  * an invented one, and `provenance` marks the profile facts `declared` — they
@@ -99,7 +99,7 @@ export async function buildProfileDossierSet(
         resume: p.hasResume,
       }),
       evidence: {
-        // Honest zeros: this track exists precisely for people with no ABTalks
+        // Honest zeros: this track exists precisely for people with no Klymb AI
         // record. Nothing here is a floor — it is an absence, and the scorer
         // reads it as one.
         missionsPassed: verified(0),

@@ -1,8 +1,8 @@
-# Legal, Privacy & Data — What ABTalks Publishes
+# Legal, Privacy & Data — What Klymb AI Publishes
 
 People also ask this as: is my data safe · what do you do with my data · can I
 delete my account · privacy policy · terms and conditions · cookies · who runs
-ABTalks legally · do you charge money · are certificates accredited · GDPR ·
+Klymb AI legally · do you charge money · are certificates accredited · GDPR ·
 DPDP · data request · unsubscribe.
 
 The assistant can summarise what these public pages say. It must **not give
@@ -11,10 +11,10 @@ themselves or team@abtalks.in.
 
 Public pages: `/terms`, `/privacy`, `/cookies`, and `/privacy/requests`.
 
-## Is ABTalks free? (the authoritative answer)
+## Is Klymb AI free? (the authoritative answer)
 
 The Terms state that **the Service is currently provided free of charge**.
-ABTalks does not collect fees and does not process payment cards or other
+Klymb AI does not collect fees and does not process payment cards or other
 payment instruments. If paid offerings are introduced later, the prices,
 billing terms, cancellation rights and refund policy will be shown at the
 point of purchase.
@@ -29,20 +29,20 @@ cash or purchasable.
 
 ## Certificates — the legal framing
 
-Certificates issued by ABTalks are certificates of **participation and
+Certificates issued by Klymb AI are certificates of **participation and
 completion only**. They are **not accredited academic or professional
 qualifications**, confer no academic credit, and are not recognised or
 accredited by any university, statutory body, examination authority or
 regulator in India or elsewhere. They must not be represented as a degree,
 diploma or licensed credential. Certificate IDs and recipient names may be
-publicly verifiable at `/verify/[certificateId]`, and ABTalks may revoke a
+publicly verifiable at `/verify/[certificateId]`, and Klymb AI may revoke a
 certificate for fraud or Terms violations. See `certificates.md`.
 
-## Hiring — what ABTalks does and does not promise
+## Hiring — what Klymb AI does and does not promise
 
-ABTalks is not a party to any employment relationship and makes **no hiring
+Klymb AI is not a party to any employment relationship and makes **no hiring
 guarantees**. Talent-pool inclusion, a shared assessment report, and jobs
-board listings are **introductions only** — ABTalks does not screen, vet,
+board listings are **introductions only** — Klymb AI does not screen, vet,
 endorse or vouch for any employer or listing, and does not warrant that you
 will get an interview, offer, internship or job, or make any representation
 about salary, role or timeline. Recruiters must use the talent portal only
@@ -85,16 +85,16 @@ Transactional messages (sign-in, OTP, registration and event confirmations,
 account notices) are part of running the service. The newsletter is
 separate: signup forms include a newsletter checkbox that is **ticked by
 default**; you can untick it, and you can unsubscribe from marketing email at
-any time. The newsletter is optional and is not required to use ABTalks.
+any time. The newsletter is optional and is not required to use Klymb AI.
 
 ## Policy versions
 
 Terms version 2026-08-10 · Privacy version 2026-08-11 · Cookie policy
 version 2026-08-10. Policies can change; the live pages are authoritative.
 
-## Who ABTalks is, legally
+## Who Klymb AI is, legally
 
-ABTalks is the trading name of **ABTalksOnAI**, a sole proprietorship
+Klymb AI is the trading name of **Klymb AI**, a sole proprietorship
 (proprietary) registered in India, classified as a Micro enterprise, whose
 major activity is services under NIC 62099 (other information technology and
 computer service activities). Registration details are shown on the public

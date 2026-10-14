@@ -16,7 +16,7 @@ import { TickIcon } from "./rv-icons";
  */
 
 const TABS = [
-  { id: "evidence", label: "ABTalks Evidence" },
+  { id: "evidence", label: "Klymb AI Evidence" },
   { id: "experience", label: "Experience" },
   { id: "education", label: "Education" },
   { id: "skills", label: "Skills" },
@@ -35,7 +35,7 @@ export function PanelPreview({ tabs }: { tabs: CandidateRecruiterView["tabs"] })
           <span />
           <span />
         </span>
-        <span className="rv-frame__label">ABTalks Hire · candidate detail</span>
+        <span className="rv-frame__label">Klymb AI Hire · candidate detail</span>
       </div>
 
       <div className="rv-frame__body">
@@ -187,7 +187,7 @@ function SkillsTab({ tabs }: { tabs: CandidateRecruiterView["tabs"] }) {
     <>
       {verified.length > 0 && (
         <div className="rv-kv__pair">
-          <span className="rv-kv__k">Verified by ABTalks</span>
+          <span className="rv-kv__k">Verified by Klymb AI</span>
           <div className="rv-chips">
             {verified.map((s) => (
               <span className="rv-chip rv-chip--verified" key={s.name}>

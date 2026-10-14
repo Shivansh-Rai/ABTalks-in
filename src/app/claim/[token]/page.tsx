@@ -29,7 +29,7 @@ import { loadClaimPreview } from "@/features/resume/import/outreach";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Claim your ABTalks profile",
+  title: "Claim your Klymb AI profile",
   robots: { index: false, follow: false },
 };
 
@@ -67,7 +67,7 @@ export default async function ClaimPage({ params }: Props) {
     return (
       <Shell
         title="This link has expired"
-        description="Sign in with the email on your résumé to reach your ABTalks profile."
+        description="Sign in with the email on your résumé to reach your Klymb AI profile."
       >
         <Link href={SIGN_IN_HREF} className={cn(buttonVariants(), "w-full")}>
           Go to sign in
@@ -80,7 +80,7 @@ export default async function ClaimPage({ params }: Props) {
     return (
       <Shell title="This profile is no longer available" description="There is nothing to claim at this link.">
         <Link href="/" className={cn(buttonVariants({ variant: "outline" }), "w-full")}>
-          Go to ABTalks
+          Go to Klymb AI
         </Link>
       </Shell>
     );

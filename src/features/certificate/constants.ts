@@ -30,8 +30,8 @@ export const CERTIFICATE_TYPES: Record<CertificateType, CertificateTypeConfig> =
     subtitle: "India's AI Vibe Coding Hackathon",
     fileSlug: "ViCoDathon-2026",
   },
-  COHORT: { code: "CH", title: "ABTalks Cohort", subtitle: "Cohort Program", fileSlug: "Cohort" },
-  WORKSHOP: { code: "WS", title: "ABTalks Workshop", subtitle: "Workshop", fileSlug: "Workshop" },
+  COHORT: { code: "CH", title: "Klymb AI Cohort", subtitle: "Cohort Program", fileSlug: "Cohort" },
+  WORKSHOP: { code: "WS", title: "Klymb AI Workshop", subtitle: "Workshop", fileSlug: "Workshop" },
 };
 
 type RGB = { r: number; g: number; b: number };

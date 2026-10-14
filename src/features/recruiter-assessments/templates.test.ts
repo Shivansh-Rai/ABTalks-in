@@ -656,7 +656,7 @@ async function run() {
     assert(!/searchParams[\s\S]{0,200}organizationId/.test(page), "the scope never comes from the URL");
   });
 
-  await suite("G5. ABTalks presets are untouched by personal templates", () => {
+  await suite("G5. Klymb AI presets are untouched by personal templates", () => {
     const presets = readSource("src/features/recruiter-assessments/presets.ts");
     assert(!presets.includes("./templates") && !presets.includes("prisma"), "presets stay static code");
     const picker = readSource("src/components/hire/assessment/preset-picker.tsx");

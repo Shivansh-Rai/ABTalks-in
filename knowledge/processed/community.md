@@ -1,6 +1,6 @@
 # Community
 
-ABTalks positions itself as a build-in-public community for learners who want visible proof of work.
+Klymb AI positions itself as a build-in-public community for learners who want visible proof of work.
 
 Known community figures from the supplied sources include:
 - 10,000+ AI learners and community members
@@ -12,8 +12,8 @@ Known community figures from the supplied sources include:
 
 | Violation | Consequence |
 |---|---|
-| Foul language, harassment, harmful messaging | Permanent ban from ABTalks |
+| Foul language, harassment, harmful messaging | Permanent ban from Klymb AI |
 | Plagiarism, platform misuse | 60-day challenge ban |
 
-Source: ABTalks program pages, captured in the retired `abtalks-chatbot-kb.md`
+Source: Klymb AI program pages, captured in the retired `abtalks-chatbot-kb.md`
 site scrape (see `knowledge/metadata/sources.json`, `chatbot-kb-site-scrape`).

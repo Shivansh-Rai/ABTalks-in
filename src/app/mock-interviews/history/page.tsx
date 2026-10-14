@@ -8,7 +8,7 @@ import { resolvePlatformUserId } from "@/features/interview/platform/provider";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Your Practice History | ABTalks",
+  title: "Your Practice History | Klymb AI",
 };
 
 /**

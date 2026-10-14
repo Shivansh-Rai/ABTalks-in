@@ -38,7 +38,7 @@ import { routesViaAbtMailer, sendViaAbtMailer } from "@/lib/abt-mailer";
  */
 
 const FROM_EMAIL = process.env.FROM_EMAIL || "team@abtalks.in";
-const FROM_NAME = process.env.FROM_NAME || "ABTalks";
+const FROM_NAME = process.env.FROM_NAME || "Klymb AI";
 const REPLY_TO = process.env.REPLY_TO_EMAIL || FROM_EMAIL;
 
 export type SendEmailResult =
@@ -63,7 +63,7 @@ export async function sendEmail(opts: {
   /**
    * T-232: overrides the global Reply-To. Outreach mail must not point at the
    * shared team inbox, so it passes a no-reply address and asks the candidate
-   * to reply on ABTalks. Every other caller is unchanged.
+   * to reply on Klymb AI. Every other caller is unchanged.
    */
   replyTo?: string;
   /** T-259: what this message is, e.g. "recruiter.otp". Defaults to "generic". */

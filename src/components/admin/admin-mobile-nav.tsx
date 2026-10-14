@@ -152,7 +152,7 @@ export function AdminMobileNav() {
               onClick={() => setOpen(false)}
               className="mt-4 border-t border-[#E9E9E9] pt-4 text-xs font-medium text-[#03535F] hover:underline"
             >
-              ← Back to ABTalks
+              ← Back to Klymb AI
             </Link>
           </div>
         </>

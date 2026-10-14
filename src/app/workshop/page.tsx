@@ -40,13 +40,13 @@ import {
  * actually published.
  */
 export const metadata: Metadata = {
-  title: "ABTalks | Live Workshops",
+  title: "Klymb AI | Live Workshops",
   description:
-    "Free live workshops from ABTalks, most Saturdays on YouTube. Practical AI, career and build sessions — see what is coming up and catch the past recordings.",
+    "Free live workshops from Klymb AI, most Saturdays on YouTube. Practical AI, career and build sessions — see what is coming up and catch the past recordings.",
   openGraph: {
-    title: "ABTalks | Live Workshops",
+    title: "Klymb AI | Live Workshops",
     description:
-      "Free live workshops from ABTalks, most Saturdays on YouTube.",
+      "Free live workshops from Klymb AI, most Saturdays on YouTube.",
     type: "website",
   },
 };

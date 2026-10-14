@@ -7,7 +7,7 @@ import { OutreachThread } from "@/components/outreach/outreach-thread";
 import { OutreachReplyBox } from "@/components/outreach/outreach-reply-box";
 
 export const metadata: Metadata = {
-  title: "Conversation | ABTalks Hire",
+  title: "Conversation | Klymb AI Hire",
 };
 
 /**

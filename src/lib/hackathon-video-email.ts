@@ -40,7 +40,7 @@ export async function sendVideoWelcomeEmail(
       ${VIDEOTHON.resultsLabel}
     </p>
     ${whatsappHtml}
-    <p style="margin:0 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:0 0 24px;">Thanks,<br>The Klymb AI team</p>
     <p style="margin:0;font-size:12px;color:#8A8A8A;border-top:1px solid #E9E9E9;padding-top:16px;">
       You received this email because ${email} was used to register for ${VIDEOTHON.name}. If that was a mistake, reply to this email.
     </p>
@@ -64,7 +64,7 @@ export async function sendVideoWelcomeEmail(
       ? `Kickoff updates and the brief are shared in the WhatsApp group: ${VIDEOTHON.whatsappLink}\n`
       : "",
     "Thanks,",
-    "The ABTalks team",
+    "The Klymb AI team",
     "",
     "---",
     `You received this email because ${email} was used to register for ${VIDEOTHON.name}. If that was a mistake, reply to this email.`,

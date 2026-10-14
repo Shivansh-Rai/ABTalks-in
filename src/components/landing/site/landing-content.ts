@@ -24,7 +24,7 @@ export const STATS = [
 
 export const BRIDGE_SLABS = [
   { key: "top", slab: 3, label: "100+ companies" },
-  { key: "middle", slab: 2, label: "ABTalks" },
+  { key: "middle", slab: 2, label: "Klymb AI" },
   { key: "bottom", slab: 1, label: "13k+ users" },
 ] as const;
 
@@ -47,7 +47,7 @@ export const BRIDGE_PANELS = [
   },
   {
     label: "The Bridge",
-    title: "ABTalks",
+    title: "Klymb AI",
     body: "We run the programs, score the work, and match evidence to requirements. Profiles move only when the candidate releases them.",
     items: null,
   },
@@ -374,7 +374,7 @@ export const COMMUNITY_BULLETS = [
 export const COMMUNITY_PHOTOS = [
   {
     src: "/landing/site/photo-1.webp",
-    alt: "Builders at an ABTalks hackathon",
+    alt: "Builders at an Klymb AI hackathon",
     tile: 1,
     width: 230,
     height: 400,
@@ -388,7 +388,7 @@ export const COMMUNITY_PHOTOS = [
   },
   {
     src: "/landing/site/photo-3.webp",
-    alt: "Demo night at an ABTalks community meetup",
+    alt: "Demo night at an Klymb AI community meetup",
     tile: 3,
     width: 220,
     height: 400,
@@ -402,7 +402,7 @@ export const COMMUNITY_PHOTOS = [
   },
   {
     src: "/landing/site/photo-5.webp",
-    alt: "The ABTalks community at a workshop",
+    alt: "The Klymb AI community at a workshop",
     tile: 5,
     width: 220,
     height: 400,

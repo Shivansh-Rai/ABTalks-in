@@ -21,7 +21,7 @@ export function RulesSlide() {
       </motion.div>
 
       <p className="mt-2 text-sm text-muted-foreground">
-        ABTalks is a place to grow with serious learners. Read these carefully.
+        Klymb AI is a place to grow with serious learners. Read these carefully.
       </p>
 
       <motion.div className="mt-4 space-y-2.5">
@@ -40,7 +40,7 @@ export function RulesSlide() {
               <p className="mt-1 text-xs text-muted-foreground">
                 Any abusive language, harassment, or harmful messaging will lead
                 to <strong className="text-foreground">permanent ban</strong> from
-                ABTalks.
+                Klymb AI.
               </p>
             </motion.div>
           </motion.div>

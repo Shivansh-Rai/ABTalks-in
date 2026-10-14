@@ -124,23 +124,33 @@ function applySourceCookie(
 }
 
 /**
- * Drop leftover Auth.js PKCE/state/nonce cookies (host-only and .abtalks.in).
- * A stale verifier from a previous Google attempt decrypts as InvalidCheck and
- * 500s /api/auth/error — especially when switching accounts or bouncing www.
+ * Drop leftover Auth.js PKCE/state/nonce cookies. A stale verifier from a
+ * previous Google attempt decrypts as InvalidCheck and 500s /api/auth/error —
+ * especially when switching accounts.
+ *
+ * HOST-ONLY, one Set-Cookie per name. This used to loop over
+ * `[undefined, ".abtalks.in"]` to also clear the cookies `auth.config.ts`
+ * widened — but `response.cookies.set` keys by NAME, so the second iteration
+ * overwrote the first and only the `.abtalks.in` variant was ever emitted.
+ * Measured on the live deploy: 12 names in, 12 Set-Cookie headers out, every
+ * one carrying `Domain=.abtalks.in`. The sweep has therefore never cleared a
+ * host-only cookie — the exact case it exists for.
+ *
+ * `auth.config.ts` no longer sets a cookie domain at all (plan 189 §6-A), so
+ * host-only is the only scope this app creates and the only one worth
+ * clearing. A widened cookie left on a browser from an older deploy is scoped
+ * to a domain app.klymb.ai is not under, so it is never sent here and cannot
+ * be cleared from here either; it expires on its own 15-minute maxAge.
  */
 function expireOAuthCheckCookies(response: NextResponse) {
-  const domains: (string | undefined)[] = [undefined, ".abtalks.in"];
   for (const name of OAUTH_CHECK_COOKIE_NAMES) {
-    for (const domain of domains) {
-      response.cookies.set(name, "", {
-        path: "/",
-        maxAge: 0,
-        httpOnly: true,
-        sameSite: "lax",
-        secure: name.startsWith("__Secure-"),
-        ...(domain ? { domain } : {}),
-      });
-    }
+    response.cookies.set(name, "", {
+      path: "/",
+      maxAge: 0,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: name.startsWith("__Secure-"),
+    });
   }
 }
 

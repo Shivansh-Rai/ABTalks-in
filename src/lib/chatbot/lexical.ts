@@ -161,7 +161,7 @@ function coverageWeight(idf: number): number {
  * Terms absent from the corpus entirely ("weather", "hostel") are charged the
  * maximum IDF, so a question built around unknown words cannot score well no
  * matter how strongly its filler words match. Common words are cheap, so a
- * short question made of known terms ("What is ABTalks?") still scores high.
+ * short question made of known terms ("What is Klymb AI?") still scores high.
  */
 export function termCoverage(
   index: LexicalIndex,

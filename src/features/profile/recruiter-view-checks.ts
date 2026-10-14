@@ -153,9 +153,9 @@ const DROPPED = new Set(["sessions-invalidated", "track-pools", "skills-evidence
 const PLATFORM_ROW: CandidateSafeCheck = {
   id: "platform-hold",
   tone: "blocked",
-  label: "Managed by ABTalks",
+  label: "Managed by Klymb AI",
   detail:
-    "Some visibility settings on your account are managed by ABTalks and are not something you can change from your profile. If you think this is wrong, contact support.",
+    "Some visibility settings on your account are managed by Klymb AI and are not something you can change from your profile. If you think this is wrong, contact support.",
   fixStep: null,
   fixLabel: null,
 };
@@ -226,7 +226,7 @@ function headlineFor(
   openCount: number,
 ): string {
   if (!appears && platformHold) {
-    return "You are not appearing in recruiter search, and the reason is on ABTalks' side.";
+    return "You are not appearing in recruiter search, and the reason is on Klymb AI's side.";
   }
   if (!appears) {
     return openCount > 0

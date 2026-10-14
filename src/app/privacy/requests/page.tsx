@@ -6,8 +6,8 @@ import { DataRightsRequestForm } from "@/components/legal/data-rights-request-fo
 import { EcosystemPageHeader } from "@/components/shared/ecosystem-page-header";
 
 export const metadata: Metadata = {
-  title: "Data rights request · ABTalks",
-  description: "Request access, correction, or deletion of your ABTalks data",
+  title: "Data rights request · Klymb AI",
+  description: "Request access, correction, or deletion of your Klymb AI data",
   robots: { index: false },
 };
 

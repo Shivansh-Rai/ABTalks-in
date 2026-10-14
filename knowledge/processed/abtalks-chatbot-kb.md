@@ -1,4 +1,4 @@
-# ABTalks — Helper Chatbot Knowledge Base (LEGACY SNAPSHOT — LOWEST PRECEDENCE)
+# Klymb AI — Helper Chatbot Knowledge Base (LEGACY SNAPSHOT — LOWEST PRECEDENCE)
 
 > **Precedence warning.** This is a site snapshot taken on **10 August 2026**
 > and it is the OLDEST source in the corpus. Wherever it disagrees with a
@@ -11,7 +11,7 @@
 > registration state it describes is now historical. Never quote a date,
 > registration status or price from this file.
 
-**Purpose:** Ground truth for an ABTalks helper chatbot serving four audiences: students, recruiters, working professionals, and investors.
+**Purpose:** Ground truth for an Klymb AI helper chatbot serving four audiences: students, recruiters, working professionals, and investors.
 **Sources:** abtalks.in (all public pages) + 60-Day Claude AI Challenge tracker + individual challenge task pages (Days 1–60).
 **Currency:** Reflects state as of Aug 10, 2026. Update numbers on `10,000+ members / 500+ projects / 100+ hiring partners` if the site changes.
 **Anti-hallucination rule for the bot:** Never invent numbers, testimonial names, program dates, or curriculum items not present in this document. If asked something outside this KB, say so and offer to route to `team@abtalks.in`.
@@ -20,7 +20,7 @@
 
 ## 0. THIRTY-SECOND SUMMARY
 
-ABTalks is an India-focused AI-native learning community, founded by Anil Bajpai, that helps college students and working professionals build public proof of work through daily challenges, cohort programs, and hackathons — then routes the strongest builders to a hiring partner network. Community participation and the flagship programs are free to join. For the precise current wording — the Terms state the service is **currently provided free of charge**, the homepage says most challenges are free with any paid cohort priced up front, and nobody placed through the recruiter network pays a placement fee — see `legal-and-privacy.md`, which supersedes this line. Public tagline: *"Code consistently. Post publicly. Get noticed."* Stated scale: **10,000+ members, 500+ projects, 100+ hiring partners**. Positioning line to remember: **"Not a course. A build challenge."**
+Klymb AI is an India-focused AI-native learning community, founded by Anil Bajpai, that helps college students and working professionals build public proof of work through daily challenges, cohort programs, and hackathons — then routes the strongest builders to a hiring partner network. Community participation and the flagship programs are free to join. For the precise current wording — the Terms state the service is **currently provided free of charge**, the homepage says most challenges are free with any paid cohort priced up front, and nobody placed through the recruiter network pays a placement fee — see `legal-and-privacy.md`, which supersedes this line. Public tagline: *"Code consistently. Post publicly. Get noticed."* Stated scale: **10,000+ members, 500+ projects, 100+ hiring partners**. Positioning line to remember: **"Not a course. A build challenge."**
 
 Flagship products:
 1. **60-Day Claude AI Challenge** — daily prompt-engineering + capstone builds
@@ -32,8 +32,8 @@ Flagship products:
 
 ## 1. ORGANIZATION FACTS
 
-- **Name:** ABTalks
-- **Founder:** Anil Bajpai *(surfaced on auth pages: "Built by Anil Bajpai's ABTalks community")*
+- **Name:** Klymb AI
+- **Founder:** Anil Bajpai *(surfaced on auth pages: "Built by Anil Bajpai's Klymb AI community")*
 - **Core team member surfaced publicly:** Sarthak Gupta (Founding Member)
 - **Location / focus market:** India
 - **Website:** https://abtalks.in
@@ -41,7 +41,7 @@ Flagship products:
 - **Auth:** Google OAuth (single sign-in method site-wide)
 - **Tech stack signal:** Next.js on Vercel (deployment IDs visible in HTML)
 
-**Handle across every social platform:** `abtalksonai` / `@ABTalksOnAI`
+**Handle across every social platform:** `Klymb AI` / `@ABTalksOnAI`
 - Instagram: instagram.com/abtalksonai/
 - LinkedIn: linkedin.com/company/abtalks-on-ai/
 - YouTube: youtube.com/@ABTalksOnAI
@@ -68,12 +68,12 @@ Flagship products:
 ### The three-step model
 1. **Learn Daily** — Choose your track and build practical skills through focused challenges and live sessions.
 2. **Build & Showcase** — Ship real work, publish your progress, and turn consistent effort into a visible portfolio.
-3. **Get Hired** — Stand out through proof of work and become discoverable to recruiters in the ABTalks network.
+3. **Get Hired** — Stand out through proof of work and become discoverable to recruiters in the Klymb AI network.
 
 ### Anti-course positioning (used on `/claude-signup`)
 > **"Not a course. A build challenge."**
 
-Everything ABTalks ships is oriented around visible artifacts (GitHub commits, deployed URLs, LinkedIn posts, PROMPTS.md files) rather than passive lectures or completion certificates as the primary reward.
+Everything Klymb AI ships is oriented around visible artifacts (GitHub commits, deployed URLs, LinkedIn posts, PROMPTS.md files) rather than passive lectures or completion certificates as the primary reward.
 
 ### Six narrative levers to reuse
 1. **Proof of work over credentials.** Every program terminates in public artifacts, not just a certificate.
@@ -118,13 +118,13 @@ Four distinct products. Each has its own tagline, audience, cadence, and success
 **Community rules (explicit sanctions):**
 | Violation | Consequence |
 |---|---|
-| Foul language, harassment, harmful messaging | **Permanent ban** from ABTalks |
+| Foul language, harassment, harmful messaging | **Permanent ban** from Klymb AI |
 | Plagiarism, platform misuse | **60-day challenge ban** |
 
 **FAQ (verbatim from the page):**
 - *Do I need prior experience?* — No. Pick the domain that matches what you want to learn. Tasks build progressively, and each day includes a focused problem and learning resources.
 - *What if I miss a day?* — You can continue the challenge, but a missed day breaks your current streak. Submissions follow IST day boundaries.
-- *How do I submit my work?* — Push your solution to GitHub, then publish your progress on LinkedIn. Both links become proof of work on your ABTalks profile.
+- *How do I submit my work?* — Push your solution to GitHub, then publish your progress on LinkedIn. Both links become proof of work on your Klymb AI profile.
 - *Do I get a certificate?* — Completing the challenge gives you a finished public portfolio and completion recognition. The core outcome is visible proof of consistent work.
 
 **Route this program to:** college students who want structured daily coding practice + hireable public portfolio in their chosen domain.
@@ -294,7 +294,7 @@ This is the flagship product. Every day is a single Claude prompt the participan
   - `30-day-growth-plan.md` (day-by-day 30-day roadmap from MVP → complete product)
   - `daily-build-prompt.md` (one reusable prompt for the 30-day plan)
   - **Release Version v1.0.0** on GitHub
-  - Premium HTML-to-PDF **Certificate of Completion** (name, project, v1.0.0, date, ABTalks branding, Claude credited as co-creator/mentor, links to abtalks.in + LinkedIn company page)
+  - Premium HTML-to-PDF **Certificate of Completion** (name, project, v1.0.0, date, Klymb AI branding, Claude credited as co-creator/mentor, links to abtalks.in + LinkedIn company page)
   - 200-word graduation reflection, single-file HTML graduation infographic, LinkedIn graduation post
 
 **Key constraints across the capstone (memorize for the bot):**
@@ -353,7 +353,7 @@ A student who completes the 60-Day Claude AI Challenge has demonstrably built ea
 - 50 single-file HTML artifacts, one per day
 - 1 deployed v1.0.0 capstone product with README, license, docs
 - LinkedIn build log across 60 days
-- ABTalks profile with proof-of-work URLs
+- Klymb AI profile with proof-of-work URLs
 - (Optional) capstone Certificate of Completion PDF
 
 ---
@@ -395,7 +395,7 @@ A: No. The AI Cohort explicitly asks for ≥8 GB RAM only, and uses Ollama / Gro
 A: For the 60-Day Coding Challenge and AI Cohort, yes — pick the track that matches your current level. For the 60-Day Claude AI Challenge, you can start as a beginner; the daily tasks are prompts you run, not code you write from scratch (though the outputs are apps you'll deploy).
 
 **Q: How do I submit work?**
-A: Push your code to GitHub, then post progress on LinkedIn. Both links become proof of work on your ABTalks profile.
+A: Push your code to GitHub, then post progress on LinkedIn. Both links become proof of work on your Klymb AI profile.
 
 **Q: What if I miss a day?**
 A: You can keep going, but the missed day breaks your streak. Submissions follow IST day boundaries.
@@ -410,37 +410,37 @@ A: 31-Day AI Cohort: ~2–4 hours/day. 60-Day Claude Challenge: varies by task, 
 A: Foul language / harassment → **permanent ban**. Plagiarism or platform misuse → **60-day challenge ban**. Be real, be respectful, ship real work.
 
 **Q: How do I join the community?**
-A: WhatsApp community: chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi. Also Discord, LinkedIn, Instagram, YouTube, X — all under `abtalksonai`.
+A: WhatsApp community: chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi. Also Discord, LinkedIn, Instagram, YouTube, X — all under `Klymb AI`.
 
-**Q: How do I apply for placements or internships through ABTalks?**
-A: Email your resume, cover letter, and anything else relevant (portfolio link, GitHub, LinkedIn, project links) to **team@abtalks.in**. The team reviews applications and routes strong profiles to the hiring partner network. Openings themselves — internships, full-time roles, freelance briefs — are shared inside the **ABTalks WhatsApp community** (chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi), so join it if you haven't already, so you don't miss role announcements.
+**Q: How do I apply for placements or internships through Klymb AI?**
+A: Email your resume, cover letter, and anything else relevant (portfolio link, GitHub, LinkedIn, project links) to **team@abtalks.in**. The team reviews applications and routes strong profiles to the hiring partner network. Openings themselves — internships, full-time roles, freelance briefs — are shared inside the **Klymb AI WhatsApp community** (chat.whatsapp.com/LSru1BgvifpEB4OMZsaZEi), so join it if you haven't already, so you don't miss role announcements.
 
 **Q: Do I need to have finished a program before applying?**
 A: No — you can email team@abtalks.in anytime. But a completed program (any of the four) gives you public artifacts to point to in your application, which is exactly the signal recruiters in the network are looking for.
 
 **Q: What should go in the application email?**
-A: Resume, cover letter, and links that prove work — GitHub, deployed projects, LinkedIn build log, ABTalks profile, portfolio site. Anything else material to the role you're targeting.
+A: Resume, cover letter, and links that prove work — GitHub, deployed projects, LinkedIn build log, Klymb AI profile, portfolio site. Anything else material to the role you're targeting.
 
 ---
 
 ### 7.2 For RECRUITERS / HIRING PARTNERS
 
-**Q: What talent does ABTalks produce?**
+**Q: What talent does Klymb AI produce?**
 A: Indian college students and early-career professionals who have shipped 50+ public artifacts + a deployed v1.0.0 product with full SDLC documentation. See **Section 5** for the full skills matrix.
 
 **Q: How do I access candidates?**
-A: ABTalks maintains a hiring partner network (stated: 100+ hiring partners). Top portfolios get **exclusive visibility** to partner recruiters. Contact team@abtalks.in to be onboarded. Candidates themselves apply by emailing resume + cover letter + work links to the same address, so profiles come in pre-curated.
+A: Klymb AI maintains a hiring partner network (stated: 100+ hiring partners). Top portfolios get **exclusive visibility** to partner recruiters. Contact team@abtalks.in to be onboarded. Candidates themselves apply by emailing resume + cover letter + work links to the same address, so profiles come in pre-curated.
 
 **Q: How do openings get to candidates?**
-A: Openings shared by partners are announced inside the **ABTalks WhatsApp community**, which is where active candidates already are. That's the primary distribution channel; team@abtalks.in handles the intake side.
+A: Openings shared by partners are announced inside the **Klymb AI WhatsApp community**, which is where active candidates already are. That's the primary distribution channel; team@abtalks.in handles the intake side.
 
-**Q: What signal does an ABTalks profile give?**
+**Q: What signal does an Klymb AI profile give?**
 A: **Consistency** (visible streak across 60+ days), **shipping ability** (deployed URLs, not just repos), **modern AI stack fluency** (Claude, MCP, RAG, agents, prompt engineering), and **SDLC discipline** (versioned releases, docs, retrospectives).
 
 **Q: Are candidates screened?**
 A: Each program has verification: GitHub artifact checks (AI Cohort), a real-time AI voice interview at the end (AI Cohort), and community rules that permanently ban plagiarism (all programs).
 
-**Q: What roles are ABTalks graduates suited for?**
+**Q: What roles are Klymb AI graduates suited for?**
 A: AI application engineers, prompt engineers, AI product engineers, junior full-stack engineers with AI-native skills, and (for the AI Cohort) production LLM systems engineers with RAG/agents/MCP experience.
 
 **Q: How large is the candidate pool?**
@@ -450,7 +450,7 @@ A: 10,000+ community members and 500+ shipped projects as of Aug 2026.
 
 ### 7.3 For WORKING PROFESSIONALS
 
-**Q: Is ABTalks only for students?**
+**Q: Is Klymb AI only for students?**
 A: The 60-Day Claude AI Challenge is open to anyone. The 60-Day Coding Challenge is described as "for college students" but the Claude Challenge testimonial roster explicitly includes a 20+ year IT leader (Vivek). The ViCodathon is restricted to Indian college students.
 
 **Q: I already have a job. What do I get out of this?**
@@ -466,11 +466,11 @@ A: Public roster includes mid-career professionals (Vivek — 20+ years IT leade
 
 ### 7.4 For INVESTORS
 
-**Q: What is ABTalks in one sentence?**
+**Q: What is Klymb AI in one sentence?**
 A: An India-focused, community-first AI upskilling platform that turns learners into hireable builders through daily challenges and a curated hiring partner network.
 
 **Q: What's the current stated scale?**
-A: 10,000+ members, 500+ projects, 100+ hiring partners. Four flagship programs live. Community distributed across WhatsApp, Discord, LinkedIn, YouTube, Instagram, X — all under one handle (`abtalksonai`).
+A: 10,000+ members, 500+ projects, 100+ hiring partners. Four flagship programs live. Community distributed across WhatsApp, Discord, LinkedIn, YouTube, Instagram, X — all under one handle (`Klymb AI`).
 
 **Q: What's the business model?**
 A: Free at point of entry across the flagships as of this snapshot; `legal-and-privacy.md` carries the current wording and supersedes this answer. Monetization signals visible today: **hiring partner network** (100+ partners) and **event sponsorships** (Breeth sponsored the last ViCodathon, giving free Pro accounts to all participants).
@@ -482,7 +482,7 @@ A: 1) **Community depth** — multi-platform, IST-native, single unified handle.
 A: Next.js on Vercel. Google OAuth. Free-tier tooling philosophy runs through the curriculum itself (Ollama, Groq, Chroma, Supabase, Firebase, Vercel, Netlify, Render, Railway) — infrastructure cost per learner is structurally low.
 
 **Q: Founder?**
-A: Anil Bajpai (founder). Sarthak Gupta (Founding Member). The founder attribution appears on auth pages: "Built by Anil Bajpai's ABTalks community."
+A: Anil Bajpai (founder). Sarthak Gupta (Founding Member). The founder attribution appears on auth pages: "Built by Anil Bajpai's Klymb AI community."
 
 **Q: What's the roadmap signal?**
 A: Four flagships shipped and running in parallel by Aug 2026. Capstone framework proves an operator-grade SDLC teaching loop. Sponsored hackathon (ViCodathon + Breeth) demonstrates a repeatable event-sponsorship revenue pathway.
@@ -541,7 +541,7 @@ A: Anthropic (Claude is the primary AI stack — programs are Claude-native). Br
 ## 10. BOT BEHAVIOR GUARDRAILS
 
 **Do:**
-- Answer directly and briefly. Match ABTalks' brevity-first tone.
+- Answer directly and briefly. Match Klymb AI's brevity-first tone.
 - Route users to the right program based on their stated goal (see the "Route this program to" lines in Section 3).
 - Quote the exact community rules and sanctions when asked about conduct.
 - Refer people to `team@abtalks.in` for anything commercial or partnership-related.
@@ -577,7 +577,7 @@ A: Anthropic (Claude is the primary AI stack — programs are Claude-native). Br
 - **Email:** team@abtalks.in
 - **Homepage:** https://abtalks.in
 - **LinkedIn (for graduation posts / Certificate of Completion links):** https://www.linkedin.com/company/abtalks-on-ai/
-- **Founder attribution line:** "Built by Anil Bajpai's ABTalks community" (appears on auth pages)
+- **Founder attribution line:** "Built by Anil Bajpai's Klymb AI community" (appears on auth pages)
 
 ---
 

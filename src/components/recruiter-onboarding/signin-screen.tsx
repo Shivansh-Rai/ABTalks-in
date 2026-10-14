@@ -216,7 +216,7 @@ export function SigninScreen({
     <OnboardingShell
       aside={
         <p className="text-sm text-[#626262]">
-          <span className="hidden sm:inline">New to ABTalks Hire? </span>
+          <span className="hidden sm:inline">New to Klymb AI Hire? </span>
           <Link href="/recruiter-onboarding" className={TEXT_LINK}>
             Create an account
           </Link>
@@ -233,7 +233,7 @@ export function SigninScreen({
               key="email"
               motion={stepMotion}
               focusHeading={navigated}
-              eyebrow="ABTalks Hire"
+              eyebrow="Klymb AI Hire"
               title="Welcome back"
               description={
                 <p>
@@ -316,7 +316,7 @@ export function SigninScreen({
               key="password"
               motion={stepMotion}
               focusHeading={navigated}
-              eyebrow="ABTalks Hire"
+              eyebrow="Klymb AI Hire"
               title="Welcome back"
               description={
                 <p>

@@ -143,7 +143,7 @@ export function CandidateEvidenceReport({ lookup }: { lookup: string }) {
         <article className="hire-report__doc">
           <div className="hire-report__band hire-report__band--quiet">
             <span className="hire-report__glow" aria-hidden="true" />
-            <p className="hire-report__eyebrow">ABTalks candidate report</p>
+            <p className="hire-report__eyebrow">Klymb AI candidate report</p>
             <p className="hire-report__loading">Opening the report</p>
           </div>
         </article>
@@ -418,7 +418,7 @@ function DownloadReportButton({
 }) {
   function save() {
     const original = document.title;
-    const safe = `ABTalks report ${label}`
+    const safe = `Klymb AI report ${label}`
       .replace(/[\\/:*?"<>|]+/g, " ")
       .replace(/\s+/g, " ")
       .trim();
@@ -765,7 +765,7 @@ function ReportBody({
           <span className="hire-report__glow" aria-hidden="true" />
           <div className="hire-report__bandmain">
             <div className="hire-report__who">
-              <p className="hire-report__eyebrow">ABTalks candidate report</p>
+              <p className="hire-report__eyebrow">Klymb AI candidate report</p>
               <h1 className="hire-report__name">
                 {match.displayName ? (
                   <MaskedName name={match.displayName} revealed={revealed} />
@@ -791,7 +791,7 @@ function ReportBody({
               <p className="hire-report__score">
                 <b>{match.score}</b>
                 <span>
-                  ABTalks score
+                  Klymb AI score
                   <br />
                   out of 100
                 </span>
@@ -823,7 +823,7 @@ function ReportBody({
 
         <motion.div className="hire-report__flow" {...flowMotion}>
         <motion.section className="hire-report__section" {...itemMotion}>
-          <SectionHead number={numberOf("evidence")} title="ABTalks Evidence" />
+          <SectionHead number={numberOf("evidence")} title="Klymb AI Evidence" />
 
           <div className="hire-report__block">
             <h3 className="hire-report__blockh">Candidate summary</h3>
@@ -1062,7 +1062,7 @@ function ReportBody({
 
         <p className="hire-report__foot">
           Mission, first-attempt, commit and project figures are verified by
-          ABTalks. Experience, skills, role and external profile links are
+          Klymb AI. Experience, skills, role and external profile links are
           declared by the candidate.
         </p>
       </motion.article>

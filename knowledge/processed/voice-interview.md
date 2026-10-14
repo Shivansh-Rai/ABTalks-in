@@ -1,6 +1,6 @@
 # AI Voice Interview (AI Cohort Milestone Interviews)
 
-People also ask this as: does ABTalks have an AI mock interview · how does the
+People also ask this as: does Klymb AI have an AI mock interview · how does the
 voice interview work · AI interviewer · can I practise interviews · does it
 score my answers · can I practise with my resume · resume based interview ·
 job description interview · interview practice · where do I take the interview · what happens after the
@@ -8,7 +8,7 @@ interview · exit interview · Day 15 interview · Day 31 interview.
 
 ## What it is
 
-ABTalks runs a **real-time voice interview conducted by an AI interviewer**.
+Klymb AI runs a **real-time voice interview conducted by an AI interviewer**.
 You speak your answers out loud; the interviewer asks follow-up questions
 based on what you actually said, and afterwards you get a written assessment
 report.

@@ -21,15 +21,15 @@ export interface WorkshopAnalytics {
   uniqueAttendees: number;
   /** People who registered for more than one workshop. */
   repeatPeople: number;
-  /** Registrations from people who also hold a full ABTalks profile. */
+  /** Registrations from people who also hold a full Klymb AI profile. */
   memberRegistrations: number;
   /**
-   * People with no ABTalks account at all, or whose account was created at the
+   * People with no Klymb AI account at all, or whose account was created at the
    * moment they signed in for their first workshop — i.e. the workshop funnel
    * acquired them.
    */
   newToABTalks: number;
-  /** People who already had an ABTalks account before their first workshop. */
+  /** People who already had an Klymb AI account before their first workshop. */
   existingMembers: number;
   /** Attendees who went on to enroll in a challenge — workshop → programme. */
   convertedToChallenge: number;
@@ -100,7 +100,7 @@ export async function getWorkshopAnalytics(): Promise<WorkshopAnalytics> {
   for (const email of timesSeen.keys()) {
     const account = accountByEmail.get(email);
     if (!account) {
-      // No account at all — never joined ABTalks beyond the workshop form.
+      // No account at all — never joined Klymb AI beyond the workshop form.
       newToABTalks += 1;
       continue;
     }

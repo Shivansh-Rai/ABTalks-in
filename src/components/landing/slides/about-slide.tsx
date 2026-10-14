@@ -12,10 +12,10 @@ export function AboutSlide() {
       className="rounded-3xl border bg-card/80 p-5 shadow-lg backdrop-blur-sm md:p-6"
     >
       <h2 className="font-display text-xl font-bold tracking-tight md:text-2xl">
-        What is ABTalks?
+        What is Klymb AI?
       </h2>
       <p className="mt-2 text-sm text-muted-foreground">
-        ABTalks is a 60-day coding challenge built around Anil Bajpai&apos;s
+        Klymb AI is a 60-day coding challenge built around Anil Bajpai&apos;s
         community of recruiters and students. Pick a domain, code daily, post
         your progress, and become discoverable to recruiters.
       </p>

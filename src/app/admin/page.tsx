@@ -75,7 +75,7 @@ export default async function AdminHomePage() {
     <div className="space-y-6">
       <AdminPageHeader
         title={`${greetingIst()}, ${firstName}`}
-        description="Here's what's happening on ABTalks today."
+        description="Here's what's happening on Klymb AI today."
       />
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

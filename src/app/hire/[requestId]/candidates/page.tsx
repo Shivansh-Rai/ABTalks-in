@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 type Props = { params: Promise<{ requestId: string }> };
 
 export const metadata: Metadata = {
-  title: "Matched candidates | ABTalks Hire",
+  title: "Matched candidates | Klymb AI Hire",
 };
 
 export default async function HireCandidatesPage({ params }: Props) {

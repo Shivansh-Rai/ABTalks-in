@@ -24,7 +24,7 @@ import { MyAssessmentTemplates } from "@/components/hire/assessment/my-templates
 import type { AssessmentDraft } from "@/components/hire/assessment/assessment-types";
 
 export const metadata: Metadata = {
-  title: "Create an assessment | ABTalks Hire",
+  title: "Create an assessment | Klymb AI Hire",
 };
 // Create sends up to MAX_ASSIGN_PER_CALL notifications inline; the server
 // action runs under this page's function limit.
@@ -134,7 +134,7 @@ function BuilderView({
         presetLocked={presetLocked}
         projectId={projectId}
         // Recruiter surface: the builder may offer "Save as template". It
-        // hides it again while an ABTalks preset's questions are locked.
+        // hides it again while an Klymb AI preset's questions are locked.
         canSaveTemplate
         template={template}
       />
@@ -214,7 +214,7 @@ export default async function CreateTestPage({
   }
 
   // 1b) Customize one of the recruiter's own templates (`?template=<id>`).
-  // Its questions are editable — it is their content, unlike an ABTalks preset.
+  // Its questions are editable — it is their content, unlike an Klymb AI preset.
   const templateId = templateParam?.trim();
   if (templateId) {
     const templateScope = await recruiterTemplateScope();
@@ -313,7 +313,7 @@ export default async function CreateTestPage({
         </div>
       </div>
       <MyAssessmentTemplates templates={myTemplates} projectId={projectId} />
-      {/* The ABTalks template picker and the blank builder under it. One client
+      {/* The Klymb AI template picker and the blank builder under it. One client
           component so "Import from JSON" in the picker's head can fill the
           builder below it (plan 185). */}
       <CreateTestLanding

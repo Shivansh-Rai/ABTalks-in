@@ -290,7 +290,7 @@ export function GlobalCommunitySection() {
             id="gcomMap"
             ref={mapRef}
             role="img"
-            aria-label="Dotted world map showing the eight places ABTalks operates in, connected as a network. The same list follows as text."
+            aria-label="Dotted world map showing the eight places Klymb AI operates in, connected as a network. The same list follows as text."
           >
             <svg
               className="gcom__land"

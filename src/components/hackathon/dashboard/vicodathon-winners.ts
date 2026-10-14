@@ -60,7 +60,7 @@ export const VICODATHON_WINNERS: WinnerPlace[] = [
     place: 4,
     placeLabel: "4th Place",
     entryLabel: "Arcade",
-    problemStatement: "Redesign ABTalks",
+    problemStatement: "Redesign Klymb AI",
     members: [
       {
         fullName: "Mohit Kabi",

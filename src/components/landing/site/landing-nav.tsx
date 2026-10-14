@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import type { LandingUser } from "@/features/landing/get-landing-state";
 import { LandingUserMenu } from "@/components/landing/landing-user-menu";
 import { GET_STARTED_ITEMS, NAV_LINKS } from "./landing-content";
+import { Wordmark } from "@/components/shared/wordmark";
 
 type Props = {
   user: LandingUser | null;
@@ -182,14 +182,8 @@ export function LandingNav({ user, showRecruiterCta = false }: Props) {
     >
       <div className="container">
         <nav className="nav" aria-label="Primary" ref={navRef}>
-          <Link href="/" className="nav__logo" aria-label="ABTalks home">
-            <Image
-              src="/landing/abtalks-logo-mark.png"
-              alt="ABTalks"
-              width={561}
-              height={168}
-              priority
-            />
+          <Link href="/" className="nav__logo" aria-label="Klymb AI home">
+            <Wordmark size="lg" />
           </Link>
 
           <ul

@@ -28,10 +28,10 @@ const GENERIC_HTML = `<div style="font-family: Inter, -apple-system, 'Segoe UI',
   <p style="color: #353535;">Hi {{recipientName}},</p>
   <h2 style="color: #000000; margin: 16px 0 8px;">{{title}}</h2>
   <p style="color: #353535;">{{body}}</p>
-  <p><a href="{{baseUrl}}{{href}}" style="color: #03535F;">View details on ABTalks &rarr;</a></p>
+  <p><a href="{{baseUrl}}{{href}}" style="color: #03535F;">View details on Klymb AI &rarr;</a></p>
   <hr style="border: none; border-top: 1px solid #E9E9E9; margin: 24px 0;" />
   <p style="color: #A5A5A5; font-size: 12px;">
-    You received this because of your notification settings on ABTalks.
+    You received this because of your notification settings on Klymb AI.
     You can update your preferences at {{baseUrl}}/settings/notifications.
   </p>
 </div>`;
@@ -45,7 +45,7 @@ const GENERIC_TEXT = `Hi {{recipientName}},
 View details: {{baseUrl}}{{href}}
 
 ---
-You received this because of your notification settings on ABTalks.
+You received this because of your notification settings on Klymb AI.
 Update preferences: {{baseUrl}}/settings/notifications`;
 
 /**
@@ -54,7 +54,7 @@ Update preferences: {{baseUrl}}/settings/notifications`;
  * files it under Promotions, so the email says plainly what happened.
  */
 const EMAIL_SUBJECTS: Record<string, string> = {
-  "profile.viewed": "A recruiter viewed your ABTalks profile",
+  "profile.viewed": "A recruiter viewed your Klymb AI profile",
 };
 
 const templateCache = new Map<string, { html: string; text: string }>();

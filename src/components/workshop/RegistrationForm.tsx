@@ -452,7 +452,7 @@ export default function RegistrationForm({
 
               {isExistingMember && (
                 <p className="wk-faint text-xs">
-                  Prefilled from your ABTalks profile — any changes here update it.
+                  Prefilled from your Klymb AI profile — any changes here update it.
                 </p>
               )}
             </div>

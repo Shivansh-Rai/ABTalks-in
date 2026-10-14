@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import type { LandingUser } from "@/features/landing/get-landing-state";
 import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 import { LandingUserMenu } from "../landing-user-menu";
+import { Wordmark } from "@/components/shared/wordmark";
 
 const NAV_LINKS = [
   { href: "#about", label: "About" },
@@ -25,15 +25,8 @@ export function HubNav({ user }: Props) {
   return (
     <div className="hub-navwrap">
       <nav className="hub-nav-pill" aria-label="Primary">
-        <Link href="/" className="hub-nav-logo" aria-label="ABTalks home">
-          <Image
-            src="/landing/abtalks-logo-mark.png"
-            alt="ABTalks"
-            width={561}
-            height={168}
-            priority
-            className="hub-nav-logo-img hub-logo-mark"
-          />
+        <Link href="/" className="hub-nav-logo" aria-label="Klymb AI home">
+          <Wordmark size="lg" className="hub-nav-logo-img hub-logo-mark" />
         </Link>
 
         <div className="hub-nav-links">

@@ -15,7 +15,7 @@ import { findDsArchitectEnrollment } from "@/repositories/ds-architect";
 import { listCurriculumForProgramSlug } from "@/repositories/learning";
 
 export const metadata = {
-  title: "Data Solutions Architect | ABTalks",
+  title: "Data Solutions Architect | Klymb AI",
   description: "Design AWS-first data and AI platforms in 10 days.",
 };
 

@@ -4,7 +4,6 @@ import { Suspense, useEffect, useState } from "react";
 import { Domain } from "@prisma/client";
 import { AlertCircle, Briefcase } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { signOutAction } from "@/app/actions/auth-actions";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,6 +26,7 @@ import {
 import { MobileSidebar } from "@/components/shared/mobile-sidebar";
 import { toneFor } from "@/lib/identity-tone";
 import { cn } from "@/lib/utils";
+import { Wordmark } from "@/components/shared/wordmark";
 
 export type AppHeaderUser = {
   name: string | null;
@@ -109,14 +109,7 @@ export function AppHeader({
             data-collapsed={collapsed}
             className="logo-link focus-spark shrink-0"
           >
-            <Image
-              src="/abtalks-logo.png"
-              alt="ABTalks"
-              width={300}
-              height={84}
-              priority
-              className="logo-image"
-            />
+            <Wordmark size="lg" className="logo-image" />
           </Link>
         </div>
 
@@ -205,7 +198,7 @@ export function AppHeader({
                 <DropdownMenuItem
                   onClick={() => {
                     window.location.href =
-                      "mailto:team@abtalks.in?subject=ABTalks Issue Report&body=Please describe the issue you're experiencing:%0D%0A%0D%0A";
+                      "mailto:team@abtalks.in?subject=Klymb AI Issue Report&body=Please describe the issue you're experiencing:%0D%0A%0D%0A";
                   }}
                 >
                   <AlertCircle className="mr-2 h-4 w-4" />

@@ -57,7 +57,7 @@ export type TalentProfile = {
    * approved recruiter could reach the member directly and never place a
    * request — bypassing both the business and the member's consent, which was
    * to be *discoverable*, not to be cold-contacted. Release happens through an
-   * accepted engagement request, handled by the ABTalks team.
+   * accepted engagement request, handled by the Klymb AI team.
    */
   contactReleased: false;
   /**

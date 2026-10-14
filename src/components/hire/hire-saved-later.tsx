@@ -91,7 +91,7 @@ function subscribeSaved(onChange: () => void): () => void {
 /**
  * Saved for later — a private holding list on this device.
  *
- * Deliberately not the Shortlist. Nothing here has been shown to the ABTalks
+ * Deliberately not the Shortlist. Nothing here has been shown to the Klymb AI
  * team: a saved candidate is one the recruiter is still thinking about, and
  * moving them to the Shortlist is the act that puts them in front of anyone.
  * Keeping the two apart is what lets a recruiter browse without every click

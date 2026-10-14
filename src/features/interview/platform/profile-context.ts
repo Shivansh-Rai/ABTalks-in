@@ -100,7 +100,7 @@ export function formatProfileContext(
     );
   }
 
-  /* --- what they have actually completed on ABTalks --------------------- */
+  /* --- what they have actually completed on Klymb AI --------------------- */
 
   // Completed challenge days are the one item here that is closer to a fact
   // than a claim, because a submission exists. It is still NOT evidence of
@@ -112,7 +112,7 @@ export function formatProfileContext(
       .slice(0, MAX_PROJECTS)
       .map((t) => trim(t.title, 70));
     lines.push(
-      `Has completed ${days} day${days === 1 ? "" : "s"} of ABTalks challenge work` +
+      `Has completed ${days} day${days === 1 ? "" : "s"} of Klymb AI challenge work` +
         (recent.length > 0 ? `, most recently: ${recent.join("; ")}` : ""),
     );
   }
