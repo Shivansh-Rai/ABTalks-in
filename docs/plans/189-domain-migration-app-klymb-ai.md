@@ -459,6 +459,55 @@ Phase 3 if another deploy lands in the same window.
 `src/auth.config.ts`, `middleware.ts`, `.env.example`,
 `docs/project-context.md`, `docs/CHANGELOG.md`, and this plan file.
 
+## 8b. As-built (verified 2026-10-14)
+
+The handover is done and the carve-outs are live. Measured, not assumed:
+
+```
+abtalks.in/verify/ABT-CC-CA39R
+  -> 308 www.abtalks.in/verify/ABT-CC-CA39R
+  -> 308 app.klymb.ai/verify/ABT-CC-CA39R  -> 200
+/r/*, /claim/*, /hackathon, /hackathon/*   -> same two-hop chain, all land 200
+www.abtalks.in/  -> 200 "ABTalksOnAI | Conversations that change perspective"
+app.klymb.ai/    -> 200 "ABTalks"
+app.klymb.ai/verify/ABT-CC-CA39R/download -> 200 application/pdf
+```
+
+Two deviations from §5 step 15 worth recording.
+
+**1. Two hops, not one.** Step 15 said to point both hosts directly at
+`app.klymb.ai`. In practice the apex is configured as a Vercel *domain-level*
+redirect to `www`, and that fires at the edge BEFORE `vercel.json` runs — so
+the carve-outs never match at the apex and every legacy link resolves through
+`www`. It works; it costs an extra round trip and chained redirects are
+discounted by search engines. The hot path is the slow one, because the old
+`AUTH_URL` was `https://abtalks.in`, so the verify URLs printed on the 3,429
+certificate PDFs name the apex.
+
+To get one hop without changing the new site's canonical host: make
+`abtalks.in` a *served* domain on the new project rather than a redirect, then
+add a host-conditional catch-all AFTER the five carve-outs (order matters —
+`vercel.json` redirects evaluate top-down, so the carve-outs win):
+
+```json
+{ "source": "/:path*",
+  "has": [{ "type": "host", "value": "abtalks.in" }],
+  "destination": "https://www.abtalks.in/:path*",
+  "permanent": true }
+```
+
+**2. Non-carved paths 404 on the new site.** `/dashboard`, `/login`, `/hire`,
+`/profile`, `/program`, `/workshop` all return 404 from the marketing site.
+That is the accepted consequence of the clean break — each is reachable by
+signing in at `app.klymb.ai` — with one exception worth closing: **`/login`**.
+With 13,590 users a bookmarked `abtalks.in/login` is common, and old email and
+the chatbot knowledge base still point there. Recommended:
+
+- add `/login` to the carve-outs (the marketing site will never want it), and
+- put a pointer on the new site's 404 page — "Looking for the ABTalks app? It
+  is at app.klymb.ai" — which covers every unlisted path at once without
+  reserving any of the new site's URL space.
+
 ## 9. Commit message
 
 ```
