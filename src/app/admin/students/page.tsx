@@ -17,6 +17,7 @@ import {
   getStudentDomainCounts,
   getStudents,
   getStudentTrackCounts,
+  parseStudentEvent,
   type StudentTrack,
 } from "@/features/admin/get-students";
 
@@ -64,6 +65,7 @@ export default async function AdminStudentsPage({
     status?: "ALL" | "ACTIVE" | "COMPLETED";
     sort?: string;
     track?: string;
+    event?: string;
   }>;
 }) {
   const sp = await searchParams;
@@ -71,6 +73,7 @@ export default async function AdminStudentsPage({
   const track = isTrack(sp.track) ? sp.track : "ALL";
   const domain = sp.domain ?? "ALL";
   const status = sp.status ?? "ALL";
+  const event = parseStudentEvent(sp.event);
 
   const [students, domainCounts, trackCounts] = await Promise.all([
     getStudents({
@@ -79,12 +82,14 @@ export default async function AdminStudentsPage({
       status,
       sortBy,
       track,
+      event,
     }),
     getStudentDomainCounts(status),
     getStudentTrackCounts({
       search: sp.q,
       domain,
       status,
+      event,
     }),
   ]);
 
@@ -132,7 +137,7 @@ export default async function AdminStudentsPage({
             <p className="mt-1 text-xs text-muted-foreground">{student.email}</p>
             <p className="mt-2 text-xs">
               {student.track === "HACKATHON"
-                ? "Days — · — streak"
+                ? (student.eventLabel ?? "Hackathon")
                 : `Days ${student.daysCompleted}/60 · ${student.currentStreak}d streak`}
             </p>
             <p className="mt-1 truncate text-xs text-muted-foreground">
@@ -207,6 +212,11 @@ export default async function AdminStudentsPage({
                   <Badge variant="outline" className={domainBadgeClass(student.domain)}>
                     {student.domain}
                   </Badge>
+                  {student.eventLabel ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {student.eventLabel}
+                    </p>
+                  ) : null}
                 </TableCell>
                 <TableCell>
                   {student.track === "HACKATHON" ? "—" : student.daysCompleted}

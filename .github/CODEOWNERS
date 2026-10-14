@@ -250,3 +250,22 @@
 /src/features/career-guidance/                      @Shivansh-Rai
 /src/features/assessment-attempts/                  @Shivansh-Rai
 /src/features/platform-assessments/                 @Shivansh-Rai
+
+# ------------------------------------------------------------------------------
+# 12. Admin member lists / hackathon track (owner: @byteninjaa0, plan 190)
+#
+# CLAUDE.md: Platform Admin, shared architecture and the hackathon track. Listed
+# last on purpose — these are specific files and hackathon-only directories, so
+# they cannot shadow the narrow Platform Admin, notification-lock or
+# candidate-profile lines above (last match wins).
+# ------------------------------------------------------------------------------
+/src/app/admin/students/                            @byteninjaa0
+/src/features/admin/get-students.ts                 @byteninjaa0
+/src/features/admin/get-student-detail.ts           @byteninjaa0
+/src/components/admin/students-filters.tsx          @byteninjaa0
+/src/app/actions/admin-export-actions.ts            @byteninjaa0
+/src/app/admin/hackathon/                           @byteninjaa0
+/src/features/hackathon/                            @byteninjaa0
+/src/features/hackathon-video/                      @byteninjaa0
+/src/components/hackathon/                          @byteninjaa0
+/src/components/admin/hackathon-master-filters.tsx  @byteninjaa0

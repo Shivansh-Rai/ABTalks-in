@@ -187,3 +187,20 @@ export function isHackathonRegistrationOpen(now: number = Date.now()): boolean {
   if (!HACKATHON.registrationOpen) return false;
   return now < new Date(HACKATHON.registrationClosesUtc).getTime();
 }
+
+/**
+ * Admin member lists span every hackathon event, not just the live one
+ * (`HACKATHON.eventId`). `legacy` is the backfill default from
+ * `20260908190000_event_scoped_hackathon` — the first hackathon (24 Jul –
+ * 8 Sep 2026). `HackathonEvent` is empty, so labels live here; an unknown id
+ * falls back to the raw id so a future event shows up unlabelled rather than
+ * disappearing from the list.
+ */
+export const HACKATHON_EVENT_LABELS: Record<string, string> = {
+  legacy: "Vicodathon 1",
+  "vicodathon-2-2026": "Vicodathon 2",
+};
+
+export function hackathonEventLabel(eventId: string): string {
+  return HACKATHON_EVENT_LABELS[eventId] ?? eventId;
+}

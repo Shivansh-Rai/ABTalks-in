@@ -18,10 +18,14 @@ import type {
   StudentTrack,
   StudentTrackCounts,
 } from "@/features/admin/get-students";
+import { HACKATHON_EVENT_LABELS } from "@/components/hackathon/hackathon-config";
 import { cn } from "@/lib/utils";
 import type { Domain } from "@prisma/client";
 
 const trackOptions = ["ALL", "CHALLENGE", "HACKATHON"] as const;
+// Rows sort by join date, so the Hackathon tab's first page is always the
+// newest event — this is how you reach the earlier ones.
+const eventOptions = ["ALL", ...Object.keys(HACKATHON_EVENT_LABELS)] as const;
 const domainOptions = ["ALL", "SE", "DS", "AI", "CLAUDE"] as const;
 const statusOptions = ["ALL", "ACTIVE", "COMPLETED"] as const;
 const sortOptions = [
@@ -68,6 +72,11 @@ export function StudentsFilters({
     [searchParams],
   );
 
+  const currentEvent = useMemo(
+    () => searchParams.get("event") ?? "ALL",
+    [searchParams],
+  );
+
   const hackathonOnly = currentTrack === "HACKATHON";
 
   function pushWith(next: {
@@ -76,6 +85,7 @@ export function StudentsFilters({
     domain?: string;
     status?: string;
     sort?: string;
+    event?: string;
   }) {
     const params = new URLSearchParams(searchParams.toString());
     if (next.q !== undefined) {
@@ -98,6 +108,10 @@ export function StudentsFilters({
       if (next.sort && next.sort !== "recent") params.set("sort", next.sort);
       else params.delete("sort");
     }
+    if (next.event !== undefined) {
+      if (next.event && next.event !== "ALL") params.set("event", next.event);
+      else params.delete("event");
+    }
     router.push(`${pathname}?${params.toString()}`);
   }
 
@@ -118,7 +132,12 @@ export function StudentsFilters({
       domain: "ALL",
       status: "ALL",
       sort: "recent",
+      event: "ALL",
     });
+  }
+
+  function eventLabel(event: (typeof eventOptions)[number]) {
+    return event === "ALL" ? "All events" : HACKATHON_EVENT_LABELS[event]!;
   }
 
   function handleTrackSelect(track: (typeof trackOptions)[number]) {
@@ -126,7 +145,8 @@ export function StudentsFilters({
       pushWith({ track: "HACKATHON", domain: "ALL", status: "ALL" });
       return;
     }
-    pushWith({ track });
+    // The event filter only applies to hackathon rows — drop it on the way out.
+    pushWith({ track, event: "ALL" });
   }
 
   function handleExport() {
@@ -144,6 +164,7 @@ export function StudentsFilters({
           domain,
           search: searchParams.get("q") ?? undefined,
           track,
+          event: currentEvent,
         });
 
         if (data.length === 0) {
@@ -166,6 +187,7 @@ export function StudentsFilters({
     (currentTrack !== "ALL" ? 1 : 0) +
     (currentDomain !== "ALL" ? 1 : 0) +
     (currentStatus !== "ALL" ? 1 : 0) +
+    (currentEvent !== "ALL" ? 1 : 0) +
     (currentSort !== "recent" ? 1 : 0);
 
   return (
@@ -236,6 +258,31 @@ export function StudentsFilters({
                   ))}
                 </div>
               </div>
+
+              {hackathonOnly ? (
+                <div>
+                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Hackathon event
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {eventOptions.map((event) => (
+                      <button
+                        key={event}
+                        type="button"
+                        onClick={() => pushWith({ event })}
+                        className={cn(
+                          "rounded-full border px-3 py-1 text-xs",
+                          currentEvent === event
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border hover:bg-accent",
+                        )}
+                      >
+                        {eventLabel(event)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
 
               {!hackathonOnly ? (
                 <>
