@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth, signIn } from "@/auth";
+import { logger } from "@/lib/logger";
+import { peekHrInviteEmail } from "@/features/hire/hr-invite";
 
 /**
  * Plan 194 — where an HR's emailed sign-in link lands.
@@ -23,11 +25,30 @@ export async function GET(request: Request) {
 
   if (!token) return NextResponse.redirect(home);
 
-  // An HR who clicks their link again while already signed in should land on
-  // the desk, not burn a second invite — and must not be swapped into another
-  // account mid-session.
+  // An existing session is kept ONLY when it is already this link's recipient.
+  //
+  // It used to be kept whenever there was one at all — the same mistake
+  // /preview/enter made, fixed there in #798 and missed here. The effect was
+  // that clicking an HR link in a browser signed in as somebody else (the
+  // preview candidate, typically) skipped the sign-in, forwarded to /hire,
+  // bounced off the gate and ended on /dashboard: the invited recruiter never
+  // got their own account, and the link looked broken.
+  //
+  // So the question is who the browser is, not whether it is anybody. The
+  // token is peeked rather than spent to ask it, so a link clicked by its own
+  // recipient twice is not burned the second time.
   const session = await auth();
-  if (session?.user?.id) return NextResponse.redirect(desk);
+  if (session?.user?.id) {
+    const invited = await peekHrInviteEmail(token);
+    if (invited && session.user.email?.toLowerCase() === invited) {
+      return NextResponse.redirect(desk);
+    }
+    // Anyone else: the link is a credential for ONE named person, so it wins
+    // over whatever session happens to be in this browser.
+    logger.info("[hr-invite] replacing another account's session", {
+      userId: session.user.id,
+    });
+  }
 
   try {
     // Throws the redirect that carries the session cookie.

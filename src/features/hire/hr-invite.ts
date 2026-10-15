@@ -163,6 +163,26 @@ export async function createHrInvite(
   };
 }
 
+/**
+ * Who a token belongs to, WITHOUT spending it.
+ *
+ * Used to answer one question before deciding whether to burn an invite: is
+ * the browser already signed in as the person this link is for? If it is,
+ * there is nothing to do and the link should survive for its real recipient.
+ */
+export async function peekHrInviteEmail(
+  rawToken: string | undefined | null,
+): Promise<string | null> {
+  if (!rawToken) return null;
+  const row = await prisma.verificationToken.findUnique({
+    where: { token: hash(rawToken) },
+    select: { identifier: true, expires: true },
+  });
+  if (!row || !row.identifier.startsWith(IDENTIFIER_PREFIX)) return null;
+  if (row.expires.getTime() < Date.now()) return null;
+  return row.identifier.slice(IDENTIFIER_PREFIX.length);
+}
+
 export type HrInviteHolder = {
   id: string;
   email: string;
