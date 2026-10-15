@@ -1,6 +1,9 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth, signIn } from "@/auth";
+import { logger } from "@/lib/logger";
+import { isCandidateRegistered } from "@/features/registration/registration-gate";
+import { getRecruiterState } from "@/features/talent-pool/recruiter-registration";
 import {
   hasPreviewAccess,
   isLaunchOnePagerEnabled,
@@ -52,12 +55,38 @@ export async function GET(request: Request) {
 
   const destination = new URL(HOME[side], request.url);
 
-  // An existing session is never overwritten. An admin who opens a preview
-  // link keeps their own account instead of being silently demoted into the
-  // preview one; they already pass the gate on both sides anyway.
+  // An existing session is kept ONLY when it can actually use this side.
+  //
+  // It used to be kept unconditionally, to avoid demoting an admin into the
+  // preview account. The result was the opposite of helpful: an admin — or
+  // anyone signed in as the other side's preview account — opened the
+  // candidate link, was forwarded to /dashboard holding an account with no
+  // CandidateProfile, and landed on /register. A link whose whole job is "show
+  // me the product" must not end at a signup form.
+  //
+  // So the question asked here is not "is somebody signed in" but "can this
+  // session open the door this link opens". A registered candidate keeps their
+  // own account on the candidate link, a recruiter keeps theirs on the
+  // recruiter link, and anyone else is signed in as that side's preview
+  // account, which is what the link promised.
   const session = await auth();
   if (session?.user?.id) {
-    return NextResponse.redirect(destination);
+    const canUseSide =
+      side === "candidate"
+        ? await isCandidateRegistered(session.user.id)
+        : (await getRecruiterState(session.user.id)).status === "active";
+
+    if (canUseSide) {
+      return NextResponse.redirect(destination);
+    }
+
+    // Replacing a session is worth a line in the log: an admin who does this
+    // is signed out of their own account and signs back in at /login, which
+    // their preview cookie keeps reachable.
+    logger.info("[preview] replacing a session that cannot use this side", {
+      side,
+      userId: session.user.id,
+    });
   }
 
   const token = previewToken(side);
