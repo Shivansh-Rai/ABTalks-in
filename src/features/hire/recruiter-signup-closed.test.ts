@@ -30,6 +30,21 @@ const ACCOUNTED_FOR: Record<string, string> = {
     "the HR trial invite — requireAdmin() in admin-hr-invite-actions",
 };
 
+/**
+ * The registration entry points, which must ALSO honour ENABLE_RECRUITER_SIGNUP.
+ *
+ * ENABLE_RECRUITER_AUTH alone is not enough any more: it governs sign-in too,
+ * so turning it off to stop strangers registering would also lock out the
+ * recruiters an admin created and emailed a password to.
+ */
+const MUST_HONOUR_SIGNUP_FLAG = [
+  "src/app/actions/talent-actions.ts",
+  "src/app/actions/recruiter-auth-actions.ts",
+  "src/app/talent/register/page.tsx",
+  "src/app/recruiter-onboarding/page.tsx",
+  "src/app/recruiter-onboarding/signup/page.tsx",
+];
+
 /** Files whose caller must check the recruiter-auth flag. */
 const MUST_BE_FLAG_GATED = [
   "src/app/actions/recruiter-auth-actions.ts",
@@ -127,6 +142,29 @@ function main() {
       );
     });
   }
+
+  for (const file of MUST_HONOUR_SIGNUP_FLAG) {
+    suite(`${file.split("/").pop()} closes when ENABLE_RECRUITER_SIGNUP=false`, () => {
+      const src = readFileSync(join(process.cwd(), file), "utf8");
+      assert(
+        src.includes("isRecruiterSignupEnabled"),
+        `${file} would still take a registration with signups closed`,
+      );
+    });
+  }
+
+  suite("sign-in does NOT depend on the signup flag", () => {
+    // The whole point of splitting them: an admin-created recruiter must be
+    // able to sign in with the password they were emailed while registration
+    // is shut.
+    const src = readFileSync(join(process.cwd(), "src/lib/email-auth.ts"), "utf8");
+    assert(
+      !src.includes("isRecruiterSignupEnabled"),
+      "authorizePassword now checks the signup flag, so closing registration " +
+        "would stop admin-created recruiters signing in — the exact thing the " +
+        "split exists to prevent",
+    );
+  });
 
   suite("the invite link does not depend on the recruiter-auth flag", () => {
     const auth = readFileSync(join(process.cwd(), "src/auth.ts"), "utf8");

@@ -18,6 +18,8 @@ type HireAuthContextValue = {
   approved: boolean;
   signedIn: boolean;
   authEnabled: boolean;
+  passwordEnabled?: boolean;
+  signupEnabled?: boolean;
   /**
    * Platform Admin. Decides what the desk shows and nothing more: every admin
    * action checks `requireAdmin()` itself.
@@ -35,6 +37,8 @@ export function useHireAuth(): HireAuthContextValue {
       approved: false,
       signedIn: false,
       authEnabled: false,
+      passwordEnabled: false,
+      signupEnabled: false,
       isAdmin: false,
       openAuth: () => {
         window.location.href = "/hire";
@@ -48,12 +52,20 @@ export function HireAuthProvider({
   approved,
   signedIn,
   authEnabled,
+  passwordEnabled = false,
+  signupEnabled = true,
   isAdmin = false,
   children,
 }: {
   approved: boolean;
   signedIn: boolean;
   authEnabled: boolean;
+  /** Plan 154's password tab in the dialog. The page at /talent/login always
+   *  passed this; the dialog never did, so a recruiter holding an emailed
+   *  password had only a code field to look at. */
+  passwordEnabled?: boolean;
+  /** When false the desk takes no new registrations — sign-in only. */
+  signupEnabled?: boolean;
   isAdmin?: boolean;
   children: ReactNode;
 }) {
@@ -77,6 +89,8 @@ export function HireAuthProvider({
         open={open}
         reason={reason}
         authEnabled={authEnabled}
+        passwordEnabled={passwordEnabled}
+        signupEnabled={signupEnabled}
         onOpenChange={setOpen}
       />
     </HireAuthContext.Provider>

@@ -4,7 +4,11 @@ import { auth } from "@/auth";
 import { getRecruiterState } from "@/features/talent-pool/recruiter-registration";
 import { RecruiterAuthClosed } from "@/components/talent/recruiter-auth-closed";
 import { RecruiterOnboardingWizard } from "@/components/recruiter-onboarding/recruiter-onboarding-wizard";
-import { isEmailLoginEnabled, isRecruiterAuthEnabled } from "@/lib/feature-flags";
+import {
+  isEmailLoginEnabled,
+  isRecruiterAuthEnabled,
+  isRecruiterSignupEnabled,
+} from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: "Create a recruiter account | Klymb AI",
@@ -27,7 +31,7 @@ export default async function RecruiterSignupPage() {
     if (state.status === "active") redirect("/hire");
   }
 
-  if (!isRecruiterAuthEnabled()) {
+  if (!isRecruiterAuthEnabled() || !isRecruiterSignupEnabled()) {
     return <RecruiterAuthClosed />;
   }
 
