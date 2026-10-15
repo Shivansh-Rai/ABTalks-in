@@ -135,14 +135,14 @@ Scout found verified candidates for your requirement "${req.title}".
 
 Top matches: ${names}
 
-Open: ${process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "https://abtalksapp.vercel.app"}/hire/${req.id}
+Open: ${process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "https://app.klymb.ai"}/hire/${req.id}
 
 — Klymb AI Scout
 `;
       const html = `<p>Hi${req.recruiter.name ? ` ${escapeHtml(req.recruiter.name)}` : ""},</p>
 <p>Scout found <strong>${search.data.matches.length}</strong> verified candidate(s) for <strong>${escapeHtml(req.title)}</strong>.</p>
 <p>Top matches: ${escapeHtml(names)}</p>
-<p><a href="${process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "https://abtalksapp.vercel.app"}/hire/${req.id}">Open your Scout search</a></p>
+<p><a href="${process.env.NEXTAUTH_URL ?? process.env.AUTH_URL ?? "https://app.klymb.ai"}/hire/${req.id}">Open your Scout search</a></p>
 <p>— Klymb AI Scout</p>`;
 
       const sent = await sendEmail({

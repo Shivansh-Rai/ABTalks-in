@@ -12,7 +12,7 @@ export async function sendAccountDeletedEmail(input: {
   to: string;
   name: string | null;
 }): Promise<void> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://abtalks.in";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
   const firstName = input.name?.trim().split(/\s+/)[0] || "there";
   const subject = "Your Klymb AI account has been deleted";
 

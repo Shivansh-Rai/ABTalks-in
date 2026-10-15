@@ -32,7 +32,7 @@ export type OutreachEmailData = {
 export type RenderedEmail = { subject: string; html: string; text: string };
 
 const PREFERENCES_URL =
-  "http://abtalks.in/?utm_source=brevo&utm_medium=email&utm_campaign=ABT-Profile_copy";
+  "https://app.klymb.ai/?utm_source=klymb&utm_medium=email&utm_campaign=profile_claim";
 
 /**
  * Every attribute in the layout is double-quoted, so `'` needs no escaping —

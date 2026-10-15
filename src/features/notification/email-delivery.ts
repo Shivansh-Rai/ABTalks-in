@@ -98,7 +98,7 @@ export async function processEmailDelivery(
     return;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://abtalks.in";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
   const { subject, html, text } = renderTemplate(notification.eventType, {
     title: notification.title,
     body: notification.body ?? "",

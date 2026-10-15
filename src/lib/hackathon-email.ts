@@ -3,7 +3,7 @@ import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { sendEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
 
 const WHATSAPP_LINK = HACKATHON.whatsappLink;
 

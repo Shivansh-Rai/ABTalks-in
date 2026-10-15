@@ -69,7 +69,7 @@ export async function enrollInClaudeChallenge() {
         const profile = await getCandidateProfile(userId);
         const fullName =
           profile?.fullName?.trim() || sessionName?.trim() || "there";
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://abtalks.in";
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.klymb.ai";
         const { subject, html, text } = claudeWelcomeEmail({ fullName, appUrl });
         const pdf = await loadGuidelinesPdf(appUrl);
         const sent = await sendEmail({

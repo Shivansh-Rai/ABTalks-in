@@ -7,5 +7,5 @@ Hi {{recipientName}},
 View details: {{baseUrl}}{{href}}
 
 ---
-You received this because of your notification settings on ABTalks.
+You received this because of your notification settings on Klymb AI.
 Update preferences: {{baseUrl}}/settings/notifications
