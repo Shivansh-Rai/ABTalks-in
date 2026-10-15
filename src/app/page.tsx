@@ -68,10 +68,27 @@ export default async function HomePage() {
     // registered or not. Sending a registered candidate to /dashboard here
     // would bounce them straight back (middleware gates /dashboard), so the
     // old redirect must not fire for them.
-    const previewCookie = (await cookies()).get(
-      PREVIEW_COOKIE_NAMES.candidate,
-    )?.value;
-    const mayEnter = isAdmin || hasPreviewAccess("candidate", previewCookie);
+    const jar = await cookies();
+    const mayEnter =
+      isAdmin ||
+      hasPreviewAccess(
+        "candidate",
+        jar.get(PREVIEW_COOKIE_NAMES.candidate)?.value,
+      );
+    // /login is behind the gate too, so the button must not be offered to
+    // someone it would only bounce — and it must point at the door that
+    // visitor can actually open. The candidate link opens /login; the
+    // recruiter link opens /talent/login and NOT /login. A stranger gets no
+    // button at all.
+    const hasRecruiterPreview = hasPreviewAccess(
+      "recruiter",
+      jar.get(PREVIEW_COOKIE_NAMES.recruiter)?.value,
+    );
+    const signInHref = mayEnter
+      ? "/login"
+      : hasRecruiterPreview
+        ? "/talent/login"
+        : null;
 
     if (session?.user?.id && mayEnter) {
       // Asked for explicitly: an admin lands on the product, not the console.
@@ -95,7 +112,7 @@ export default async function HomePage() {
     return (
       <>
         <GoogleAdsScripts />
-        <LaunchOnePager user={user} />
+        <LaunchOnePager user={user} signInHref={signInHref} />
       </>
     );
   }

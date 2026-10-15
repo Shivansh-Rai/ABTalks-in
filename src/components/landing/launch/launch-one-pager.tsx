@@ -30,7 +30,19 @@ import "./launch.css";
  * have an account, and the community invite, which is the only way an
  * interested visitor can stay in touch meanwhile.
  */
-export function LaunchOnePager({ user }: { user: LandingUser | null }) {
+export function LaunchOnePager({
+  user,
+  signInHref,
+}: {
+  user: LandingUser | null;
+  /**
+   * The sign-in door this visitor can actually open, or null for none. /login
+   * is behind the gate, so a stranger gets no button rather than one that
+   * bounces, and a recruiter-link holder is sent to /talent/login, which is
+   * the door their cookie opens.
+   */
+  signInHref: string | null;
+}) {
   const year = new Date().getFullYear();
 
   return (
@@ -47,11 +59,11 @@ export function LaunchOnePager({ user }: { user: LandingUser | null }) {
 
           {user ? (
             <LandingUserMenu user={user} />
-          ) : (
-            <Link href="/login" className="btn btn--ghost btn--sm">
+          ) : signInHref ? (
+            <Link href={signInHref} className="btn btn--ghost btn--sm">
               Sign in
             </Link>
-          )}
+          ) : null}
         </div>
       </header>
 
@@ -73,13 +85,13 @@ export function LaunchOnePager({ user }: { user: LandingUser | null }) {
 
             <p className="launch__body">{LAUNCH_HERO.body}</p>
 
-            {user ? null : (
+            {!user && signInHref ? (
               <div className="launch__actions">
-                <Link href="/login" className="btn btn--ghost btn--lg">
+                <Link href={signInHref} className="btn btn--ghost btn--lg">
                   Sign in
                 </Link>
               </div>
-            )}
+            ) : null}
           </div>
         </section>
 

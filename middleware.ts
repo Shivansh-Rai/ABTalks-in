@@ -77,18 +77,27 @@ const { auth } = NextAuth(authConfig);
  *
  * Each line earns its place:
  *   /         the one-pager itself
- *   /login    the only door in. Without it nobody — admins included — can
- *             sign in on a browser that has no preview cookie.
  *   /terms /privacy /cookies
  *             the footer and consent-banner links, which have to be reachable.
  *   /verify   the address printed on every certificate already issued. Closing
  *             it would break verification for the people holding those links.
  *
  * `/api/auth/*` needs no entry — the matcher at the bottom never sees it.
+ *
+ * `/login` is deliberately NOT here. It was, and the result was that a
+ * stranger could reach the sign-in form, authenticate, and land back on the
+ * launch page holding a session that opened nothing — which looked, from the
+ * outside, exactly like a hole in the gate. It is now behind a preview link
+ * like everything else: open the link, then sign in. The cost is real and was
+ * accepted deliberately — on a browser with no preview cookie and no session,
+ * NOBODY can sign in, admins included. The way back in is the preview link,
+ * so losing both links means fixing it in the Vercel dashboard, not here.
+ *
+ * The recruiter door, /talent/login, sits inside RECRUITER_PATHS and so opens
+ * with the recruiter link, not the candidate one.
  */
 const GATE_PUBLIC_PATHS = [
   "/",
-  "/login",
   "/terms",
   "/privacy",
   "/cookies",
