@@ -45,6 +45,12 @@ export async function sendHrInviteEmail(input: {
       <p style="margin:28px 0">
         <a href="${url}" style="background:#03535F;color:#ffffff;text-decoration:none;padding:12px 22px;border-radius:8px;display:inline-block;font-weight:600">Open my workspace</a>
       </p>
+      <p style="color:#4b5563;font-size:13px;margin-bottom:6px">
+        If the button does not work, copy this link into your browser:
+      </p>
+      <p style="margin:0 0 24px">
+        <a href="${url}" style="color:#03535F;font-size:13px;word-break:break-all">${escapeHtml(url)}</a>
+      </p>
       <p style="color:#4b5563;font-size:13px">
         The link works once and expires on ${escapeHtml(expires)}. It signs in to
         your own workspace, so please don't forward it — if a colleague needs
