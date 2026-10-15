@@ -38,7 +38,14 @@ export function RecruiterLoginForm({
   registerHref?: string;
 }) {
   const router = useRouter();
-  const [method, setMethod] = useState<"code" | "password">("code");
+  // Password first when it is on offer. Accounts here are created by an admin
+  // who emails the recruiter their password, so the password is the method
+  // they actually hold; the code was the default from when it was the only
+  // way in. The tabs still switch, and a recruiter with no password set is one
+  // click from a code.
+  const [method, setMethod] = useState<"code" | "password">(
+    passwordEnabled ? "password" : "code",
+  );
   const [step, setStep] = useState<"email" | "code">("email");
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
@@ -172,7 +179,7 @@ export function RecruiterLoginForm({
           />
           <p className="text-xs text-muted-foreground">
             {passwordEnabled
-              ? "We’ll email you a 6-digit code. Set a password? Use the Password tab."
+              ? "We’ll email you a 6-digit code instead. Have a password? Use the Password tab."
               : "We’ll email you a 6-digit code. No password, no Google account."}
           </p>
         </div>
