@@ -1,4 +1,5 @@
 import Script from "next/script";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getLandingState } from "@/features/landing/get-landing-state";
@@ -6,9 +7,11 @@ import type { LandingUser } from "@/features/landing/get-landing-state";
 import { getRecruiterState } from "@/features/talent-pool/recruiter-registration";
 import { isCandidateRegistered } from "@/features/registration/registration-gate";
 import {
+  hasPreviewAccess,
   isClaudeEnabled,
   isDatabricksEnabled,
   isLaunchOnePagerEnabled,
+  PREVIEW_COOKIE_NAMES,
 } from "@/lib/feature-flags";
 import { LandingPage } from "@/components/landing/site/landing-page";
 import { LaunchOnePager } from "@/components/landing/launch/launch-one-pager";
@@ -52,34 +55,34 @@ function gtag_report_conversion(url) {
 
 export default async function HomePage() {
   const session = await auth();
-  // Plan 191, temporary: the launch one-pager stands in for the marketing
-  // landing, and the recruiter product is hidden.
+  // Plans 191 + 192, temporary: the launch one-pager stands in for the
+  // marketing landing and the whole platform is closed behind it.
   const onePager = isLaunchOnePagerEnabled();
-
-  if (session?.user?.id) {
-    if (session.user.isAdmin || (session.user as { role?: string }).role === "ADMIN") {
-      redirect("/admin");
-    }
-
-    if (onePager) {
-      // A registered candidate still goes to their dashboard, exactly as
-      // before. What must NOT happen here is the /hire redirect below:
-      // middleware sends /hire back to / while the one-pager is on, so a
-      // recruiter account would bounce between the two forever. They see the
-      // one-pager with their account menu instead.
-      if (await isCandidateRegistered(session.user.id)) {
-        redirect("/dashboard");
-      }
-    } else {
-      // RecruiterProfile is the current database-backed recruiter authority.
-      // Checking it here keeps a stale JWT role from sending the wrong account
-      // to its home surface.
-      const recruiter = await getRecruiterState(session.user.id);
-      redirect(recruiter.status === "none" ? "/dashboard" : "/hire");
-    }
-  }
+  const isAdmin =
+    session?.user?.isAdmin === true ||
+    (session?.user as { role?: string } | undefined)?.role === "ADMIN";
 
   if (onePager) {
+    // Who gets past the launch page: an admin, or a browser holding the
+    // candidate preview cookie. Everyone else stays on it — signed in or not,
+    // registered or not. Sending a registered candidate to /dashboard here
+    // would bounce them straight back (middleware gates /dashboard), so the
+    // old redirect must not fire for them.
+    const previewCookie = (await cookies()).get(
+      PREVIEW_COOKIE_NAMES.candidate,
+    )?.value;
+    const mayEnter = isAdmin || hasPreviewAccess("candidate", previewCookie);
+
+    if (session?.user?.id && mayEnter) {
+      // Asked for explicitly: an admin lands on the product, not the console.
+      // /admin is still one URL away. An admin with no CandidateProfile is
+      // passed on to /register by the dashboard's own gate, which is open to
+      // them.
+      if (isAdmin || (await isCandidateRegistered(session.user.id))) {
+        redirect("/dashboard");
+      }
+    }
+
     const user: LandingUser | null = session?.user?.id
       ? {
           name: session.user.name ?? null,
@@ -88,23 +91,25 @@ export default async function HomePage() {
           isAdmin: session.user.isAdmin ?? false,
         }
       : null;
-    // Signed out, /register bounces through the candidate door anyway, so the
-    // CTA says so up front. Signed in and unregistered — the only signed-in
-    // case that reaches here besides a recruiter — goes straight to it.
-    const getStartedHref = user ? "/register" : "/login?from=%2Fregister";
 
     return (
       <>
         <GoogleAdsScripts />
-        <LaunchOnePager
-          user={user}
-          getStartedHref={getStartedHref}
-          // /claude-signup redirects to / unless the challenge is open, so the
-          // hero CTA only points there once it is.
-          claudeHref={isClaudeEnabled() ? "/claude-signup" : getStartedHref}
-        />
+        <LaunchOnePager user={user} />
       </>
     );
+  }
+
+  if (session?.user?.id) {
+    if (isAdmin) {
+      redirect("/admin");
+    }
+
+    // RecruiterProfile is the current database-backed recruiter authority.
+    // Checking it here keeps a stale JWT role from sending the wrong account
+    // to its home surface.
+    const recruiter = await getRecruiterState(session.user.id);
+    redirect(recruiter.status === "none" ? "/dashboard" : "/hire");
   }
 
   const state = await getLandingState();

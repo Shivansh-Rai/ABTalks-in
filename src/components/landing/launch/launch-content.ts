@@ -1,5 +1,3 @@
-import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
-
 /**
  * Plan 191 — copy for the temporary launch one-pager.
  *
@@ -24,7 +22,7 @@ export const CLAUDE_LAUNCH_LABEL = "15 November 2026";
 export const LAUNCH_HERO = {
   eyebrow: "Next cohort",
   headline: "Another Claude Challenge\nis launching.",
-  body: "Sixty days of building with Claude — one scoped task a day, shipped in public, scored against the platform's own checks. Registration opens shortly before kickoff. Create your account now and you'll be ready on day one.",
+  body: "Sixty days of building with Claude — one scoped task a day, shipped in public, scored against the platform's own checks. Registration opens shortly before kickoff. Join the community below and you'll hear the moment it does.",
   datePrefix: "Starts",
 } as const;
 
@@ -43,26 +41,9 @@ export const LAUNCH_POINTS = [
   },
 ] as const;
 
-export const LAUNCH_TRACKS = [
-  {
-    href: "/challenges",
-    title: "60-Day Coding Challenge",
-    note: "AI, Data Science or Software Engineering — one task a day.",
-  },
-  {
-    href: PROGRAM_AI_COHORT_BASE,
-    title: "31 Days AI Cohort",
-    note: "Ship a production-grade chatbot: RAG, agents, MCP and deploy.",
-  },
-  {
-    href: "/hackathon",
-    title: "Hackathon",
-    note: "Weekend builds, judged and archived.",
-  },
-] as const;
-
+// No /mission: it sits in middleware's protectedPaths, so that link has always
+// led to a login form rather than to the page.
 export const LAUNCH_FOOTER_LINKS = [
-  { href: "/mission", label: "Mission" },
   { href: "/terms", label: "Terms" },
   { href: "/privacy", label: "Privacy" },
   { href: "/cookies", label: "Cookies" },

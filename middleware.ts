@@ -52,6 +52,65 @@ function resolveRequestId(incoming: string | null): string {
 
 const { auth } = NextAuth(authConfig);
 
+/* -------------------------------------------------------------------------
+ * Plans 191 + 192, TEMPORARY: the launch gate.
+ *
+ * While `LANDING_ONE_PAGER` is anything but "false", the only thing the public
+ * gets is the launch one-pager at `/`. Everything else — the candidate product
+ * and the recruiter product alike — redirects there, for signed-out and
+ * signed-in visitors both.
+ *
+ * This is a MARKETING GATE, NOT A SECURITY BOUNDARY. Every route keeps the
+ * authorization it already had: `protectedPaths` below still sends signed-out
+ * visitors to their door, and every page guard is untouched. Removing this
+ * gate re-opens the product; it never exposes anything that was protected.
+ *
+ * Read from `process.env` by hand, duplicating `src/lib/feature-flags.ts`:
+ * middleware must not import from `@/lib/*` — doing so blows the 1 MB Edge
+ * bundle limit, the same reason the consent constants above are duplicated.
+ * Keep the two in step.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * What answers while the gate is on. Everything not listed redirects to `/`.
+ * Prefixes match the path itself and anything under it.
+ *
+ * Each line earns its place:
+ *   /         the one-pager itself
+ *   /login    the only door in. Without it nobody — admins included — can
+ *             sign in on a browser that has no preview cookie.
+ *   /terms /privacy /cookies
+ *             the footer and consent-banner links, which have to be reachable.
+ *   /verify   the address printed on every certificate already issued. Closing
+ *             it would break verification for the people holding those links.
+ *
+ * `/api/auth/*` needs no entry — the matcher at the bottom never sees it.
+ */
+const GATE_PUBLIC_PATHS = [
+  "/",
+  "/login",
+  "/terms",
+  "/privacy",
+  "/cookies",
+  "/verify",
+] as const;
+
+/** The recruiter product. The candidate preview link does NOT open these. */
+const RECRUITER_PATHS = ["/hire", "/talent", "/recruiter-onboarding"] as const;
+
+const PREVIEW_COOKIE = {
+  candidate: "klymb_preview_candidate",
+  recruiter: "klymb_preview_recruiter",
+} as const;
+
+/** 30 days. Long enough that the team is not re-pasting the link every week. */
+const PREVIEW_COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
+
+function matchesPath(pathname: string, base: string): boolean {
+  if (base === "/") return pathname === "/";
+  return pathname === base || pathname.startsWith(`${base}/`);
+}
+
 const protectedPaths = [
   "/dashboard",
   "/explore",
@@ -231,41 +290,85 @@ export default auth((req) => {
       exactProtectedPaths.includes(pathname));
   const isAuthPage = pathname === "/login";
 
-  /**
-   * Plan 191, TEMPORARY: the recruiter product is hidden while the launch
-   * one-pager is the home page. Nothing is deleted — /hire, /talent and
-   * /recruiter-onboarding are all still on disk and still work; this only
-   * stops the public and candidates from reaching them, including by typed
-   * URL, because the one-pager advertises no recruiter side at all.
-   *
-   * Read from `process.env` by hand. This duplicates
-   * `isLaunchOnePagerEnabled()` in `src/lib/feature-flags.ts` on purpose:
-   * middleware must not import from `@/lib/*` — doing so blows the 1 MB Edge
-   * bundle limit, the same reason the consent constants above are duplicated.
-   * Keep the two in sync. `LANDING_ONE_PAGER=false` lifts both halves.
-   *
-   * Admins are exempt so the desk stays reachable in production; /admin and
-   * /admin/hire are untouched either way.
-   */
-  const launchOnePager = process.env.LANDING_ONE_PAGER !== "false";
-  const isRecruiterSurface =
-    pathname === "/hire" ||
-    pathname.startsWith("/hire/") ||
-    pathname === "/talent" ||
-    pathname.startsWith("/talent/") ||
-    pathname === "/recruiter-onboarding" ||
-    pathname.startsWith("/recruiter-onboarding/");
+  // See GATE_PUBLIC_PATHS above for what this is and what it is not.
+  const gateOn = process.env.LANDING_ONE_PAGER !== "false";
+
+  // An admin passes both sides without a link; the two preview cookies each
+  // open their own side and NOT the other, so the candidate link handed to a
+  // designer never opens the hire desk.
   const isAdminSession =
     req.auth?.user?.isAdmin === true ||
     (req.auth?.user as { role?: string } | undefined)?.role === "ADMIN";
-  const recruiterHidden = launchOnePager && isRecruiterSurface && !isAdminSession;
+  const candidateToken = process.env.PREVIEW_TOKEN_CANDIDATE;
+  const recruiterToken = process.env.PREVIEW_TOKEN_RECRUITER;
+  const hasCandidatePreview =
+    !!candidateToken &&
+    req.cookies.get(PREVIEW_COOKIE.candidate)?.value === candidateToken;
+  const hasRecruiterPreview =
+    !!recruiterToken &&
+    req.cookies.get(PREVIEW_COOKIE.recruiter)?.value === recruiterToken;
+
+  const isRecruiterSurface = RECRUITER_PATHS.some((p) => matchesPath(pathname, p));
+  const mayPass = isRecruiterSurface
+    ? isAdminSession || hasRecruiterPreview
+    : isAdminSession || hasCandidatePreview;
+
+  const gated =
+    gateOn &&
+    !mayPass &&
+    !GATE_PUBLIC_PATHS.some((p) => matchesPath(pathname, p));
+
+  /**
+   * The unlock, handled before everything else.
+   *
+   * `?preview=<token>` sets that side's cookie and bounces to the same URL
+   * without the parameter, so the secret never settles in the address bar, the
+   * browser history or a `Referer` header on the next outbound click.
+   * `?preview=off` clears both. A value matching neither sets nothing and is
+   * answered exactly like `off` — a wrong guess must not learn which of the
+   * two it nearly was.
+   */
+  const previewParam = req.nextUrl.searchParams.get("preview");
 
   let response: NextResponse;
 
-  // First, ahead of the session gate: a signed-out visitor to /hire must land
-  // on the home page, not on /talent/login — a recruiter door that is itself
-  // hidden right now.
-  if (recruiterHidden) {
+  if (gateOn && previewParam !== null) {
+    const clean = new URL(req.nextUrl);
+    clean.searchParams.delete("preview");
+    response = withTracking(
+      NextResponse.redirect(clean),
+      ref,
+      src,
+      alreadyAttributed,
+      consent,
+      hasAttributionCookies,
+      requestId,
+    );
+
+    const side =
+      candidateToken && previewParam === candidateToken
+        ? "candidate"
+        : recruiterToken && previewParam === recruiterToken
+          ? "recruiter"
+          : null;
+
+    if (side) {
+      response.cookies.set(PREVIEW_COOKIE[side], previewParam, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: PREVIEW_COOKIE_MAX_AGE,
+        path: "/",
+      });
+    } else {
+      // "off", a typo, or a stranger trying values: leave with nothing.
+      response.cookies.delete(PREVIEW_COOKIE.candidate);
+      response.cookies.delete(PREVIEW_COOKIE.recruiter);
+    }
+  } else if (gated) {
+    // Ahead of the session gate on purpose: a signed-out visitor to /hire or
+    // /dashboard must land on the launch page, not on a login form for a
+    // product that is currently closed.
     response = withTracking(
       NextResponse.redirect(new URL("/", req.nextUrl)),
       ref,
