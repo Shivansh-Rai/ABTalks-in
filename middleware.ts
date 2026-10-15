@@ -112,6 +112,21 @@ const PREVIEW_COOKIE = {
   recruiter: "klymb_preview_recruiter",
 } as const;
 
+/**
+ * The two preview accounts, by hand — middleware cannot import `@/lib/*`
+ * (Edge bundle), so this duplicates `PREVIEW_EMAIL` in
+ * `features/preview/preview-accounts.ts`. Keep them in step.
+ *
+ * Used only to notice that a browser holding both preview cookies is signed in
+ * on the WRONG side for the page it just asked for. One session is one account,
+ * so holding both links cannot mean being both at once — what it can mean is
+ * switching without being dumped on a signup form, which is what this enables.
+ */
+const PREVIEW_EMAIL = {
+  candidate: "preview-candidate@klymb.ai",
+  recruiter: "preview-recruiter@klymb.ai",
+} as const;
+
 /** 30 days. Long enough that the team is not re-pasting the link every week. */
 const PREVIEW_COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
 
@@ -334,6 +349,34 @@ export default auth((req) => {
     !GATE_PUBLIC_PATHS.some((p) => matchesPath(pathname, p));
 
   /**
+   * Signed in as one side's preview account, asking for the other side's
+   * product, holding a valid link for it.
+   *
+   * Without this, opening both links in one browser half-works: the second
+   * link switches the session, and going back to the first side lands on
+   * /register (no CandidateProfile) or an empty desk (no RecruiterProfile).
+   * Both links in one browser is the normal way to look at the platform, so
+   * the switch happens here instead of being the visitor's problem.
+   *
+   * Only ever redirects between accounts this browser already holds valid
+   * links for; it opens nothing new.
+   */
+  const sessionEmail = req.auth?.user?.email ?? null;
+  const wrongSide =
+    gateOn && !isPreviewEntry
+      ? isRecruiterSurface &&
+        sessionEmail === PREVIEW_EMAIL.candidate &&
+        hasRecruiterPreview
+        ? "recruiter"
+        : !isRecruiterSurface &&
+            sessionEmail === PREVIEW_EMAIL.recruiter &&
+            hasCandidatePreview &&
+            !GATE_PUBLIC_PATHS.some((p) => matchesPath(pathname, p))
+          ? "candidate"
+          : null
+      : null;
+
+  /**
    * The unlock, handled before everything else.
    *
    * `?preview=<token>` sets that side's cookie and bounces to the same URL
@@ -391,6 +434,18 @@ export default auth((req) => {
       response.cookies.delete(PREVIEW_COOKIE.candidate);
       response.cookies.delete(PREVIEW_COOKIE.recruiter);
     }
+  } else if (wrongSide) {
+    const swap = new URL("/preview/enter", req.nextUrl);
+    swap.searchParams.set("side", wrongSide);
+    response = withTracking(
+      NextResponse.redirect(swap),
+      ref,
+      src,
+      alreadyAttributed,
+      consent,
+      hasAttributionCookies,
+      requestId,
+    );
   } else if (gated) {
     // Ahead of the session gate on purpose: a signed-out visitor to /hire or
     // /dashboard must land on the launch page, not on a login form for a

@@ -104,18 +104,51 @@ async function main() {
     // /dashboard is protected and there is no session, so this redirects to
     // /login. That is a different `return` inside the middleware, and it is
     // exactly the branch a merge like this one tends to miss.
+    //
+    // The launch gate (plans 191-193) is turned OFF for this one case on
+    // purpose: with it on, /dashboard is redirected to / before the auth
+    // branch is ever reached, and this assertion would be testing the gate
+    // instead of the thing it was written for. The gate's own redirect is
+    // covered by the case below.
+    const gate = process.env.LANDING_ONE_PAGER;
+    process.env.LANDING_ONE_PAGER = "false";
+    try {
+      const res = await run("https://abtalks.in/dashboard");
+      assert(
+        res.status === 307 || res.status === 302,
+        `expected a redirect for a signed-out /dashboard, got ${res.status}`,
+      );
+      assert(
+        res.headers.get("location")?.includes("/login"),
+        "the existing auth redirect must still happen",
+      );
+      assert(
+        UUID_RE.test(res.headers.get(REQUEST_ID_HEADER) ?? ""),
+        "the redirect response carries no request id",
+      );
+    } finally {
+      if (gate === undefined) delete process.env.LANDING_ONE_PAGER;
+      else process.env.LANDING_ONE_PAGER = gate;
+    }
+  });
+
+  await suite("the gate's own redirect carries the id too", async () => {
+    // With the launch gate on — the default — a signed-out /dashboard is sent
+    // to the launch page instead. That is another `return`, and it has to
+    // carry the id like every other one.
     const res = await run("https://abtalks.in/dashboard");
     assert(
       res.status === 307 || res.status === 302,
-      `expected a redirect for a signed-out /dashboard, got ${res.status}`,
+      `expected the gate to redirect, got ${res.status}`,
     );
+    const loc = res.headers.get("location") ?? "";
     assert(
-      res.headers.get("location")?.includes("/login"),
-      "the existing auth redirect must still happen",
+      loc.endsWith("/") || loc.endsWith("abtalks.in/"),
+      `expected the launch page, got ${loc}`,
     );
     assert(
       UUID_RE.test(res.headers.get(REQUEST_ID_HEADER) ?? ""),
-      "the redirect response has no request id",
+      "the gate redirect carries no request id",
     );
   });
 
