@@ -10,7 +10,6 @@ import {
   LAUNCH_FOOTER_LINKS,
   LAUNCH_HERO,
   LAUNCH_POINTS,
-  LAUNCH_TRACKS,
 } from "./launch-content";
 import "@/components/landing/site/landing.css";
 import "./launch.css";
@@ -25,19 +24,13 @@ import "./launch.css";
  * on top, so nothing in `components/landing/site/**` had to change to put this
  * page up — flip the flag off and that landing is back, untouched.
  *
- * The recruiter product does not appear here at all: no hire desk, no talent
- * pool, no recruiter onboarding. Middleware redirects those routes to / for
- * everyone but admins while this page is live.
+ * Plan 192 closed the candidate side too, so this page offers nothing to join
+ * — registration is shut until kickoff and every track route redirects back
+ * here. What is left is the announcement, one "Sign in" for people who already
+ * have an account, and the community invite, which is the only way an
+ * interested visitor can stay in touch meanwhile.
  */
-export function LaunchOnePager({
-  user,
-  getStartedHref,
-  claudeHref,
-}: {
-  user: LandingUser | null;
-  getStartedHref: string;
-  claudeHref: string;
-}) {
+export function LaunchOnePager({ user }: { user: LandingUser | null }) {
   const year = new Date().getFullYear();
 
   return (
@@ -55,14 +48,9 @@ export function LaunchOnePager({
           {user ? (
             <LandingUserMenu user={user} />
           ) : (
-            <div className="launch__nav-cta">
-              <Link href="/login" className="btn btn--ghost btn--sm">
-                Sign in
-              </Link>
-              <Link href={getStartedHref} className="btn btn--clay btn--nav">
-                Get Started
-              </Link>
-            </div>
+            <Link href="/login" className="btn btn--ghost btn--sm">
+              Sign in
+            </Link>
           )}
         </div>
       </header>
@@ -85,16 +73,13 @@ export function LaunchOnePager({
 
             <p className="launch__body">{LAUNCH_HERO.body}</p>
 
-            <div className="launch__actions">
-              <Link href={claudeHref} className="btn btn--primary btn--lg">
-                Get Started
-              </Link>
-              {user ? null : (
+            {user ? null : (
+              <div className="launch__actions">
                 <Link href="/login" className="btn btn--ghost btn--lg">
                   Sign in
                 </Link>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -109,23 +94,8 @@ export function LaunchOnePager({
           </div>
         </section>
 
-        <section className="launch__tracks" aria-label="Open right now">
+        <section className="launch__community" aria-label="Community">
           <div className="container">
-            <h2 className="launch__section-title">Open right now</h2>
-            <ul className="launch__track-list">
-              {LAUNCH_TRACKS.map((track) => (
-                <li key={track.href}>
-                  <Link href={track.href} className="launch__track">
-                    <span className="launch__track-title">{track.title}</span>
-                    <span className="launch__track-note">{track.note}</span>
-                    <span className="launch__track-arrow" aria-hidden="true">
-                      →
-                    </span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-
             <a
               href={WHATSAPP_INVITE}
               className="btn btn--whatsapp btn--lg launch__whatsapp"
