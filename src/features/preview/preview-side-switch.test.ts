@@ -173,6 +173,52 @@ async function main() {
     );
   });
 
+  console.log("\nHR invite: what the gate opens");
+
+  await suite("an invited HR reaches /hr/signin with no cookies at all", async () => {
+    const res = await run("/hr/signin?t=whatever", []);
+    assert(
+      !location(res).endsWith("app.klymb.ai/"),
+      `the link must reach the route that spends the token; got ${location(res)}`,
+    );
+  });
+
+  await suite("a recruiter SESSION opens the desk without a preview cookie", async () => {
+    const res = await run("/hire", [
+      await sessionCookie("hr@acme-test.com", "RECRUITER"),
+    ]);
+    assert(
+      !location(res).endsWith("app.klymb.ai/"),
+      `an invited HR must reach /hire; got ${location(res)}`,
+    );
+  });
+
+  await suite("that rule does NOT open the candidate side", async () => {
+    const res = await run("/dashboard", [
+      await sessionCookie("hr@acme-test.com", "RECRUITER"),
+    ]);
+    assert(
+      location(res).endsWith("app.klymb.ai/"),
+      `a recruiter has no business on /dashboard; got ${location(res) || res.status}`,
+    );
+  });
+
+  await suite("a candidate session still cannot open the desk", async () => {
+    const res = await run("/hire", [await sessionCookie("someone@example.com")]);
+    assert(
+      location(res).endsWith("app.klymb.ai/"),
+      `only a RECRUITER session passes; got ${location(res) || res.status}`,
+    );
+  });
+
+  await suite("a stranger with no session is still shut out of the desk", async () => {
+    const res = await run("/hire", []);
+    assert(
+      location(res).endsWith("app.klymb.ai/"),
+      `the gate must still hold for the public; got ${location(res) || res.status}`,
+    );
+  });
+
   console.log(`\n${passed} passed, ${failed} failed\n`);
   if (failed > 0) process.exitCode = 1;
 }

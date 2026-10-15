@@ -98,6 +98,10 @@ const { auth } = NextAuth(authConfig);
  */
 const GATE_PUBLIC_PATHS = [
   "/",
+  // Plan 194: where an invited HR's emailed sign-in link lands. Public of
+  // necessity — an invited recruiter holds no preview cookie — and worthless
+  // without a live token, which the route itself spends and verifies.
+  "/hr/signin",
   "/terms",
   "/privacy",
   "/cookies",
@@ -337,10 +341,25 @@ export default auth((req) => {
   // belongs to neither side, so either cookie reaches it — a recruiter-cookie
   // browser has to get here too, and /preview is not inside RECRUITER_PATHS.
   const isPreviewEntry = matchesPath(pathname, "/preview");
+  /**
+   * Plan 194: an invited HR signs in to their OWN recruiter account and holds
+   * no preview cookie, so the desk has to open for a recruiter SESSION too.
+   *
+   * This widens the launch gate, deliberately and narrowly. What it does not
+   * do is create a way in: a session can only be obtained through a door that
+   * is itself behind the gate — /login and /talent/login both are — or through
+   * an invite link issued by an admin. And it changes no authorization: every
+   * recruiter surface keeps the checks it already had, `/hire/*` beyond the
+   * public entry still requires a session, and the hire layout still resolves
+   * the RecruiterProfile for itself.
+   */
+  const isRecruiterSession =
+    (req.auth?.user as { role?: string } | undefined)?.role === "RECRUITER";
+
   const mayPass = isPreviewEntry
     ? isAdminSession || hasCandidatePreview || hasRecruiterPreview
     : isRecruiterSurface
-      ? isAdminSession || hasRecruiterPreview
+      ? isAdminSession || hasRecruiterPreview || isRecruiterSession
       : isAdminSession || hasCandidatePreview;
 
   const gated =
