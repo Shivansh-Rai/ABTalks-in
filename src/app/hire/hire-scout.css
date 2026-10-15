@@ -74,7 +74,8 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app {
   color-scheme: dark;
 }
 
-html.dark:not(:has(.theme-abtalks-light)) .hire-app__logo img,
+/* The desk wordmark is type now and inherits currentColor, so it needs no
+   invert; the header icon is still a bitmap and does. */
 html.dark:not(:has(.theme-abtalks-light)) .hire-hbtn__icon img {
   filter: invert(1);
   mix-blend-mode: screen;
@@ -153,17 +154,18 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-hbtn__icon img {
 .hire-app__logo {
   display: block;
   flex: none;
-  height: 28px;
+  line-height: 1;
+}
+
+/* Sized to the box the old 346x81 export was cropped into: ~27px tall. */
+.hire-app__logo-text {
+  font-size: 22px;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 /* The mark is 561x168. Height is what has to match the header; width follows,
    which is why it is auto rather than the 108px the old cropped sprite needed. */
-.hire-app__logo img {
-  display: block;
-  height: 100%;
-  width: auto;
-  max-width: none;
-}
 
 .hire-app__badge {
   display: inline-flex;
@@ -4355,8 +4357,11 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app.hire-menu {
 }
 
 @media (max-width: 640px) {
-  .hire-app__logo {
-    width: 88px;
+  /* Was `width: 88px`, which cropped the old bitmap. Type does not crop, it
+     truncates — the mark read "klyn" on a phone — so the width goes and the
+     size comes down instead. */
+  .hire-app__logo-text {
+    font-size: 18px;
   }
 
   .hire-app__badge {
@@ -7646,10 +7651,10 @@ a.hire-assess-action {
   height: 27px;
 }
 
-.hire-app--landing .hire-app__logo img {
-  filter: none;
-  mix-blend-mode: normal;
+.hire-app--landing .hire-app__logo-text {
+  font-size: 22px;
 }
+
 
 .hire-app--landing .abt-header-icon {
   color: #03535f;
@@ -8140,6 +8145,10 @@ a.hire-assess-action {
     height: 22px;
   }
 
+  .hire-app--landing .hire-app__logo-text {
+    font-size: 18px;
+  }
+
   .hire-app--landing .hire-signin {
     height: 36px;
     padding: 0 15px;
@@ -8259,11 +8268,6 @@ a.hire-assess-action {
 }
 
 /* The design crops the 346x81 export into a 140x27 box (object-fit: cover). */
-.hire-app:not(.hire-app--landing) .hire-app__logo img {
-  width: 140px;
-  height: 27px;
-  object-fit: cover;
-}
 
 .hire-app:not(.hire-app--landing) .hire-app__badge {
   height: auto;
@@ -8289,6 +8293,10 @@ a.hire-assess-action {
 
   .hire-app:not(.hire-app--landing) .hire-app__logo {
     height: 27px;
+  }
+
+  .hire-app:not(.hire-app--landing) .hire-app__logo-text {
+    font-size: 22px;
   }
 
   .hire-app:not(.hire-app--landing) .hire-app__nav {
@@ -10826,10 +10834,10 @@ a.hire-profile__ext-link:focus-visible {
     height: 22px;
   }
 
-  .hire-app:not(.hire-app--landing) .hire-app__logo img {
-    width: 114px;
-    height: 22px;
+  .hire-app:not(.hire-app--landing) .hire-app__logo-text {
+    font-size: 18px;
   }
+
 
   .hire-app--results .hire-scout-region {
     padding: 8px 12px 12px;
@@ -10930,10 +10938,10 @@ a.hire-profile__ext-link:focus-visible {
     height: 17px;
   }
 
-  .hire-app:not(.hire-app--landing) .hire-app__logo img {
-    width: 88px;
-    height: 17px;
+  .hire-app:not(.hire-app--landing) .hire-app__logo-text {
+    font-size: 14px;
   }
+
 }
 
 
@@ -11659,31 +11667,6 @@ a.hire-profile__ext-link:focus-visible {
     box-shadow 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
 }
 
-.hire-app__logo-swap {
-  display: grid;
-  height: 100%;
-  justify-items: start;
-  align-items: center;
-}
-
-.hire-app__logo-swap > img {
-  grid-area: 1 / 1;
-  transition: opacity 1200ms cubic-bezier(0.45, 0.05, 0.25, 1);
-}
-
-/* Landing is a light field now, so the dark wordmark reads; every other
-   /hire/* page keeps the same dark mark. Light wordmark stays in the tree
-   for the results crossfade but stays hidden on landing. */
-.hire-app--landing .hire-app__logo-img--light,
-.hire-app:not(.hire-app--landing) .hire-app__logo-img--light {
-  opacity: 0;
-}
-
-.hire-app--landing .hire-app__logo-img--dark,
-.hire-app:not(.hire-app--landing) .hire-app__logo-img--dark {
-  opacity: 1;
-}
-
 .hire-app--results .hire-app__badge,
 .hire-app--results .hire-app__nav > .hire-hbtn {
   animation: hire-results-in 700ms var(--ease) 500ms both;
@@ -11691,10 +11674,6 @@ a.hire-profile__ext-link:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .hire-app__header,
-  .hire-app__logo-swap > img {
-    transition: none;
-  }
-
   .hire-app--results .hire-app__badge,
   .hire-app--results .hire-app__nav > .hire-hbtn {
     animation: none;
@@ -11704,10 +11683,6 @@ a.hire-profile__ext-link:focus-visible {
 /* The stacked wordmarks size to the logo box: a definite row, or `height:100%`
    on the images has nothing to resolve against and they render at their
    natural 67-81px. */
-.hire-app__logo-swap {
-  grid-template-rows: 100%;
-}
-
 /* Portrait screens. Every ellipse in the design is % of width x % of height,
    which on a phone stretches each one into a tall streak — light and dark
    alike. On the 1956x870 frame each is close to a circle whose radius is its
@@ -14810,22 +14785,20 @@ a.hire-profile__ext-link:focus-visible {
   }
 }
 
-/* Phones show the mark as "AB" across all of /hire. The image is drawn at a
-   fixed 102px and a 36px window shows exactly "AB": in both the light and dark
-   files "AB" ends at ~33% of the width and "T" starts at ~37%. */
+/* Phones used to show the mark as "AB": the bitmap was drawn at a fixed 102px
+   and a 36px window cropped it to those two letters. Type does not crop, it
+   truncates — the same window read "klyn" — and the wordmark has no monogram
+   form, so phones now get the whole mark, smaller. At 19px it is ~77px wide,
+   which the header carries easily beside one button. */
 @media (max-width: 900px) {
   .hire-app .hire-app__header .hire-app__logo {
     flex: none;
-    width: 36px;
-    height: 24px;
-    overflow: hidden;
   }
 
-  .hire-app .hire-app__header .hire-app__logo img {
-    width: 102px;
-    height: auto;
-    max-width: none;
+  .hire-app .hire-app__header .hire-app__logo-text {
+    font-size: 19px;
   }
+
 }
 
 /* Landing heading on phones: 40px put "Who are you looking for?" across most

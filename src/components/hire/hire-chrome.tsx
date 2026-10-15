@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { Wordmark } from "@/components/shared/wordmark";
 import { usePathname } from "next/navigation";
 import { Bookmark, FolderKanban, LayoutDashboard, Menu, UserCheck, X } from "lucide-react";
 import { RecruiterAccountMenu } from "@/components/hire/recruiter-account-menu";
@@ -234,31 +234,13 @@ export function HireChrome({
         )}
         <Link href="/" className="hire-app__brand" aria-label="Klymb AI home">
           <span className="hire-app__logo">
-            {/* The same stacked-wordmark swap runs on the desk AND on plain
-                /hire/* pages (requests, jobs, messages, settings, …) so the
-                header brand reads identically once the user is inside Hire.
-                The dark wordmark is the visible mark on the light landing
-                field and on every other /hire/* page; the light mark stays
-                in the stack for opacity transitions. */}
-            <span className="hire-app__logo-swap">
-              <Image
-                src="/hire/abtalks-wordmark.png"
-                alt=""
-                aria-hidden
-                width={342}
-                height={67}
-                priority
-                className="hire-app__logo-img hire-app__logo-img--light"
-              />
-              <Image
-                src="/hire/abtalks-wordmark-dark.png"
-                alt="Klymb AI"
-                width={346}
-                height={81}
-                priority
-                className="hire-app__logo-img hire-app__logo-img--dark"
-              />
-            </span>
+            {/* Plan 189's wordmark is TYPE, not a bitmap. The rename swapped 24
+                <Image> call sites for it and missed this one, so the desk kept
+                showing the old mark with alt="Klymb AI" over it. Type also
+                inherits currentColor, which is why the light/dark image swap
+                and the invert filter underneath it are gone: the mark now
+                takes the header's own colour in every context. */}
+            <Wordmark size="md" className="hire-app__logo-text" />
           </span>
         </Link>
 
