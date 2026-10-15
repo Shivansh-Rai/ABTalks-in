@@ -5,6 +5,7 @@ import { listRecruiters } from "@/features/talent-pool/recruiter-registration";
 import { AdminRecruitersPanel } from "@/components/talent/admin-recruiters-panel";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { CreateRecruiterForm } from "@/components/admin/create-recruiter-form";
+import { HrInviteForm } from "@/components/admin/hr-invite-form";
 import { isEmailLoginEnabled } from "@/lib/feature-flags";
 import {
   RecruiterSeatsPanel,
@@ -61,6 +62,10 @@ export default async function AdminRecruitersPage() {
 
       <section className="space-y-3">
         <CreateRecruiterForm emailLoginEnabled={isEmailLoginEnabled()} />
+
+        {/* Plan 194: the trial path. Unlike the form above it sets no
+            password — the HR gets a one-click sign-in link instead. */}
+        <HrInviteForm />
       </section>
 
       <section className="space-y-3">
