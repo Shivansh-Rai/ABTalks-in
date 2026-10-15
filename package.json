@@ -132,6 +132,7 @@
     "test:navbar-shortlist": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/navbar-shortlist.test.ts",
     "test:virtual": "NODE_OPTIONS=--conditions=react-server tsx src/features/hire/virtual-candidate.test.ts",
     "test:notify": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/notification/notify.test.ts",
+    "test:recruiter-signup-closed": "tsx src/features/hire/recruiter-signup-closed.test.ts",
     "test:hr-invite": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/hire/hr-invite.test.ts",
     "test:preview-sides": "cross-env AUTH_SECRET=preview-test-secret PREVIEW_TOKEN_CANDIDATE=test-candidate-token PREVIEW_TOKEN_RECRUITER=test-recruiter-token tsx src/features/preview/preview-side-switch.test.ts",
     "test:registration-gate": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/registration/registration-gate.test.ts",
