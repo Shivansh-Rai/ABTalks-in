@@ -71,7 +71,7 @@ export function CookieConsentModal() {
             <p className="text-xs leading-snug text-muted-foreground sm:text-[13px] sm:leading-relaxed">
               <span className="sm:hidden">
                 We use essential cookies for sign-in and security, plus optional
-                analytics to improve ABTalks.{" "}
+                analytics to improve Klymb AI.{" "}
                 <Link
                   href="/cookies"
                   className="font-medium text-primary underline-offset-2 hover:underline"
@@ -81,7 +81,7 @@ export function CookieConsentModal() {
                 .
               </span>
               <span className="hidden sm:inline">
-                We use cookies to make ABTalks work. Essential cookies are required
+                We use cookies to make Klymb AI work. Essential cookies are required
                 for sign-in, security, and keeping your session active. We also use
                 optional analytics cookies to understand product usage and improve the platform.{" "}
                 <Link

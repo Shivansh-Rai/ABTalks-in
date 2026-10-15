@@ -1,7 +1,6 @@
 "use client";
 
 import { Children, useState, type ReactNode } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
@@ -11,6 +10,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { COHORT_REGISTER_ONBOARDING_KEY } from "@/components/talent-hunt/constants";
 import { cn } from "@/lib/utils";
 import { SiteSearchSlot } from "@/components/dashboard-hub/site-search-slot";
+import { Wordmark } from "@/components/shared/wordmark";
 
 const DEFAULT_BASE_PATH = "/ai-cohort-register";
 
@@ -90,15 +90,8 @@ export function CohortRegisterOnboardingFlow({
       <header className="abt-header z-10 shrink-0 gap-3">
         <div className="abt-header-inner">
           <div className="flex min-w-0 items-center gap-3">
-            <Link href="/" aria-label="ABTalks home" className="logo-link">
-              <Image
-                src="/abtalks-logo.png"
-                alt="ABTalks"
-                width={300}
-                height={84}
-                priority
-                className="logo-image"
-              />
+            <Link href="/" aria-label="Klymb AI home" className="logo-link">
+              <Wordmark size="lg" className="logo-image" />
             </Link>
             <p className="text-sm text-muted-foreground">AI Cohort Training Program</p>
           </div>

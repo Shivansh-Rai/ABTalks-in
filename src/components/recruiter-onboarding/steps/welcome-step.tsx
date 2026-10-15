@@ -55,11 +55,11 @@ export function WelcomeStep({
     <OnboardingStep
       motion={motion}
       focusHeading={focusHeading}
-      eyebrow="ABTalks Hire"
+      eyebrow="Klymb AI Hire"
       title="Let’s build your recruiting workspace."
       description={
         <p>
-          Tell us who you are and where you hire. ABTalks uses it to set up your
+          Tell us who you are and where you hire. Klymb AI uses it to set up your
           workspace, so you can start searching for candidates straight away.
         </p>
       }

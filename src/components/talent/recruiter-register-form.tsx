@@ -22,7 +22,7 @@ import { PASSWORD_MIN_LENGTH } from "@/lib/validations/email-auth";
  * Recruiter registration, open to anyone.
  *
  * The email is verified by a code before anything is written, so a registration
- * always carries an address the ABTalks team can actually reach — which is the
+ * always carries an address the Klymb AI team can actually reach — which is the
  * whole point of the review step that follows. Phone is a contact detail, not a
  * credential, so it is optional and unverified.
  */

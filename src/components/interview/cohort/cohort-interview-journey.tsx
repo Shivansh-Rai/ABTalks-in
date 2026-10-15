@@ -37,7 +37,7 @@ export function CohortInterviewJourney({
   const dayLabel = blueprint === "DAY_15" ? "Day 15" : "Day 31";
 
   // The live and completion stages get a full-bleed dark environment.
-  // Pre-interview stages use the standard AB Talks layout.
+  // Pre-interview stages use the standard Klymb AI layout.
   const isImmersive = stage === "live";
 
   return (
@@ -45,7 +45,7 @@ export function CohortInterviewJourney({
     // wrapper used to force `dark`; the interview now follows the cream/orange
     // system the rest of the site uses, so forcing a theme here would fight it.
     <div className="interview-room">
-      {/* Pre-interview stages: standard AB Talks layout with subtle step indicator */}
+      {/* Pre-interview stages: standard Klymb AI layout with subtle step indicator */}
       {!isImmersive && stage !== "completion" && stage !== "result" && (
         <div className="text-foreground">
           {stage !== "intro" && (

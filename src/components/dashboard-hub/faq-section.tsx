@@ -17,7 +17,7 @@ export function FaqSection({ items = DASHBOARD_FAQ }: { items?: { q: string; a: 
             Questions, <span className="text-[#03535F]">answered.</span>
           </h2>
           <p className="mt-3 text-[15px] leading-relaxed text-[#4B4B4B]">
-            Everything you need to know about the ABTalks 60-day challenge,
+            Everything you need to know about the Klymb AI 60-day challenge,
             submissions, streaks, and more.
           </p>
         </div>

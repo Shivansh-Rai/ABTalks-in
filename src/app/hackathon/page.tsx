@@ -17,7 +17,7 @@ import "@/app/hackathon/_styles/hackathon-v2.css";
 import "@/components/hackathon-video/landing.css";
 
 export const metadata: Metadata = {
-  title: `${VIDEOTHON.name} · ABTalks`,
+  title: `${VIDEOTHON.name} · Klymb AI`,
   description:
     "A 24-hour hackathon for video editors. Solo. One brief. Ship one cut.",
 };

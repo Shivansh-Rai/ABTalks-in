@@ -181,7 +181,7 @@ export function UnlockContactDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="hire-app hire-unlock sm:max-w-sm" showCloseButton>
           <DialogHeader>
-            <p className="hire-auth__kicker">ABTalks Hire</p>
+            <p className="hire-auth__kicker">Klymb AI Hire</p>
             <DialogTitle>Unlock contact details</DialogTitle>
             <DialogDescription>
               {candidateLabel}: email and phone, visible to you alone.
@@ -233,7 +233,7 @@ export function UnlockContactDialog({
                   <Link href="/hire/credits" onClick={() => setOpen(false)}>
                     View credits
                   </Link>{" "}
-                  or contact ABTalks at team@abtalks.in for more credits.
+                  or contact Klymb AI at team@abtalks.in for more credits.
                 </p>
               ) : null}
             </>

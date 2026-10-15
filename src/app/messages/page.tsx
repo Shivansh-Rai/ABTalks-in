@@ -7,7 +7,7 @@ import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Messages | ABTalks",
+  title: "Messages | Klymb AI",
 };
 
 /**
@@ -35,7 +35,7 @@ export default async function CandidateMessagesPage() {
         <div className="space-y-1">
           <h1 className="font-display text-2xl font-bold tracking-tight">Messages</h1>
           <p className="text-sm text-muted-foreground">
-            Recruiters who contact you through ABTalks. Your replies go only to
+            Recruiters who contact you through Klymb AI. Your replies go only to
             the recruiter in that conversation.
           </p>
         </div>

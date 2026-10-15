@@ -139,7 +139,7 @@ export function WorkshopRegistrationsView({
                 </TableCell>
                 <TableCell>
                   {/* Every row has an account now, so the useful distinction is
-                      full ABTalks member vs workshop-only signup. */}
+                      full Klymb AI member vs workshop-only signup. */}
                   <Badge variant={r.isMember ? "default" : "secondary"}>
                     {r.isMember ? "Member" : "Workshop only"}
                   </Badge>

@@ -52,7 +52,7 @@ export const VIDEOTHON = {
   // rendered by the dashboard Server Component from kickoff onwards and must
   // never be passed to (or imported by) a client component: that would ship
   // the text in the JS bundle before kickoff.
-  brief: "Record a 2–4 minutes screen video that shows ABTalks working from both sides: a recruiter looking for talent, and a student building proof of skill.",
+  brief: "Record a 2–4 minutes screen video that shows Klymb AI working from both sides: a recruiter looking for talent, and a student building proof of skill.",
   briefPoints: [
     {
       lead: "Show both sides.",

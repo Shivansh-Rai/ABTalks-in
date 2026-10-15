@@ -247,3 +247,64 @@ export function isHireProPreviewEnabled(): boolean {
 export function isVirtualCandidatesEnabled(): boolean {
   return process.env.HIRE_VIRTUAL_CANDIDATES === "true";
 }
+
+/**
+ * Plan 191, TEMPORARY: the launch one-pager is the home page.
+ *
+ * On unless `LANDING_ONE_PAGER=false`. Default-on deliberately — production
+ * needed no new variable to get the page, and setting it to "false" in Vercel
+ * restores the full marketing landing and unhides the recruiter product with
+ * no code change. Two things read it:
+ *
+ *   - `src/app/page.tsx` renders `LaunchOnePager` instead of `LandingPage`,
+ *     and stops routing recruiter accounts to /hire (which middleware would
+ *     bounce back to /, an infinite redirect).
+ *   - `middleware.ts` redirects /hire, /talent and /recruiter-onboarding to /
+ *     for everyone except admins. It CANNOT import this file (edge bundle), so
+ *     it reads `process.env.LANDING_ONE_PAGER` by hand — keep the two in step.
+ *
+ * Nothing is deleted while this is on. Remove the flag and its two call sites
+ * when the hide is over.
+ */
+export function isLaunchOnePagerEnabled(): boolean {
+  return process.env.LANDING_ONE_PAGER !== "false";
+}
+
+/**
+ * Plan 192, TEMPORARY: the two preview links that open the gated platform.
+ *
+ * `/?preview=<token>` sets an httpOnly cookie for that side (see
+ * `middleware.ts`, which owns the unlock and the gate itself). One side never
+ * implies the other, so the candidate link can be handed out without opening
+ * the hire desk. An unset token means that side has no link at all — only
+ * admins get in.
+ *
+ * Rotating a value in Vercel revokes every link and cookie built from it.
+ */
+export const PREVIEW_COOKIE_NAMES = {
+  candidate: "klymb_preview_candidate",
+  recruiter: "klymb_preview_recruiter",
+} as const;
+
+export type PreviewSide = keyof typeof PREVIEW_COOKIE_NAMES;
+
+/** The configured token for a side, or null when that side has no link. */
+export function previewToken(side: PreviewSide): string | null {
+  const raw =
+    side === "candidate"
+      ? process.env.PREVIEW_TOKEN_CANDIDATE
+      : process.env.PREVIEW_TOKEN_RECRUITER;
+  return raw?.trim() ? raw : null;
+}
+
+/**
+ * Whether a cookie value opens that side. Server-side only — middleware does
+ * the same comparison inline because it cannot import this file (Edge bundle).
+ */
+export function hasPreviewAccess(
+  side: PreviewSide,
+  cookieValue: string | undefined,
+): boolean {
+  const token = previewToken(side);
+  return !!token && cookieValue === token;
+}

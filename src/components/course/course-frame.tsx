@@ -22,7 +22,7 @@ function getScroller(from: HTMLElement | null): HTMLElement | null {
 }
 
 /**
- * Course chrome inside the ABTalks shell: one course sidebar listing modules,
+ * Course chrome inside the Klymb AI shell: one course sidebar listing modules,
  * each expandable to its sub-topics, with progress and the reading position.
  */
 export function CourseFrame({ courseSlug, courseTitle, modules, current, children }: Props) {

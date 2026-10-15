@@ -408,7 +408,7 @@ function Footer() {
   return (
     <View style={styles.footer} fixed>
       <Text style={styles.footerText}>
-        ABTalks Coding Challenge · AI Conversations That Matter · CONFIDENTIAL —
+        Klymb AI Coding Challenge · AI Conversations That Matter · CONFIDENTIAL —
         For Hiring Organizations Only
       </Text>
     </View>
@@ -465,7 +465,7 @@ function ResumePage({ profile }: { profile: RecruiterProfileView }) {
     <Page size="A4" style={styles.page} wrap={false}>
       <View style={styles.brandBar}>
         <Text>
-          <Text style={styles.brandGold}>AB TALKS</Text>
+          <Text style={styles.brandGold}>Klymb AI</Text>
           <Text style={styles.brandMuted}> | AI Conversations That Matter</Text>
         </Text>
       </View>
@@ -667,7 +667,7 @@ function AssessmentPage({ profile }: { profile: RecruiterProfileView }) {
     profile.assessmentDate ? `Assessment Date: ${profile.assessmentDate}` : null,
     profile.interviewerName ? `Interviewer: ${profile.interviewerName}` : null,
     profile.challengeRound ? `Challenge Round: ${profile.challengeRound}` : null,
-    `ABTalks ID: ${profile.abtalksId}`,
+    `Klymb AI ID: ${profile.abtalksId}`,
   ].filter((part): part is string => !!part);
 
   const scoreCards = hasFullScores
@@ -701,7 +701,7 @@ function AssessmentPage({ profile }: { profile: RecruiterProfileView }) {
     <Page size="A4" style={styles.page} wrap={false}>
       <View style={styles.assessBand}>
         <Text style={styles.assessLabel}>
-          <Text style={{ color: GOLD }}>AB TALKS </Text>
+          <Text style={{ color: GOLD }}>Klymb AI </Text>
           <Text style={{ color: "#ffffff" }}>CANDIDATE ASSESSMENT REPORT</Text>
         </Text>
         <Text style={styles.assessName}>{profile.fullName}</Text>
@@ -714,7 +714,7 @@ function AssessmentPage({ profile }: { profile: RecruiterProfileView }) {
         <View style={styles.synergyBox}>
           <Text style={{ fontSize: 8.5 }}>
             <Text style={{ fontFamily: FONT_HEADING, color: NAVY }}>
-              ABTalks Synergy Score:{" "}
+              Klymb AI Synergy Score:{" "}
             </Text>
             <Text style={{ fontFamily: FONT_HEADING, color: GOLD_DARK }}>
               {profile.assessmentComposite}
@@ -867,7 +867,7 @@ function AssessmentPage({ profile }: { profile: RecruiterProfileView }) {
 
           {rec ? (
             <View style={styles.recBox}>
-              <Text style={styles.recLabel}>ABTalks Recommendation</Text>
+              <Text style={styles.recLabel}>Klymb AI Recommendation</Text>
               <Text style={styles.recValue}>{rec}</Text>
             </View>
           ) : null}
@@ -881,7 +881,7 @@ function AssessmentPage({ profile }: { profile: RecruiterProfileView }) {
 
 export function RecruiterPdf({ profile }: { profile: RecruiterProfileView }) {
   return (
-    <Document title={`${profile.fullName} | ABTalks`}>
+    <Document title={`${profile.fullName} | Klymb AI`}>
       <ResumePage profile={profile} />
       <AssessmentPage profile={profile} />
     </Document>

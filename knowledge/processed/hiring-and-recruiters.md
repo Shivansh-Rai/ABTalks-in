@@ -1,18 +1,18 @@
-# Hiring on ABTalks — Scout, the Recruiter Network & Candidate Consent
+# Hiring on Klymb AI — Scout, the Recruiter Network & Candidate Consent
 
-People also ask this as: how does ABTalks help recruiters find candidates ·
+People also ask this as: how does Klymb AI help recruiters find candidates ·
 who can see my profile · do recruiters get my phone number · how do I get
-hired through ABTalks · how do companies find me · is my profile public ·
+hired through Klymb AI · how do companies find me · is my profile public ·
 what is Scout · talent portal · am I open to work · do you charge a
 placement fee.
 
-This covers the employer/recruiter side of ABTalks and what candidates need
+This covers the employer/recruiter side of Klymb AI and what candidates need
 to know about how their profile reaches companies. Source of truth: the live
 public pages `/` (homepage), `/hire` and the talent portal.
 
 ## The pitch
 
-ABTalks does evidence-based hiring rather than resume- and interview-only
+Klymb AI does evidence-based hiring rather than resume- and interview-only
 hiring. Companies see what a candidate actually built and shipped on the
 platform — dated commits, deployed URLs, completed missions, streaks,
 interview scores — instead of a self-written resume.
@@ -69,10 +69,10 @@ recruiters get a shortlist view.
 
 ## Jobs board
 
-`/jobs` is the ABTalks jobs board, visible once you are signed in.
+`/jobs` is the Klymb AI jobs board, visible once you are signed in.
 
 ## Custom cohorts for companies
 
 Companies with a niche requirement can have a cohort built around it: send
-the role, stack and timeline, and ABTalks designs a challenge for it —
+the role, stack and timeline, and Klymb AI designs a challenge for it —
 usually running within three to four weeks. Contact team@abtalks.in.

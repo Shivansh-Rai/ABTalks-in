@@ -309,7 +309,7 @@ export function SkillsSection({
       </PwRow>
 
       {/* ---- Derived from curriculum + completion. Not editable. ---- */}
-      <h3 className="pw-sub-title pw-sub-spaced">ABTalks Verified Skills</h3>
+      <h3 className="pw-sub-title pw-sub-spaced">Klymb AI Verified Skills</h3>
       <p className="pw-sub-text">
         These skills are added based on your enrollment and performance in
         Cohorts and Challenges.

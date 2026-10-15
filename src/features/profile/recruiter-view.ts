@@ -243,7 +243,7 @@ function buildDims(
         label: "Missions passed",
         kind: "unavailable",
         caption:
-          "You have no track record on ABTalks yet. Finish days of a challenge or a cohort and this starts measuring.",
+          "You have no track record on Klymb AI yet. Finish days of a challenge or a cohort and this starts measuring.",
       },
       {
         key: "cleanPass",

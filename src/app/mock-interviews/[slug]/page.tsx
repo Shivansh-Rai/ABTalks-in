@@ -20,7 +20,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const domain = getDomain(slug);
   return {
-    title: domain ? `${domain.label} Mock Interview | ABTalks` : "Mock Interview",
+    title: domain ? `${domain.label} Mock Interview | Klymb AI` : "Mock Interview",
     description: domain?.blurb,
   };
 }
@@ -164,7 +164,7 @@ export default async function MockInterviewDomainPage({
                     Sign in to practise
                   </Link>
                   <span className="text-[13px] text-[#8F8F8F]">
-                    Free with any ABTalks account.
+                    Free with any Klymb AI account.
                   </span>
                 </div>
               )}

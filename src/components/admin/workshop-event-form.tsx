@@ -53,7 +53,7 @@ export const EMPTY_WORKSHOP: WorkshopFormValues = {
   timeLabel: "7:00 PM IST",
   title: "",
   description: "",
-  host: "ABTalks",
+  host: "Klymb AI",
   location: "Live · YouTube",
   tag: "Workshop",
   accent: "#03535F",

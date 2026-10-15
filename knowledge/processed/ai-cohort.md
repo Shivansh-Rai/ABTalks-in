@@ -34,5 +34,5 @@ Python fundamentals, SQL & DB fundamentals, Git/GitHub/CLI, REST APIs &
 backend basics, JavaScript & React fundamentals. Laptop with ≥8 GB RAM,
 GitHub account. No paid API keys needed (Ollama / Groq / Chroma).
 
-Source: ABTalks program pages, captured in the retired `abtalks-chatbot-kb.md`
+Source: Klymb AI program pages, captured in the retired `abtalks-chatbot-kb.md`
 site scrape (see `knowledge/metadata/sources.json`, `chatbot-kb-site-scrape`).

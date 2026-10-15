@@ -228,7 +228,7 @@ export async function loadRequestMatches(
         shortlisted: (member?.shortlistedBy?.length ?? 0) > 0,
         engagementStatus: engagements.get(m.candidateUserId)?.status ?? null,
         scores: pickPublicScores(m.scoreBreakdown),
-        // Always the recomputed ABTalks band, never a stored declared figure.
+        // Always the recomputed Klymb AI band, never a stored declared figure.
         // The candidate's own expectation is admin-only (see to-public-match.ts);
         // reading it back out of a frozen evidence blob would reopen exactly the
         // exposure that was closed on the write side.

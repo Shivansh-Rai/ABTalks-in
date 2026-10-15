@@ -20,7 +20,7 @@ import type { Scope } from "./service";
  * template id is a name and never a capability: another recruiter's id reads
  * as NOT_FOUND, exactly like an id that does not exist.
  *
- * Unrelated to the static ABTalks presets in ./presets.ts, which are code, are
+ * Unrelated to the static Klymb AI presets in ./presets.ts, which are code, are
  * shared by everyone and are never written here.
  */
 

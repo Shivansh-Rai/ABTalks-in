@@ -270,17 +270,17 @@ const SIGNIN_COPY: Omit<TemplateCopy, "kind" | "tags" | "label"> = {
   // one-tap-copy, and modern spam filters treat "code: NNNNNN" as clearly
   // transactional. The word "verification" is spam-heavy and is dropped;
   // "sign-in code" reads the same to a human and better to a filter.
-  subject: (code) => `Your ABTalks sign-in code is ${code}`,
-  title: "Your ABTalks sign-in code",
+  subject: (code) => `Your Klymb AI sign-in code is ${code}`,
+  title: "Your Klymb AI sign-in code",
   preheader: (code) =>
-    `Use ${code} to sign in to ABTalks. It expires in ${EMAIL_CODE_TTL_MINUTES} minutes.`,
+    `Use ${code} to sign in to Klymb AI. It expires in ${EMAIL_CODE_TTL_MINUTES} minutes.`,
   introHtml: `Enter this code on the sign-in screen to continue. The code is valid for the next ${EMAIL_CODE_TTL_MINUTES} minutes.`,
   introText: "Enter this code on the sign-in screen to continue:",
   codeLabel: "Sign-in code",
   ignoreHtml:
-    "If you didn&rsquo;t try to sign in to ABTalks, you can safely ignore this email &mdash; no changes have been made to any account.",
+    "If you didn&rsquo;t try to sign in to Klymb AI, you can safely ignore this email &mdash; no changes have been made to any account.",
   ignoreText:
-    "If you didn't try to sign in to ABTalks, you can safely ignore this email — no changes have been made to any account.",
+    "If you didn't try to sign in to Klymb AI, you can safely ignore this email — no changes have been made to any account.",
   footerReason: "someone requested a sign-in code for this address",
 };
 
@@ -300,18 +300,18 @@ const COPY: Record<EmailCodeVariant, TemplateCopy> = {
   password: {
     kind: "auth.password_code",
     tags: ["password-code", "transactional"],
-    subject: (code) => `Your ABTalks password code is ${code}`,
-    title: "Your ABTalks password code",
+    subject: (code) => `Your Klymb AI password code is ${code}`,
+    title: "Your Klymb AI password code",
     label: "Password",
     preheader: (code) =>
-      `Use ${code} to set your ABTalks password. It expires in ${EMAIL_CODE_TTL_MINUTES} minutes.`,
-    introHtml: `Enter this code to set a new password for your ABTalks account. The code is valid for the next ${EMAIL_CODE_TTL_MINUTES} minutes.`,
-    introText: "Enter this code to set a new password for your ABTalks account:",
+      `Use ${code} to set your Klymb AI password. It expires in ${EMAIL_CODE_TTL_MINUTES} minutes.`,
+    introHtml: `Enter this code to set a new password for your Klymb AI account. The code is valid for the next ${EMAIL_CODE_TTL_MINUTES} minutes.`,
+    introText: "Enter this code to set a new password for your Klymb AI account:",
     codeLabel: "Password code",
     ignoreHtml:
-      "If you didn&rsquo;t ask to set or reset your ABTalks password, you can safely ignore this email &mdash; your password has not been changed.",
+      "If you didn&rsquo;t ask to set or reset your Klymb AI password, you can safely ignore this email &mdash; your password has not been changed.",
     ignoreText:
-      "If you didn't ask to set or reset your ABTalks password, you can safely ignore this email — your password has not been changed.",
+      "If you didn't ask to set or reset your Klymb AI password, you can safely ignore this email — your password has not been changed.",
     footerReason: "someone requested a password code for this address",
   },
 };
@@ -347,7 +347,16 @@ export async function deliverEmailCode(
   return {};
 }
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
+
+/**
+ * `APP_URL` without the scheme, for footer link TEXT. Derived rather than
+ * written out, because a literal host here silently becomes a lie the moment
+ * the domain moves: before plan 189 these footers displayed the old host while
+ * the href already pointed at the new one, and visible text that disagrees
+ * with its destination is what both users and spam filters read as phishing.
+ */
+const APP_HOST = APP_URL.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
 /**
  * Full HTML5 document for a one-time code, deliberately plain.
@@ -374,11 +383,11 @@ export function renderCodeHtml(copy: TemplateCopy, code: string): string {
     <p style="margin:0 0 16px;">${copy.introHtml}</p>
     <p style="margin:0 0 4px;font-size:13px;color:#6B6B6B;">${copy.codeLabel}</p>
     <p style="margin:0 0 20px;font-size:30px;font-weight:700;letter-spacing:6px;color:#000000;font-family:Menlo,Consolas,monospace;">${code}</p>
-    <p style="margin:0 0 16px;">Do not share this code with anyone. ABTalks will never ask you for it.</p>
+    <p style="margin:0 0 16px;">Do not share this code with anyone. Klymb AI will never ask you for it.</p>
     <p style="margin:0 0 16px;">${copy.ignoreHtml}</p>
-    <p style="margin:0 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:0 0 24px;">Thanks,<br>The Klymb AI team</p>
     <p style="margin:0;font-size:12px;color:#8A8A8A;border-top:1px solid #E9E9E9;padding-top:16px;">
-      You received this email because ${copy.footerReason} on <a href="${APP_URL}" style="color:#8A8A8A;">abtalks.in</a>. Questions? Reply to this email.
+      You received this email because ${copy.footerReason} on <a href="${APP_URL}" style="color:#8A8A8A;">${APP_HOST}</a>. Questions? Reply to this email.
     </p>
   </div>
 </body>
@@ -392,15 +401,15 @@ ${copy.introText}
 
 ${code}
 
-The code is valid for the next ${EMAIL_CODE_TTL_MINUTES} minutes. Do not share this code with anyone. ABTalks will never ask you for it.
+The code is valid for the next ${EMAIL_CODE_TTL_MINUTES} minutes. Do not share this code with anyone. Klymb AI will never ask you for it.
 
 ${copy.ignoreText}
 
 Thanks,
-The ABTalks team
+The Klymb AI team
 
 ---
-You received this email because ${copy.footerReason} on abtalks.in. Questions? Reply to this email.`;
+You received this email because ${copy.footerReason} on ${APP_HOST}. Questions? Reply to this email.`;
 }
 
 /** Exposed for the template regression test only. */

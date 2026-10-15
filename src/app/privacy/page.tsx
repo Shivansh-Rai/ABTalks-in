@@ -6,8 +6,8 @@ import { loadLegalMarkdown } from "@/lib/legal";
 import { EcosystemPageHeader } from "@/components/shared/ecosystem-page-header";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy · ABTalks",
-  description: "ABTalks Privacy Policy",
+  title: "Privacy Policy · Klymb AI",
+  description: "Klymb AI Privacy Policy",
 };
 
 export default async function PrivacyPage() {

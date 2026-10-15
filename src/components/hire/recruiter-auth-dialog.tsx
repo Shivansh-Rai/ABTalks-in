@@ -42,7 +42,7 @@ export function RecruiterAuthDialog({
         showCloseButton
       >
         <DialogHeader>
-          <p className="hire-auth__kicker">ABTalks Hire</p>
+          <p className="hire-auth__kicker">Klymb AI Hire</p>
           <DialogTitle>
             {!authEnabled
               ? "Not open yet"

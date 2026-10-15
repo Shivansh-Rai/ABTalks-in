@@ -96,7 +96,7 @@ export function stem(token: string): string {
  * which matches helo, hello, hellooo and heeellllooo alike.
  *
  * A message counts as a greeting only when it is NOTHING but greetings plus
- * an optional addressee ("hey there", "hi team", "hello abtalks"). "hi how do
+ * an optional addressee ("hey there", "hi team", "hello Klymb AI"). "hi how do
  * I register" is a question, and goes to retrieval like any other.
  */
 const GREETING_WORDS = [
@@ -105,7 +105,7 @@ const GREETING_WORDS = [
 ];
 const TIME_GREETINGS = ["good morning", "good afternoon", "good evening", "gm"];
 const ADDRESSEES = [
-  "there", "team", "abtalks", "all", "everyone", "guys", "bot", "buddy",
+  "there", "team", "Klymb AI", "all", "everyone", "guys", "bot", "buddy",
   "bro", "sir", "maam", "mam", "friend", "friends", "folks",
 ];
 

@@ -43,15 +43,15 @@ Rules:
 - Then the skills with matchesSearch true, by name, if any; otherwise up to three of their skills.
 - Mention "open to work" when openToWork is true.
 - Mention education (degree, school) when present, especially when search.requiresDegree is true.
-- Mention verifiedFacts as achievements on ABTalks when present, in their own words.
+- Mention verifiedFacts as achievements on Klymb AI when present, in their own words.
 - No scores, ranks, ids, emails, phone numbers, em dashes or lists with bullets.
 - If the sheet is thin, one sentence is enough, for example:
   "Asha is a Student who studies B.Tech at Northfield University."
   "Rahul is a Working Professional who works at Globex Systems."
 
 Examples of the style only. The names, companies and colleges in them are fictional and must never appear in your answer unless the fact sheet contains them:
-{"summary": "Priya is a Data Analyst at Acme Analytics and is open to work. Their skills include Python, SQL and Power BI, all asked for in this search. They hold a B.Tech from Northfield University and have completed 42 of 60 missions of the 60-Day Challenge on ABTalks."}
-{"summary": "This candidate is a Student studying BCA at Riverside College. They work with React and Node, and have earned a track certificate on ABTalks."}`;
+{"summary": "Priya is a Data Analyst at Acme Analytics and is open to work. Their skills include Python, SQL and Power BI, all asked for in this search. They hold a B.Tech from Northfield University and have completed 42 of 60 missions of the 60-Day Challenge on Klymb AI."}
+{"summary": "This candidate is a Student studying BCA at Riverside College. They work with React and Node, and have earned a track certificate on Klymb AI."}`;
 
 export type CandidateSummaryFailure =
   | "unconfigured"

@@ -19,7 +19,7 @@ type Props = {
   searchParams: Promise<{ projectId?: string }>;
 };
 
-export const metadata: Metadata = { title: "Assessment | ABTalks Hire" };
+export const metadata: Metadata = { title: "Assessment | Klymb AI Hire" };
 // Assign sends up to MAX_ASSIGN_PER_CALL notifications inline; the server
 // action runs under this page's function limit.
 export const maxDuration = 60;

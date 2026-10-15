@@ -15,7 +15,7 @@ import { findPowerBiEnrollment } from "@/repositories/powerbi";
 import { listCurriculumForProgramSlug } from "@/repositories/learning";
 
 export const metadata = {
-  title: "Power BI & Analytics | ABTalks",
+  title: "Power BI & Analytics | Klymb AI",
   description: "Ship recruiter-grade Power BI dashboards in 7 days.",
 };
 

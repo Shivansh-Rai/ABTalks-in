@@ -123,7 +123,7 @@ export function KeepThreeDashboard({ activeStage }: { activeStage: number }) {
   return (
     <div className="dash" aria-label="Candidate shortlist preview">
       <div className="dash__bar">
-        <span className="dash__logo">AB TALKS</span>
+        <span className="dash__logo">Klymb AI</span>
         <span className="dash__tag">Talent</span>
         <span className="dash__spacer"></span>
         <span className="dash__mini">Talent pool</span>

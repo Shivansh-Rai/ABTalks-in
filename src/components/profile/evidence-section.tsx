@@ -95,7 +95,7 @@ export function EvidenceSection({ evidence }: { evidence: ProfileEvidence }) {
         <section className="space-y-3">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
             <Award className="size-4 text-primary" aria-hidden />
-            ABTalks credentials
+            Klymb AI credentials
           </h3>
           <ul className="space-y-2">
             {credentials.map((c) => (

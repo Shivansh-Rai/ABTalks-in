@@ -22,7 +22,7 @@ import { dispatch } from "@/features/notification/notification-service";
  * ## Where a reply goes
  *
  * The recruiter's message reaches the candidate as a real email. The candidate
- * replies ON ABTALKS, at /messages/<thread>, and that reply is delivered to the
+ * replies ON Klymb AI, at /messages/<thread>, and that reply is delivered to the
  * one recruiter who owns the thread: in their /hire/messages, as a bell row,
  * and as an email to their own work address via `outreach.reply_received`.
  * There is no inbound email and no shared inbox. The outreach email's Reply-To
@@ -54,7 +54,7 @@ const TX = { maxWait: 20000, timeout: 20000 } as const;
 const OUTREACH_REPLY_TO =
   process.env.OUTREACH_REPLY_TO_EMAIL || "no-reply@abtalks.in";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
 
 /** How much of a reply the recruiter's notification previews. */
 const SNIPPET_LENGTH = 280;
@@ -119,13 +119,13 @@ function snippet(body: string): string {
 export function readableEmailFailure(reason: string | undefined): string {
   const r = (reason ?? "").toLowerCase();
   if (r.includes("test address")) {
-    return "Test account — ABTalks never emails @abtalks.dev addresses.";
+    return "Test account — Klymb AI never emails @abtalks.dev addresses.";
   }
   if (r.includes("brevo_api_key missing")) {
     return "Email sending isn't set up on this environment.";
   }
   if (/status code: 40[13]/.test(r)) {
-    return "The email service refused ABTalks' credentials. Our team has been alerted.";
+    return "The email service refused Klymb AI's credentials. Our team has been alerted.";
   }
   if (/status code: 429/.test(r)) {
     return "The email service is busy. Try again in a few minutes.";
@@ -353,27 +353,27 @@ export function buildOutreachEmail(input: {
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;color:#111;line-height:1.5">
   <p style="background:#FFF4E5;border:1px solid #F5C77E;border-radius:6px;padding:12px 14px;margin:0 0 20px">
     <strong>Do not reply to this email</strong> &mdash; replies to it are not delivered.
-    <a href="${link}" style="color:#0B57D0">Click here to view the conversation</a> and reply to ${name} on ABTalks.
+    <a href="${link}" style="color:#0B57D0">Click here to view the conversation</a> and reply to ${name} on Klymb AI.
   </p>
-  <p style="margin:0 0 12px">${whoHtml} sent you a message on ABTalks:</p>
+  <p style="margin:0 0 12px">${whoHtml} sent you a message on Klymb AI:</p>
   <div style="white-space:pre-wrap;border-left:3px solid #ddd;padding:4px 0 4px 14px;margin:0 0 20px">${bodyHtml}</div>
   <p style="margin:0 0 24px">
-    <a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px">View and reply on ABTalks</a>
+    <a href="${link}" style="display:inline-block;background:#111;color:#fff;text-decoration:none;padding:10px 18px;border-radius:6px">View and reply on Klymb AI</a>
   </p>
-  <p style="font-size:12px;color:#666;margin:0">You received this because a recruiter at ${escapeHtml(input.company)} has access to your contact details on ABTalks. Your reply goes only to ${name}.</p>
+  <p style="font-size:12px;color:#666;margin:0">You received this because a recruiter at ${escapeHtml(input.company)} has access to your contact details on Klymb AI. Your reply goes only to ${name}.</p>
 </div>`;
 
   const text = [
     "DO NOT REPLY TO THIS EMAIL - replies to it are not delivered.",
-    `View the conversation and reply to ${input.recruiterName} on ABTalks: ${link}`,
+    `View the conversation and reply to ${input.recruiterName} on Klymb AI: ${link}`,
     "",
-    `${who} sent you a message on ABTalks:`,
+    `${who} sent you a message on Klymb AI:`,
     "",
     input.body,
     "",
     `View and reply: ${link}`,
     "",
-    `You received this because a recruiter at ${input.company} has access to your contact details on ABTalks. Your reply goes only to ${input.recruiterName}.`,
+    `You received this because a recruiter at ${input.company} has access to your contact details on Klymb AI. Your reply goes only to ${input.recruiterName}.`,
   ].join("\n");
 
   return { subject: `${who}: ${input.subject}`, html, text };

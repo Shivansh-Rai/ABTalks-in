@@ -60,7 +60,7 @@ export default async function AchievementsPage() {
             Your Achievements
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Certificates and milestones you&apos;ve earned on ABTalks.
+            Certificates and milestones you&apos;ve earned on Klymb AI.
           </p>
         </div>
 

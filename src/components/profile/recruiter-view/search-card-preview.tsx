@@ -28,7 +28,7 @@ export function SearchCardPreview({
           <span />
           <span />
         </span>
-        <span className="rv-frame__label">ABTalks Hire · search results</span>
+        <span className="rv-frame__label">Klymb AI Hire · search results</span>
       </div>
 
       <div className="rv-frame__body">
@@ -95,7 +95,7 @@ export function SearchCardPreview({
                   }
                   title={
                     skill.evidenceBacked
-                      ? "Verified by ABTalks — earned by finishing a track that teaches it"
+                      ? "Verified by Klymb AI — earned by finishing a track that teaches it"
                       : "Your own claim"
                   }
                 >

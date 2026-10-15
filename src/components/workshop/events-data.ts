@@ -286,7 +286,7 @@ export const placeholderSaturdays = (
           iconName: "CalendarClock",
           title: "Workshop — TBA",
           desc: "Topic announced soon. Register to be notified when this session opens.",
-          host: "ABTalks",
+          host: "Klymb AI",
           location: "Live · YouTube",
           placeholder: true,
         });

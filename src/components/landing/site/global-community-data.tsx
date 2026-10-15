@@ -260,7 +260,7 @@ export const GC_FLAGS: Record<GcFlagKey, ReactNode> = {
   ),
 };
 
-/* --- The eight places ABTalks operates in --- */
+/* --- The eight places Klymb AI operates in --- */
 export const GC_LOCATIONS: readonly GcLocation[] = [
   { id: "india",       name: "India",           short: "India",       flag: "in",   builders: "9,200+", lat:  22.00, lng:   78.90, card: { place: "above",         gap: 30 } },
   { id: "singapore",   name: "Singapore",       short: "Singapore",   flag: "sg",   builders: "230+",   lat:   1.35, lng:  103.82, card: { place: "below",         gap: 12, w: 122 } },

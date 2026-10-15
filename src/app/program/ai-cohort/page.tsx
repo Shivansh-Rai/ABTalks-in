@@ -4,7 +4,7 @@ import { PROGRAM_AI_COHORT_BASE } from "@/features/program/constants";
 import { getEntryState } from "@/features/program/entry";
 
 export const metadata = {
-  title: "AI Cohort — ABTalks",
+  title: "AI Cohort — Klymb AI",
   description:
     "Build and deploy a production-grade enterprise AI chatbot in 31 days — RAG, agents, MCP, guardrails, Docker, Kubernetes — and get in front of recruiters.",
 };

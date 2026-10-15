@@ -10,12 +10,12 @@ export interface WorkshopPrefill {
   organization: string | null;
   graduationYear: number | null;
   role: "Student" | "Professional" | null;
-  /** True when this account already has an ABTalks profile. */
+  /** True when this account already has an Klymb AI profile. */
   isExistingMember: boolean;
 }
 
 /**
- * Known details for an existing ABTalks member, so the workshop form is mostly
+ * Known details for an existing Klymb AI member, so the workshop form is mostly
  * pre-filled instead of re-asking. Falls back to the last workshop registration
  * for workshop-only users, who have a User but no StudentProfile.
  *

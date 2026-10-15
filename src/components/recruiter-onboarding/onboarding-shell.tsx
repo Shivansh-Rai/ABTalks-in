@@ -50,12 +50,12 @@ export function OnboardingShell({
       <header className="flex h-16 shrink-0 items-center justify-between gap-4 px-5 sm:px-8 lg:px-10">
         <Link
           href="/"
-          aria-label="ABTalks home"
+          aria-label="Klymb AI home"
           className="rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#03535F]"
         >
           <Image
             src="/abt-logo2.png"
-            alt="ABTalks"
+            alt="Klymb AI"
             width={318}
             height={74}
             priority

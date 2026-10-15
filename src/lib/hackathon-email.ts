@@ -3,7 +3,7 @@ import { HACKATHON } from "@/components/hackathon/hackathon-config";
 import { sendEmail } from "@/lib/email";
 import { logger } from "@/lib/logger";
 
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
+const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
 
 const WHATSAPP_LINK = HACKATHON.whatsappLink;
 
@@ -41,9 +41,9 @@ function shell(title: string, bodyHtml: string): string {
 <body style="margin:0;padding:0;background-color:#ffffff;">
   <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:${C.text};font-size:15px;line-height:1.6;">
     ${bodyHtml}
-    <p style="margin:24px 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:24px 0 24px;">Thanks,<br>The Klymb AI team</p>
     <p style="margin:0;font-size:12px;color:${C.muted};border-top:1px solid ${C.border};padding-top:16px;">
-      You received this email because you registered for the ABTalks 48-Hour AI Hackathon with this address. Questions? Reply to this email.
+      You received this email because you registered for the Klymb AI 48-Hour AI Hackathon with this address. Questions? Reply to this email.
     </p>
   </div>
 </body>
@@ -63,7 +63,7 @@ function link(href: string, label = href): string {
 }
 
 function whatsappLine(): string {
-  return `Join the ABTalks hackathon WhatsApp group: ${link(WHATSAPP_LINK)}`;
+  return `Join the Klymb AI hackathon WhatsApp group: ${link(WHATSAPP_LINK)}`;
 }
 
 /**
@@ -138,7 +138,7 @@ export async function sendSoloWelcomeEmail(
 ): Promise<void> {
   const body = `
     ${greeting(name)}
-    <p style="margin:0 0 16px;">Your registration for the ABTalks 48-Hour AI Hackathon is confirmed. You are taking part as a solo participant.</p>
+    <p style="margin:0 0 16px;">Your registration for the Klymb AI 48-Hour AI Hackathon is confirmed. You are taking part as a solo participant.</p>
     ${eventDetailsBlock()}
     <p style="margin:0 0 16px;">As a solo participant you still have access to mentors, technical support and resources throughout the event.</p>
     ${sectionTitle("Before the hackathon")}
@@ -151,7 +151,7 @@ export async function sendSoloWelcomeEmail(
   await send(
     email,
     name,
-    "Your ABTalks hackathon registration is confirmed",
+    "Your Klymb AI hackathon registration is confirmed",
     body,
   );
 }
@@ -165,7 +165,7 @@ export async function sendLeaderWelcomeEmail(
 ): Promise<void> {
   const body = `
     ${greeting(name)}
-    <p style="margin:0 0 16px;">Your team is registered for the ABTalks 48-Hour AI Hackathon, with you as team leader.</p>
+    <p style="margin:0 0 16px;">Your team is registered for the Klymb AI 48-Hour AI Hackathon, with you as team leader.</p>
     <p style="margin:0 0 6px;font-weight:700;">Your team</p>
     <p style="margin:0 0 16px;">
       Team name: <strong>${teamName}</strong><br>
@@ -184,7 +184,7 @@ export async function sendLeaderWelcomeEmail(
   await send(
     email,
     name,
-    `Your team ${teamName} is registered for the ABTalks hackathon`,
+    `Your team ${teamName} is registered for the Klymb AI hackathon`,
     body,
   );
 }
@@ -198,7 +198,7 @@ export async function sendMemberWelcomeEmail(
 ): Promise<void> {
   const body = `
     ${greeting(name)}
-    <p style="margin:0 0 16px;">Your registration for the ABTalks 48-Hour AI Hackathon is confirmed, and you have joined a team using its team code.</p>
+    <p style="margin:0 0 16px;">Your registration for the Klymb AI 48-Hour AI Hackathon is confirmed, and you have joined a team using its team code.</p>
     <p style="margin:0 0 6px;font-weight:700;">Your team</p>
     <p style="margin:0 0 16px;">
       Team name: <strong>${teamName}</strong><br>
@@ -217,7 +217,7 @@ export async function sendMemberWelcomeEmail(
   await send(
     email,
     name,
-    `You have joined team ${teamName} for the ABTalks hackathon`,
+    `You have joined team ${teamName} for the Klymb AI hackathon`,
     body,
   );
 }
@@ -263,13 +263,13 @@ export async function sendMemberRemovedEmail(
   const teamLabel = teamName ?? "your previous team";
   const body = `
     ${greeting(name)}
-    <p style="margin:0 0 16px;">You have been removed from <strong>${teamLabel}</strong> in the ABTalks 48-Hour AI Hackathon.</p>
+    <p style="margin:0 0 16px;">You have been removed from <strong>${teamLabel}</strong> in the Klymb AI 48-Hour AI Hackathon.</p>
     <p style="margin:0 0 16px;">You can register again at any time: on your own, as a new team, or by joining a team with its team code (including the same code, if your leader invites you back).</p>
     <p style="margin:0;">Register again: ${link(`${appUrl}/hackathon`)}</p>`;
   await send(
     email,
     name,
-    "You were removed from your ABTalks hackathon team",
+    "You were removed from your Klymb AI hackathon team",
     body,
   );
 }

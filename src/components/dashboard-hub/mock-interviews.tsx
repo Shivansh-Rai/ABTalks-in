@@ -105,7 +105,7 @@ export function MockInterviews({ mock, cohort }: Props) {
         >
           <p className="text-[#4B4B4B]">
             Practise a live voice interview with an AI interviewer, then read a
-            scored report on how it went. Open to every ABTalks member — no
+            scored report on how it went. Open to every Klymb AI member — no
             cohort enrolment needed.
           </p>
         </div>

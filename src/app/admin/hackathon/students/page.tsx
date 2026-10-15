@@ -14,17 +14,19 @@ import {
 import {
   getHackathonMasterStudents,
   parseHackathonMasterCohort,
+  parseHackathonMasterEvent,
 } from "@/features/hackathon/get-master-students";
 import { cn } from "@/lib/utils";
 
 export default async function AdminHackathonMasterStudentsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ cohort?: string }>;
+  searchParams: Promise<{ cohort?: string; event?: string }>;
 }) {
   const sp = await searchParams;
   const cohort = parseHackathonMasterCohort(sp.cohort);
-  const data = await getHackathonMasterStudents({ cohort });
+  const event = parseHackathonMasterEvent(sp.event);
+  const data = await getHackathonMasterStudents({ cohort, event });
 
   return (
     <div className="space-y-4 md:space-y-6">
@@ -34,7 +36,9 @@ export default async function AdminHackathonMasterStudentsPage({
             Hackathon Master Student Data
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {data.total} student{data.total !== 1 ? "s" : ""} · Sorted by recently joined
+            {data.shown} of {data.total} student{data.total !== 1 ? "s" : ""} ·
+            Sorted by recently joined
+            {data.total > data.shown ? " · capped at 500" : ""}
           </p>
         </div>
         <Link
@@ -46,7 +50,7 @@ export default async function AdminHackathonMasterStudentsPage({
       </div>
 
       <Suspense fallback={null}>
-        <HackathonMasterFilters />
+        <HackathonMasterFilters eventOptions={data.eventOptions} />
       </Suspense>
 
       {data.students.length === 0 ? (
@@ -62,6 +66,7 @@ export default async function AdminHackathonMasterStudentsPage({
                 <TableHead>College</TableHead>
                 <TableHead>Type (Solo/Team)</TableHead>
                 <TableHead>Team Name</TableHead>
+                <TableHead>Event</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -75,6 +80,9 @@ export default async function AdminHackathonMasterStudentsPage({
                     <Badge variant="outline">{row.entryType}</Badge>
                   </TableCell>
                   <TableCell>{row.teamName ?? "—"}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {row.eventLabel}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

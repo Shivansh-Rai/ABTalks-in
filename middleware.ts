@@ -52,6 +52,89 @@ function resolveRequestId(incoming: string | null): string {
 
 const { auth } = NextAuth(authConfig);
 
+/* -------------------------------------------------------------------------
+ * Plans 191 + 192, TEMPORARY: the launch gate.
+ *
+ * While `LANDING_ONE_PAGER` is anything but "false", the only thing the public
+ * gets is the launch one-pager at `/`. Everything else — the candidate product
+ * and the recruiter product alike — redirects there, for signed-out and
+ * signed-in visitors both.
+ *
+ * This is a MARKETING GATE, NOT A SECURITY BOUNDARY. Every route keeps the
+ * authorization it already had: `protectedPaths` below still sends signed-out
+ * visitors to their door, and every page guard is untouched. Removing this
+ * gate re-opens the product; it never exposes anything that was protected.
+ *
+ * Read from `process.env` by hand, duplicating `src/lib/feature-flags.ts`:
+ * middleware must not import from `@/lib/*` — doing so blows the 1 MB Edge
+ * bundle limit, the same reason the consent constants above are duplicated.
+ * Keep the two in step.
+ * ---------------------------------------------------------------------- */
+
+/**
+ * What answers while the gate is on. Everything not listed redirects to `/`.
+ * Prefixes match the path itself and anything under it.
+ *
+ * Each line earns its place:
+ *   /         the one-pager itself
+ *   /terms /privacy /cookies
+ *             the footer and consent-banner links, which have to be reachable.
+ *   /verify   the address printed on every certificate already issued. Closing
+ *             it would break verification for the people holding those links.
+ *
+ * `/api/auth/*` needs no entry — the matcher at the bottom never sees it.
+ *
+ * `/login` is deliberately NOT here. It was, and the result was that a
+ * stranger could reach the sign-in form, authenticate, and land back on the
+ * launch page holding a session that opened nothing — which looked, from the
+ * outside, exactly like a hole in the gate. It is now behind a preview link
+ * like everything else: open the link, then sign in. The cost is real and was
+ * accepted deliberately — on a browser with no preview cookie and no session,
+ * NOBODY can sign in, admins included. The way back in is the preview link,
+ * so losing both links means fixing it in the Vercel dashboard, not here.
+ *
+ * The recruiter door, /talent/login, sits inside RECRUITER_PATHS and so opens
+ * with the recruiter link, not the candidate one.
+ */
+const GATE_PUBLIC_PATHS = [
+  "/",
+  "/terms",
+  "/privacy",
+  "/cookies",
+  "/verify",
+] as const;
+
+/** The recruiter product. The candidate preview link does NOT open these. */
+const RECRUITER_PATHS = ["/hire", "/talent", "/recruiter-onboarding"] as const;
+
+const PREVIEW_COOKIE = {
+  candidate: "klymb_preview_candidate",
+  recruiter: "klymb_preview_recruiter",
+} as const;
+
+/**
+ * The two preview accounts, by hand — middleware cannot import `@/lib/*`
+ * (Edge bundle), so this duplicates `PREVIEW_EMAIL` in
+ * `features/preview/preview-accounts.ts`. Keep them in step.
+ *
+ * Used only to notice that a browser holding both preview cookies is signed in
+ * on the WRONG side for the page it just asked for. One session is one account,
+ * so holding both links cannot mean being both at once — what it can mean is
+ * switching without being dumped on a signup form, which is what this enables.
+ */
+const PREVIEW_EMAIL = {
+  candidate: "preview-candidate@klymb.ai",
+  recruiter: "preview-recruiter@klymb.ai",
+} as const;
+
+/** 30 days. Long enough that the team is not re-pasting the link every week. */
+const PREVIEW_COOKIE_MAX_AGE = 30 * 24 * 60 * 60;
+
+function matchesPath(pathname: string, base: string): boolean {
+  if (base === "/") return pathname === "/";
+  return pathname === base || pathname.startsWith(`${base}/`);
+}
+
 const protectedPaths = [
   "/dashboard",
   "/explore",
@@ -124,23 +207,33 @@ function applySourceCookie(
 }
 
 /**
- * Drop leftover Auth.js PKCE/state/nonce cookies (host-only and .abtalks.in).
- * A stale verifier from a previous Google attempt decrypts as InvalidCheck and
- * 500s /api/auth/error — especially when switching accounts or bouncing www.
+ * Drop leftover Auth.js PKCE/state/nonce cookies. A stale verifier from a
+ * previous Google attempt decrypts as InvalidCheck and 500s /api/auth/error —
+ * especially when switching accounts.
+ *
+ * HOST-ONLY, one Set-Cookie per name. This used to loop over
+ * `[undefined, ".abtalks.in"]` to also clear the cookies `auth.config.ts`
+ * widened — but `response.cookies.set` keys by NAME, so the second iteration
+ * overwrote the first and only the `.abtalks.in` variant was ever emitted.
+ * Measured on the live deploy: 12 names in, 12 Set-Cookie headers out, every
+ * one carrying `Domain=.abtalks.in`. The sweep has therefore never cleared a
+ * host-only cookie — the exact case it exists for.
+ *
+ * `auth.config.ts` no longer sets a cookie domain at all (plan 189 §6-A), so
+ * host-only is the only scope this app creates and the only one worth
+ * clearing. A widened cookie left on a browser from an older deploy is scoped
+ * to a domain app.klymb.ai is not under, so it is never sent here and cannot
+ * be cleared from here either; it expires on its own 15-minute maxAge.
  */
 function expireOAuthCheckCookies(response: NextResponse) {
-  const domains: (string | undefined)[] = [undefined, ".abtalks.in"];
   for (const name of OAUTH_CHECK_COOKIE_NAMES) {
-    for (const domain of domains) {
-      response.cookies.set(name, "", {
-        path: "/",
-        maxAge: 0,
-        httpOnly: true,
-        sameSite: "lax",
-        secure: name.startsWith("__Secure-"),
-        ...(domain ? { domain } : {}),
-      });
-    }
+    response.cookies.set(name, "", {
+      path: "/",
+      maxAge: 0,
+      httpOnly: true,
+      sameSite: "lax",
+      secure: name.startsWith("__Secure-"),
+    });
   }
 }
 
@@ -221,9 +314,152 @@ export default auth((req) => {
       exactProtectedPaths.includes(pathname));
   const isAuthPage = pathname === "/login";
 
+  // See GATE_PUBLIC_PATHS above for what this is and what it is not.
+  const gateOn = process.env.LANDING_ONE_PAGER !== "false";
+
+  // An admin passes both sides without a link; the two preview cookies each
+  // open their own side and NOT the other, so the candidate link handed to a
+  // designer never opens the hire desk.
+  const isAdminSession =
+    req.auth?.user?.isAdmin === true ||
+    (req.auth?.user as { role?: string } | undefined)?.role === "ADMIN";
+  const candidateToken = process.env.PREVIEW_TOKEN_CANDIDATE;
+  const recruiterToken = process.env.PREVIEW_TOKEN_RECRUITER;
+  const hasCandidatePreview =
+    !!candidateToken &&
+    req.cookies.get(PREVIEW_COOKIE.candidate)?.value === candidateToken;
+  const hasRecruiterPreview =
+    !!recruiterToken &&
+    req.cookies.get(PREVIEW_COOKIE.recruiter)?.value === recruiterToken;
+
+  const isRecruiterSurface = RECRUITER_PATHS.some((p) => matchesPath(pathname, p));
+  // Where a preview link lands (plan 193). It is not a product surface and
+  // belongs to neither side, so either cookie reaches it — a recruiter-cookie
+  // browser has to get here too, and /preview is not inside RECRUITER_PATHS.
+  const isPreviewEntry = matchesPath(pathname, "/preview");
+  const mayPass = isPreviewEntry
+    ? isAdminSession || hasCandidatePreview || hasRecruiterPreview
+    : isRecruiterSurface
+      ? isAdminSession || hasRecruiterPreview
+      : isAdminSession || hasCandidatePreview;
+
+  const gated =
+    gateOn &&
+    !mayPass &&
+    !GATE_PUBLIC_PATHS.some((p) => matchesPath(pathname, p));
+
+  /**
+   * Signed in as one side's preview account, asking for the other side's
+   * product, holding a valid link for it.
+   *
+   * Without this, opening both links in one browser half-works: the second
+   * link switches the session, and going back to the first side lands on
+   * /register (no CandidateProfile) or an empty desk (no RecruiterProfile).
+   * Both links in one browser is the normal way to look at the platform, so
+   * the switch happens here instead of being the visitor's problem.
+   *
+   * Only ever redirects between accounts this browser already holds valid
+   * links for; it opens nothing new.
+   */
+  const sessionEmail = req.auth?.user?.email ?? null;
+  const wrongSide =
+    gateOn && !isPreviewEntry
+      ? isRecruiterSurface &&
+        sessionEmail === PREVIEW_EMAIL.candidate &&
+        hasRecruiterPreview
+        ? "recruiter"
+        : !isRecruiterSurface &&
+            sessionEmail === PREVIEW_EMAIL.recruiter &&
+            hasCandidatePreview &&
+            !GATE_PUBLIC_PATHS.some((p) => matchesPath(pathname, p))
+          ? "candidate"
+          : null
+      : null;
+
+  /**
+   * The unlock, handled before everything else.
+   *
+   * `?preview=<token>` sets that side's cookie and bounces to the same URL
+   * without the parameter, so the secret never settles in the address bar, the
+   * browser history or a `Referer` header on the next outbound click.
+   * `?preview=off` clears both. A value matching neither sets nothing and is
+   * answered exactly like `off` — a wrong guess must not learn which of the
+   * two it nearly was.
+   */
+  const previewParam = req.nextUrl.searchParams.get("preview");
+
   let response: NextResponse;
 
-  if (isProtected && !isLoggedIn) {
+  if (gateOn && previewParam !== null) {
+    const clean = new URL(req.nextUrl);
+    clean.searchParams.delete("preview");
+    // A link that matched goes to /preview/enter, which signs the browser in
+    // as that side's preview account (plan 193). Anything else — "off", a
+    // typo, a stranger guessing — lands wherever it was headed, with the
+    // parameter stripped and no cookie, which for a gated path is `/`.
+    const matched =
+      (candidateToken && previewParam === candidateToken) ||
+      (recruiterToken && previewParam === recruiterToken);
+    if (matched) {
+      clean.pathname = "/preview/enter";
+      clean.search = "";
+    }
+    response = withTracking(
+      NextResponse.redirect(clean),
+      ref,
+      src,
+      alreadyAttributed,
+      consent,
+      hasAttributionCookies,
+      requestId,
+    );
+
+    const side =
+      candidateToken && previewParam === candidateToken
+        ? "candidate"
+        : recruiterToken && previewParam === recruiterToken
+          ? "recruiter"
+          : null;
+
+    if (side) {
+      response.cookies.set(PREVIEW_COOKIE[side], previewParam, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: PREVIEW_COOKIE_MAX_AGE,
+        path: "/",
+      });
+    } else {
+      // "off", a typo, or a stranger trying values: leave with nothing.
+      response.cookies.delete(PREVIEW_COOKIE.candidate);
+      response.cookies.delete(PREVIEW_COOKIE.recruiter);
+    }
+  } else if (wrongSide) {
+    const swap = new URL("/preview/enter", req.nextUrl);
+    swap.searchParams.set("side", wrongSide);
+    response = withTracking(
+      NextResponse.redirect(swap),
+      ref,
+      src,
+      alreadyAttributed,
+      consent,
+      hasAttributionCookies,
+      requestId,
+    );
+  } else if (gated) {
+    // Ahead of the session gate on purpose: a signed-out visitor to /hire or
+    // /dashboard must land on the launch page, not on a login form for a
+    // product that is currently closed.
+    response = withTracking(
+      NextResponse.redirect(new URL("/", req.nextUrl)),
+      ref,
+      src,
+      alreadyAttributed,
+      consent,
+      hasAttributionCookies,
+      requestId,
+    );
+  } else if (isProtected && !isLoggedIn) {
     // Send people to their own door. A signed-out recruiter opening a
     // bookmarked /hire used to land on the candidate's Google button, which is
     // the whole complaint this change exists to fix.

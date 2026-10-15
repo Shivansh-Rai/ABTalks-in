@@ -111,13 +111,13 @@ const WORK_MODE: Record<string, string> = {
 /**
  * The panel's tabs jump to sections of one scroll, as in the design.
  *
- * ABTalks Evidence leads. It is the only thing on this panel a CV cannot claim,
+ * Klymb AI Evidence leads. It is the only thing on this panel a CV cannot claim,
  * and it used to open below a Status / AB score / Email / Phone / Tags block
  * that told a recruiter nothing they had not already read on the card. Contact
  * and status are still here: View expands the rows; Reveal buys the values.
  */
 const TABS = [
-  { id: "evidence", label: "ABTalks Evidence" },
+  { id: "evidence", label: "Klymb AI Evidence" },
   { id: "contact", label: "Contact" },
   { id: "experience", label: "Experience" },
   { id: "education", label: "Education" },
@@ -311,7 +311,7 @@ type Role = { key?: string; title: string; value: ReactNode; badge?: string; not
  * The candidate profile panel (Figma 1585:189).
  *
  * Experience is the candidate's own jobs (`CandidateExperience`, typed or
- * resume-merged), loaded on open. ABTalks Evidence is completed tracks and
+ * resume-merged), loaded on open. Klymb AI Evidence is completed tracks and
  * hackathon placements, also loaded on open. Education is
  * the declared level. Contact values are behind the paid unlock (T-229):
  * "View Contact Details" only expands the section; "Reveal email" /
@@ -779,7 +779,7 @@ export function CandidateInspector({
 
   const evidenceItems = trackEvidence?.items ?? [];
   // Completed tracks and hackathon placements. Compensation is deliberately not
-  // in this list any more: an ABTalks estimate is not verified evidence, and it
+  // in this list any more: an Klymb AI estimate is not verified evidence, and it
   // now sits with the other availability facts under Contact.
   const evidenceRoles: Role[] = evidenceItems.map((item) => ({
     key: item.key,
@@ -812,7 +812,7 @@ export function CandidateInspector({
         ? [
           {
             title: "Track certificate",
-            sub: track ?? "ABTalks",
+            sub: track ?? "Klymb AI",
             date: "Issued",
           },
         ]
@@ -825,7 +825,7 @@ export function CandidateInspector({
             : "Connected"
           : "Not connected",
         // Declared profile links are never "Verified" — commit days above are
-        // ABTalks evidence wording only. The profile URL is SELF-REPORTED.
+        // Klymb AI evidence wording only. The profile URL is SELF-REPORTED.
         date: "",
       },
       {
@@ -1036,16 +1036,16 @@ export function CandidateInspector({
         </nav>
         </div>
 
-        {/* The panel opens on what ABTalks can prove. Its three subheads are
+        {/* The panel opens on what Klymb AI can prove. Its three subheads are
             the summary, the parameter breakdown and the verified counts — the
             first two used to sit at the bottom under "More", where a recruiter
             who scrolled that far had already decided. */}
         <section
           data-section="evidence"
           className="hire-profile__section"
-          aria-label="ABTalks Evidence"
+          aria-label="Klymb AI Evidence"
         >
-          <h4 className="hire-profile__h">ABTalks Evidence</h4>
+          <h4 className="hire-profile__h">Klymb AI Evidence</h4>
 
           <div className="hire-profile__group">
             {/* Same AI Summary chrome as the search result card: sparkle tab +
@@ -1107,12 +1107,12 @@ export function CandidateInspector({
             ) : (
               <div className="hire-profile__org-block">
                 <span className="hire-profile__tile" aria-hidden="true">
-                  {monogram("ABTalks")}
+                  {monogram("Klymb AI")}
                 </span>
                 <div className="hire-profile__org-main">
                   <div>
                     <p className="hire-profile__org-name">
-                      Verified work on ABTalks
+                      Verified work on Klymb AI
                     </p>
                     <p className="hire-profile__org-sub">{verifiedLine}</p>
                   </div>
@@ -1148,7 +1148,7 @@ export function CandidateInspector({
           </div>
         </section>
 
-        {/* Directly under ABTalks Evidence, above Experience — status, unlock,
+        {/* Directly under Klymb AI Evidence, above Experience — status, unlock,
             tags and external profiles stay one scroll away from the proof. */}
         <section
           data-section="contact"

@@ -23,22 +23,22 @@ export const CHATBOT_CATEGORIES: ChatbotCategory[] = [
   {
     id: "about",
     number: 1,
-    label: "ABTalks",
-    seedQuestion: "What is ABTalks and what does it do?",
+    label: "Klymb AI",
+    seedQuestion: "What is Klymb AI and what does it do?",
     href: "/",
   },
   {
     id: "programs",
     number: 2,
     label: "Programs & Challenges",
-    seedQuestion: "What programs and challenges does ABTalks offer?",
+    seedQuestion: "What programs and challenges does Klymb AI offer?",
     href: "/challenges",
   },
   {
     id: "hackathons",
     number: 3,
     label: "Hackathons",
-    seedQuestion: "Tell me about the ABTalks hackathon, its rules and status.",
+    seedQuestion: "Tell me about the Klymb AI hackathon, its rules and status.",
     href: "/hackathon",
   },
   {
@@ -66,28 +66,28 @@ export const CHATBOT_CATEGORIES: ChatbotCategory[] = [
     id: "voice-interview",
     number: 7,
     label: "Voice Interview",
-    seedQuestion: "What is the ABTalks AI voice interview and who can take it?",
+    seedQuestion: "What is the Klymb AI voice interview and who can take it?",
     href: null,
   },
   {
     id: "certificates",
     number: 8,
     label: "Certificates",
-    seedQuestion: "Which ABTalks programs give certificates and how do I claim mine?",
+    seedQuestion: "Which Klymb AI programs give certificates and how do I claim mine?",
     href: null,
   },
   {
     id: "hiring",
     number: 9,
     label: "Hiring & Recruiters",
-    seedQuestion: "How does hiring through ABTalks work and who can see my profile?",
+    seedQuestion: "How does hiring through Klymb AI work and who can see my profile?",
     href: "/hire",
   },
   {
     id: "socials-contact",
     number: 10,
     label: "Socials & Contact",
-    seedQuestion: "What are the official ABTalks social channels and contact email?",
+    seedQuestion: "What are the official Klymb AI social channels and contact email?",
     href: "/contact",
   },
 ];
@@ -98,8 +98,8 @@ export const CHATBOT_CATEGORIES: ChatbotCategory[] = [
  * is actually good at.
  */
 export const OPENING_SUGGESTIONS: { id: string; question: string }[] = [
-  { id: "programs-overview", question: "What programs does ABTalks offer?" },
-  { id: "is-free", question: "Is ABTalks free?" },
+  { id: "programs-overview", question: "What programs does Klymb AI offer?" },
+  { id: "is-free", question: "Is Klymb AI free?" },
   { id: "certificate-claim", question: "How do I get my certificate?" },
 ];
 

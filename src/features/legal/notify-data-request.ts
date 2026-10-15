@@ -23,7 +23,7 @@ export async function notifyDataRightsRequest(input: {
   type: string;
   message: string | null;
 }): Promise<void> {
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://abtalks.in";
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.klymb.ai";
   const label = TYPE_LABELS[input.type] ?? input.type;
   const adminUrl = `${appUrl}/admin/data-requests`;
 

@@ -459,7 +459,7 @@ export function buildProfileReview({
     skillBlocks.push({ kind: "chips", items: claimed.map((s) => s.name) });
   }
   if (verifiedSkills.length > 0) {
-    skillBlocks.push({ kind: "sub", text: "Verified by ABTalks" });
+    skillBlocks.push({ kind: "sub", text: "Verified by Klymb AI" });
     skillBlocks.push({
       kind: "chips",
       items: verifiedSkills.map((s) => s.name),
@@ -483,7 +483,7 @@ export function buildProfileReview({
   /* ---- accomplishments: verified + certifications + awards ---- */
   const accomplishmentBlocks: ReviewBlock[] = [];
   if (verifiedAccomplishments.length > 0) {
-    accomplishmentBlocks.push({ kind: "sub", text: "Verified by ABTalks" });
+    accomplishmentBlocks.push({ kind: "sub", text: "Verified by Klymb AI" });
     accomplishmentBlocks.push({
       kind: "items",
       items: verifiedAccomplishments.map((v) => ({

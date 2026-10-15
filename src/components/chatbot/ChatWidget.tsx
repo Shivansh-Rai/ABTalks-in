@@ -57,8 +57,8 @@ function generateId() {
   return `id-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
 }
 
-const GREETING = "Hi! I'm the ABTalks Help Assistant.";
-const NOT_HELPFUL_MESSAGE = `Sorry that wasn't useful. The ABTalks team can help you directly — email ${SUPPORT_EMAIL} and they'll get back to you.`;
+const GREETING = "Hi! I'm the Klymb AI Help Assistant.";
+const NOT_HELPFUL_MESSAGE = `Sorry that wasn't useful. The Klymb AI team can help you directly — email ${SUPPORT_EMAIL} and they'll get back to you.`;
 const TRANSPORT_ERROR_MESSAGE = `Something went wrong on my side. Please try again in a moment, or email ${SUPPORT_EMAIL} if it keeps happening.`;
 
 function renderMenuText(): string {

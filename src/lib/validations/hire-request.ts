@@ -61,7 +61,7 @@ export const placeEngagementRequestSchema = z.object({
  * One submission covering several shortlisted candidates.
  *
  * Capped at 25 because this is a hiring shortlist, not a mailing list — and
- * every row here becomes work for a human on the ABTalks side.
+ * every row here becomes work for a human on the Klymb AI side.
  */
 export const placeBulkEngagementRequestSchema = z.object({
   candidateRefs: z.array(candidateRefSchema).min(1).max(25),

@@ -26,7 +26,7 @@ export const dynamic = "force-dynamic";
  * composed server-side from the attempt's own transcript, from the question the
  * server has on the floor, or from an authored constant. Accepting text would
  * turn a paid speech API into an open text-to-speech service for anyone with an
- * ABTalks account — and unlike the cohort path, that is every registered user.
+ * Klymb AI account — and unlike the cohort path, that is every registered user.
  */
 const bodySchema = z.object({
   /**

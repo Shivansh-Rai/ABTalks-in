@@ -527,7 +527,7 @@ export type ProjectRowInput = z.infer<typeof projectRowSchema>;
  * A claim is a skill id and nothing else.
  *
  * Self-rating was removed: it was the candidate grading themselves, it was
- * never evidence, and it competed for meaning with ABTalks Verified Skills —
+ * never evidence, and it competed for meaning with Klymb AI Verified Skills —
  * which are derived from curriculum + completion in
  * features/profile/get-verified-skills.ts.
  */

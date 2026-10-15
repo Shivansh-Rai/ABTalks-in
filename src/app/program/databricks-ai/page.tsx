@@ -16,7 +16,7 @@ import { findDatabricksAiEnrollment } from "@/repositories/databricks-ai";
 import { listCurriculumForProgramSlug } from "@/repositories/learning";
 
 export const metadata = {
-  title: "Databricks Data & AI Engineering | ABTalks",
+  title: "Databricks Data & AI Engineering | Klymb AI",
   description: "Build a governed Data + AI lakehouse on Databricks in 15 days.",
 };
 

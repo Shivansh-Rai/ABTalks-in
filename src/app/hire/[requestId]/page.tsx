@@ -24,7 +24,7 @@ type Props = {
 };
 
 export const metadata: Metadata = {
-  title: "Scout search | ABTalks Hire",
+  title: "Scout search | Klymb AI Hire",
 };
 
 /**

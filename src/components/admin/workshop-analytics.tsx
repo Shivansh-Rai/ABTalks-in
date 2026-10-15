@@ -66,7 +66,7 @@ export function WorkshopAnalyticsPanel({ analytics, eventLabels }: Props) {
           icon={<Repeat className="h-4 w-4" />}
         />
         <StatCard
-          label="From ABTalks members"
+          label="From Klymb AI members"
           value={memberRegistrations}
           accent="orange"
           icon={<UserCheck className="h-4 w-4" />}
@@ -76,7 +76,7 @@ export function WorkshopAnalyticsPanel({ analytics, eventLabels }: Props) {
       <div className="space-y-3 border-t pt-6">
         <div>
           <h2 className="font-display text-lg font-semibold">
-            ABTalks membership
+            Klymb AI membership
           </h2>
           <p className="text-sm text-muted-foreground">
             Counted per person, matched by email — not per registration.
@@ -85,7 +85,7 @@ export function WorkshopAnalyticsPanel({ analytics, eventLabels }: Props) {
 
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard
-            label="New to ABTalks"
+            label="New to Klymb AI"
             value={newToABTalks}
             delta={pct(newToABTalks)}
             deltaSuffix="% of attendees"
@@ -93,7 +93,7 @@ export function WorkshopAnalyticsPanel({ analytics, eventLabels }: Props) {
             icon={<UserPlus className="h-4 w-4" />}
           />
           <StatCard
-            label="Already ABTalks members"
+            label="Already Klymb AI members"
             value={existingMembers}
             delta={pct(existingMembers)}
             deltaSuffix="% of attendees"
@@ -111,7 +111,7 @@ export function WorkshopAnalyticsPanel({ analytics, eventLabels }: Props) {
         </div>
 
         <p className="text-xs text-muted-foreground">
-          &ldquo;New to ABTalks&rdquo; means they had no account before their
+          &ldquo;New to Klymb AI&rdquo; means they had no account before their
           first workshop — the workshop brought them in.
           &ldquo;Converted&rdquo; means they went on to enroll in a challenge.
         </p>
@@ -182,7 +182,7 @@ export function WorkshopAnalyticsPanel({ analytics, eventLabels }: Props) {
       </div>
 
       <p className="text-xs text-muted-foreground">
-        &ldquo;New&rdquo; means this was the person&rsquo;s first ever ABTalks
+        &ldquo;New&rdquo; means this was the person&rsquo;s first ever Klymb AI
         workshop, matched by email. Everyone else counts as returning against the
         workshop they first signed up for.
       </p>

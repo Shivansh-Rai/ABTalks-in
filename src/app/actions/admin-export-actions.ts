@@ -2,7 +2,7 @@
 
 import { Domain } from "@prisma/client";
 import { z } from "zod";
-import { HACKATHON } from "@/components/hackathon/hackathon-config";
+import { hackathonEventLabel } from "@/components/hackathon/hackathon-config";
 import { requireAdmin } from "@/lib/admin-auth";
 import { prisma } from "@/lib/db";
 import { assertRateLimit } from "@/lib/rate-limit";
@@ -46,6 +46,7 @@ export async function getStudentsForExport(filters: {
   domain?: Domain | "ALL";
   search?: string;
   track?: "ALL" | "CHALLENGE" | "HACKATHON";
+  event?: string;
 }) {
   await requireAdminExport();
 
@@ -70,7 +71,10 @@ export async function getStudentsForExport(filters: {
     wantHackathon
       ? prisma.hackathonParticipant.findMany({
           where: {
-            eventId: HACKATHON.eventId,
+            user: { deletedAt: null },
+            ...(filters.event && filters.event !== "ALL"
+              ? { eventId: filters.event }
+              : {}),
             ...(q
               ? {
                 OR: [
@@ -89,6 +93,7 @@ export async function getStudentsForExport(filters: {
               : {}),
           },
           select: {
+            eventId: true,
             fullName: true,
             email: true,
             phone: true,
@@ -107,10 +112,20 @@ export async function getStudentsForExport(filters: {
       : Promise.resolve([]),
   ]);
 
+  // `@@unique([eventId, userId])` allows one row per event per person, so
+  // someone who joined both hackathons comes back twice. Rows arrive
+  // `createdAt desc`, so keeping the first occurrence keeps their latest event.
+  const seenHackathonUsers = new Set<string>();
+  const dedupedHackathonRows = hackathonRows.filter((row) => {
+    if (seenHackathonUsers.has(row.userId)) return false;
+    seenHackathonUsers.add(row.userId);
+    return true;
+  });
+
   const userIds = [
     ...new Set([
       ...enrollments.map((e) => e.userId),
-      ...hackathonRows.map((row) => row.userId),
+      ...dedupedHackathonRows.map((row) => row.userId),
     ]),
   ];
 
@@ -144,6 +159,7 @@ export async function getStudentsForExport(filters: {
     const identity = identities.get(e.userId);
     return {
     Track: "CHALLENGE",
+    Event: "",
     "Full Name": identity?.fullName ?? "",
     Email: emailByUser.get(e.userId) ?? "",
     Phone: identity?.phone ?? "",
@@ -167,10 +183,11 @@ export async function getStudentsForExport(filters: {
   };
   });
 
-  const hackathonExport = hackathonRows.map((row) => {
+  const hackathonExport = dedupedHackathonRows.map((row) => {
     const entryType = row.team.entryType === "SOLO" ? "SOLO" : "TEAM";
     return {
       Track: "HACKATHON",
+      Event: hackathonEventLabel(row.eventId),
       "Full Name": row.fullName,
       Email: row.email,
       Phone: row.phone,

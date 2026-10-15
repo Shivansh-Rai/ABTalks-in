@@ -13,7 +13,7 @@ import { findLangchainEnrollment } from "@/repositories/langchain";
 import { listCurriculumForProgramSlug } from "@/repositories/learning";
 
 export const metadata = {
-  title: "LangChain & LangGraph Cohort | ABTalks",
+  title: "LangChain & LangGraph Cohort | Klymb AI",
   description:
     "Go from your first LLM call to a deployed LangGraph agent in 31 days.",
 };

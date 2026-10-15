@@ -123,7 +123,7 @@ export async function recruiterReplyAction(
   }
 }
 
-/** Candidate replies on ABTalks. The reply reaches the thread's recruiter only. */
+/** Candidate replies on Klymb AI. The reply reaches the thread's recruiter only. */
 export async function candidateReplyAction(
   input: unknown,
 ): Promise<ActionResult<{ threadId: string; messageId: string; duplicate: boolean }>> {

@@ -11,7 +11,7 @@ import {
 import { encodeCandidateRef } from "@/features/hire/candidate-ref";
 
 export const metadata: Metadata = {
-  title: "Your cart | ABTalks Hire",
+  title: "Your cart | Klymb AI Hire",
 };
 
 export default async function TalentShortlistPage() {

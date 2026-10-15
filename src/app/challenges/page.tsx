@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -16,9 +15,10 @@ import { FaqAccordion } from "@/components/shared/faq-accordion";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { SiteSearchSlot } from "@/components/dashboard-hub/site-search-slot";
+import { Wordmark } from "@/components/shared/wordmark";
 
 export const metadata: Metadata = {
-  title: "60-Day Coding Challenge | ABTalks",
+  title: "60-Day Coding Challenge | Klymb AI",
   description:
     "Build every day, publish your progress, and finish with a portfolio recruiters can discover.",
 };
@@ -34,7 +34,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do I submit my work?",
-    a: "Push your solution to GitHub, then publish your progress on LinkedIn. Both links become proof of work on your ABTalks profile.",
+    a: "Push your solution to GitHub, then publish your progress on LinkedIn. Both links become proof of work on your Klymb AI profile.",
   },
   {
     q: "Do I get a certificate?",
@@ -58,19 +58,12 @@ export default function ChallengesPage() {
         <div className="abt-header-inner">
           <Link
             href="/"
-            aria-label="Back to ABTalks home"
+            aria-label="Back to Klymb AI home"
             className="focus-spark inline-flex items-center gap-2 text-foreground"
           >
             <ArrowLeft className="h-4 w-4 shrink-0" />
             <span className="logo-link">
-              <Image
-                src="/abtalks-logo.png"
-                alt="ABTalks"
-                width={300}
-                height={84}
-                priority
-                className="logo-image"
-              />
+              <Wordmark size="lg" className="logo-image" />
             </span>
           </Link>
           <div className="flex items-center gap-2">
@@ -202,7 +195,7 @@ export default function ChallengesPage() {
             Community rules
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            ABTalks is a place to grow with serious learners. Read these
+            Klymb AI is a place to grow with serious learners. Read these
             carefully.
           </p>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -217,7 +210,7 @@ export default function ChallengesPage() {
                     Any abusive language, harassment, or harmful messaging will
                     lead to{" "}
                     <strong className="text-foreground">permanent ban</strong>{" "}
-                    from ABTalks.
+                    from Klymb AI.
                   </p>
                 </div>
               </div>

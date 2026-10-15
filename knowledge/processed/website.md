@@ -43,7 +43,7 @@ someone where to go, and never invent a path.
   `/program/leaderboard`, `/program/interview`,
   `/program/cohort-interview/[blueprint]` — AI Cohort program area
 - `/talent/...` — recruiter/talent portal (approved recruiters)
-- `/admin/...` — ABTalks staff only
+- `/admin/...` — Klymb AI staff only
 
 Each program also has its own topic file: `coding-challenge.md`,
 `claude-challenge.md`, `ai-cohort.md`, `hackathon.md`, `workshops.md`,

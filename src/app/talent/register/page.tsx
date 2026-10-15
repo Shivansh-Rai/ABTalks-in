@@ -8,9 +8,9 @@ import { RecruiterAuthClosed } from "@/components/talent/recruiter-auth-closed";
 import { isEmailLoginEnabled, isRecruiterAuthEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
-  title: "Register as a recruiter | ABTalks",
+  title: "Register as a recruiter | Klymb AI",
   description:
-    "Register to hire on ABTalks with your work email. No password, no Google account.",
+    "Register to hire on Klymb AI with your work email. No password, no Google account.",
 };
 
 type Props = { searchParams: Promise<{ from?: string; email?: string }> };
@@ -47,7 +47,7 @@ export default async function TalentRegisterPage({ searchParams }: Props) {
     <div className="mx-auto max-w-md space-y-8 py-4">
       <header className="space-y-2 text-center">
         <p className="text-xs font-medium tracking-wide text-primary uppercase">
-          ABTalks Hire
+          Klymb AI Hire
         </p>
         <h1 className="font-display text-2xl font-bold tracking-tight">
           Register to hire

@@ -9,7 +9,7 @@ import { MockInterviewReportView } from "@/components/mock-interview/report-view
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Interview Report | ABTalks",
+  title: "Interview Report | Klymb AI",
 };
 
 /**

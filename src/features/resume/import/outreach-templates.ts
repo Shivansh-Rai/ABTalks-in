@@ -4,7 +4,7 @@ import type { Completeness, CompletenessKey, OutreachTemplate } from "@/features
  * The four claim-and-complete emails (plan 171). Pure: data in, `{ subject,
  * html, text }` out.
  *
- * One layout, the ABTalks profile design approved for the first email. The
+ * One layout, the Klymb AI profile design approved for the first email. The
  * invite is that design word for word, with only these changes:
  *   - the greeting row says "Hi {firstName},"
  *   - "What's missing" lists the person's real gaps (no ticks) under their
@@ -32,7 +32,7 @@ export type OutreachEmailData = {
 export type RenderedEmail = { subject: string; html: string; text: string };
 
 const PREFERENCES_URL =
-  "http://abtalks.in/?utm_source=brevo&utm_medium=email&utm_campaign=ABT-Profile_copy";
+  "https://app.klymb.ai/?utm_source=klymb&utm_medium=email&utm_campaign=profile_claim";
 
 /**
  * Every attribute in the layout is double-quoted, so `'` needs no escaping —
@@ -155,7 +155,7 @@ function layoutHtml(l: Layout): string {
   <!-- Header -->
   <tr>
     <td class="pad" style="padding-top:22px;padding-bottom:18px;">
-      <div class="logo">AB TALKS</div>
+      <div class="logo">Klymb AI</div>
     </td>
   </tr>
 
@@ -171,7 +171,7 @@ function layoutHtml(l: Layout): string {
   <!-- Hero -->
   <tr>
     <td class="pad" style="padding-bottom:10px;">
-      <div class="eyebrow">YOUR PROFILE · AB TALKS</div>
+      <div class="eyebrow">YOUR PROFILE · Klymb AI</div>
     </td>
   </tr>
 
@@ -198,7 +198,7 @@ function layoutHtml(l: Layout): string {
         <tr>
           <td style="padding:18px 20px 17px;">
             <div style="font-size:10px;font-weight:800;letter-spacing:.7px;margin-bottom:7px;">
-              YOUR AB TALKS PROFILE
+              YOUR Klymb AI PROFILE
             </div>
 
             <div style="font-size:22px;line-height:25px;font-weight:900;margin-bottom:8px;">
@@ -296,7 +296,7 @@ ${missingRowsHtml(l.completeness)}
     <td class="pad" style="padding-bottom:25px;">
       <div style="font-size:10px;line-height:15px;color:#555;">
         Thanks,<br>
-        <strong style="color:#111;">Team ABTALKS</strong>
+        <strong style="color:#111;">Team Klymb AI</strong>
       </div>
     </td>
   </tr>
@@ -305,7 +305,7 @@ ${missingRowsHtml(l.completeness)}
   <tr>
     <td style="background:#f7f9f9;border-top:1px solid #e1e7e7;padding:13px 20px;text-align:center;">
       <div style="font-size:8px;line-height:13px;letter-spacing:1.3px;color:#617174;">
-        AB TALKS &nbsp;·&nbsp; LEARN &nbsp;·&nbsp; BUILD &nbsp;·&nbsp; GROW
+        Klymb AI &nbsp;·&nbsp; LEARN &nbsp;·&nbsp; BUILD &nbsp;·&nbsp; GROW
       </div>
       <div style="font-size:8px;line-height:13px;color:#999;margin-top:5px;">
         <a href="${PREFERENCES_URL}" style="color:#777;">Preferences</a>
@@ -328,7 +328,7 @@ function missingText(c: Completeness): string {
 
 function layoutText(l: Layout, ctaNoteText: string | null): string {
   return [
-    "AB TALKS",
+    "Klymb AI",
     "",
     l.greeting,
     "",
@@ -349,7 +349,7 @@ function layoutText(l: Layout, ctaNoteText: string | null): string {
     l.closingBody,
     "",
     "Thanks,",
-    "Team ABTALKS",
+    "Team Klymb AI",
   ].join("\n");
 }
 
@@ -367,7 +367,7 @@ export function renderOutreachEmail(template: OutreachTemplate, d: OutreachEmail
     completeness: d.completeness,
     closingTitle: "Don't let an incomplete profile speak for you.",
     closingBody:
-      "A complete profile gives opportunities a better picture of your skills, background and interests across AB TALKS.",
+      "A complete profile gives opportunities a better picture of your skills, background and interests across Klymb AI.",
   };
 
   let layout: Layout;
@@ -382,7 +382,7 @@ export function renderOutreachEmail(template: OutreachTemplate, d: OutreachEmail
         title: "Someone looking at your profile would miss this.",
         hero: ["Someone looking at your profile", "would miss this."],
         body:
-          "Your AB TALKS profile is already taking shape. But a few important details are still missing, which means someone discovering your profile may not get the complete picture of what you can do.",
+          "Your Klymb AI profile is already taking shape. But a few important details are still missing, which means someone discovering your profile may not get the complete picture of what you can do.",
         cardTitle: "You're closer than you think.",
         cardText: "Complete your profile to make your skills, experience and interests easier to understand.",
         ctaHref: d.claimUrl,
@@ -396,10 +396,10 @@ export function renderOutreachEmail(template: OutreachTemplate, d: OutreachEmail
       noteText = note.text;
       layout = {
         ...common,
-        title: "Your AB TALKS profile is still waiting.",
+        title: "Your Klymb AI profile is still waiting.",
         hero: ["Your profile is", "still waiting."],
         body:
-          "Your AB TALKS profile is ready for you to claim. Claim it to review what's there, add what's missing and make it yours.",
+          "Your Klymb AI profile is ready for you to claim. Claim it to review what's there, add what's missing and make it yours.",
         cardTitle: "One step to make it yours.",
         cardText: "Claim your profile, then fill in the few details that are still missing.",
         ctaHref: d.claimUrl,
@@ -414,7 +414,7 @@ export function renderOutreachEmail(template: OutreachTemplate, d: OutreachEmail
         title: "You're in. Here's what's left on your profile.",
         hero: ["You're in.", "Here's what's left."],
         body:
-          "Your AB TALKS profile is now yours. A few details are still missing — add them so anyone discovering your profile gets the complete picture.",
+          "Your Klymb AI profile is now yours. A few details are still missing — add them so anyone discovering your profile gets the complete picture.",
         cardTitle: "You're closer than you think.",
         cardText: "Complete your profile to make your skills, experience and interests easier to understand.",
         ctaHref: d.profileUrl,
@@ -428,7 +428,7 @@ export function renderOutreachEmail(template: OutreachTemplate, d: OutreachEmail
       const focus = first ? MISSING_COPY[first].title : "your details";
       layout = {
         ...common,
-        title: "One thing left on your AB TALKS profile.",
+        title: "One thing left on your Klymb AI profile.",
         hero: ["One thing left", "to stand out."],
         body: `Your profile is ${d.completeness.percent}% complete. The most useful thing to add next: ${focus}.`,
         cardTitle: "Almost there.",
@@ -460,20 +460,20 @@ function subjectFor(template: OutreachTemplate, d: OutreachEmailData): string {
   const lead = (withName: string, without: string) => (name ? `${name}, ${withName}` : without);
   switch (template) {
     case "invite":
-      return lead("update your profile on ABTalks", "Update your profile on ABTalks");
+      return lead("update your profile on Klymb AI", "Update your profile on Klymb AI");
     case "invite_reminder":
       return lead(
-        "your ABTalks profile is still waiting for you",
-        "Your ABTalks profile is still waiting for you",
+        "your Klymb AI profile is still waiting for you",
+        "Your Klymb AI profile is still waiting for you",
       );
     case "onboard_welcome":
-      return lead("you've claimed your ABTalks profile", "You've claimed your ABTalks profile");
+      return lead("you've claimed your Klymb AI profile", "You've claimed your Klymb AI profile");
     case "onboard_reminder": {
       const first = d.completeness.missing[0];
       const focus = first ? MISSING_COPY[first].title.toLowerCase() : "a few details";
       return lead(
-        `one detail left on your ABTalks profile: ${focus}`,
-        `One detail left on your ABTalks profile: ${focus}`,
+        `one detail left on your Klymb AI profile: ${focus}`,
+        `One detail left on your Klymb AI profile: ${focus}`,
       );
     }
   }

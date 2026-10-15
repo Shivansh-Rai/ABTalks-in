@@ -151,7 +151,7 @@ function BodyCopy() {
   return (
     <>
       <p style={{ margin: 0 }}>
-        ABTalks is where ambitious learners master AI together — through live
+        Klymb AI is where ambitious learners master AI together — through live
         workshops, hands-on challenges, and a community that ships.
       </p>
       <p style={{ margin: 0 }}>&nbsp;</p>
@@ -307,7 +307,7 @@ export default function CommunityStats() {
               color: "var(--wk-text)",
             }}
           >
-            The ABTalks AI Learners Community
+            The Klymb AI Learners Community
           </h2>
 
           {/* subhead — node 1:314 */}
@@ -422,7 +422,7 @@ export default function CommunityStats() {
           className="text-[34px] font-bold leading-[1.1] tracking-tight sm:text-[48px]"
           style={{ color: "var(--wk-text)" }}
         >
-          The ABTalks AI Learners Community
+          The Klymb AI Learners Community
         </h2>
 
         <p

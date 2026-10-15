@@ -74,7 +74,7 @@ export function DeleteOwnAccountDialog() {
         <DialogHeader>
           <DialogTitle>Delete my account</DialogTitle>
           <DialogDescription>
-            This removes your data from ABTalks and cannot be undone. Type DELETE
+            This removes your data from Klymb AI and cannot be undone. Type DELETE
             to confirm.
           </DialogDescription>
         </DialogHeader>
@@ -107,7 +107,7 @@ export function DeleteOwnAccountDialog() {
             onChange={(e) => setFeedback(e.target.value)}
             maxLength={DELETE_ACCOUNT_FEEDBACK_MAX}
             rows={3}
-            placeholder="Your feedback helps us improve ABTalks"
+            placeholder="Your feedback helps us improve Klymb AI"
           />
         </div>
         <div className="space-y-2">

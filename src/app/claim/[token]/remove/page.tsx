@@ -18,7 +18,7 @@ import { RemoveForm } from "./remove-form";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "Remove my data — ABTalks",
+  title: "Remove my data — Klymb AI",
   robots: { index: false, follow: false },
 };
 

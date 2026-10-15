@@ -221,7 +221,7 @@ export async function getAdminAttemptDetail(
       strictMode: row.assessment.strictMode,
       cameraRequired: row.assessment.cameraRequired,
       // Plan 166: platform assessments belong to no workspace.
-      organizationName: row.assessment.organization?.name ?? "ABTalks (platform)",
+      organizationName: row.assessment.organization?.name ?? "Klymb AI (platform)",
       createdByName: row.assessment.createdBy.name,
     },
     status: row.status,

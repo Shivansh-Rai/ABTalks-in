@@ -15,7 +15,7 @@ import { AssessmentRowMenu } from "@/components/hire/assessment/assessment-row-m
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Assessments | ABTalks Hire",
+  title: "Assessments | Klymb AI Hire",
 };
 
 const STATUS_LABEL: Record<AssessmentListRow["status"], string> = {

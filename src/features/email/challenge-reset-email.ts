@@ -20,7 +20,7 @@ export function challengeResetEmail(input: {
 
   const text = `Hi ${firstName},
 
-Your request to reset your challenge has been approved. Your progress in the ABTalks 60-Day Claude AI Challenge has been reset, and you now start again from Day 1.
+Your request to reset your challenge has been approved. Your progress in the Klymb AI 60-Day Claude AI Challenge has been reset, and you now start again from Day 1.
 
 Important: to stay in the challenge, submit your Day 1 task before 12:00 AM (midnight) IST today.
 
@@ -29,10 +29,10 @@ Open your dashboard: ${dashboardUrl}
 If you did not ask for this reset, reply to this email and we will look into it.
 
 Thanks,
-The ABTalks team
+The Klymb AI team
 
 ---
-You received this email because a challenge reset was requested for your ABTalks account.`;
+You received this email because a challenge reset was requested for your Klymb AI account.`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -44,13 +44,13 @@ You received this email because a challenge reset was requested for your ABTalks
 <body style="margin:0;padding:0;background-color:#ffffff;">
   <div style="font-family:Arial,Helvetica,sans-serif;max-width:560px;margin:0 auto;padding:24px;color:#353535;font-size:15px;line-height:1.6;">
     <p style="margin:0 0 16px;">Hi ${escapeHtml(firstName)},</p>
-    <p style="margin:0 0 16px;">Your request to reset your challenge has been approved. Your progress in the <strong>ABTalks 60-Day Claude AI Challenge</strong> has been reset, and you now start again from <strong>Day 1</strong>.</p>
+    <p style="margin:0 0 16px;">Your request to reset your challenge has been approved. Your progress in the <strong>Klymb AI 60-Day Claude AI Challenge</strong> has been reset, and you now start again from <strong>Day 1</strong>.</p>
     <p style="margin:0 0 16px;"><strong>Important:</strong> to stay in the challenge, submit your Day 1 task before 12:00 AM (midnight) IST today.</p>
     <p style="margin:0 0 16px;">Open your dashboard: <a href="${dashboardUrl}" style="color:#03535F;">${dashboardUrl}</a></p>
     <p style="margin:0 0 16px;">If you did not ask for this reset, reply to this email and we will look into it.</p>
-    <p style="margin:0 0 24px;">Thanks,<br>The ABTalks team</p>
+    <p style="margin:0 0 24px;">Thanks,<br>The Klymb AI team</p>
     <p style="margin:0;font-size:12px;color:#8A8A8A;border-top:1px solid #E9E9E9;padding-top:16px;">
-      You received this email because a challenge reset was requested for your ABTalks account.
+      You received this email because a challenge reset was requested for your Klymb AI account.
     </p>
   </div>
 </body>

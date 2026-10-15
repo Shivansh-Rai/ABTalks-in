@@ -3,9 +3,9 @@ import { requireRecruiter } from "@/lib/program-auth";
 import { CandidateEvidenceReport } from "@/components/hire/candidate-evidence-report";
 
 export const metadata: Metadata = {
-  title: "Candidate report | ABTalks Hire",
+  title: "Candidate report | Klymb AI Hire",
   description:
-    "The full ABTalks report for a Scout match: verified evidence, experience and skills.",
+    "The full Klymb AI report for a Scout match: verified evidence, experience and skills.",
 };
 
 export default async function HireEvidencePage({

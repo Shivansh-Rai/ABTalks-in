@@ -8,9 +8,9 @@ import { RecruiterAuthClosed } from "@/components/talent/recruiter-auth-closed";
 import { isEmailLoginEnabled, isRecruiterAuthEnabled } from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
-  title: "Recruiter sign-in | ABTalks",
+  title: "Recruiter sign-in | Klymb AI",
   description:
-    "Sign in to ABTalks Hire with your work email — an emailed code or your password.",
+    "Sign in to Klymb AI Hire with your work email — an emailed code or your password.",
 };
 
 type Props = { searchParams: Promise<{ from?: string; email?: string }> };
@@ -46,7 +46,7 @@ export default async function RecruiterLoginPage({ searchParams }: Props) {
     <div className="mx-auto max-w-md space-y-8 py-4">
       <header className="space-y-2 text-center">
         <p className="text-xs font-medium tracking-wide text-primary uppercase">
-          ABTalks Hire
+          Klymb AI Hire
         </p>
         <h1 className="font-display text-2xl font-bold tracking-tight">
           Sign in to hire

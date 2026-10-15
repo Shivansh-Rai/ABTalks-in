@@ -34,7 +34,7 @@ export type MyTemplateSummary = {
 
 /**
  * Plan 185 — "My templates" on /hire/create-test: the recruiter's own saved
- * templates, above the ABTalks ones and visibly separate from them.
+ * templates, above the Klymb AI ones and visibly separate from them.
  *
  * The list is loaded on the server for the signed-in recruiter only. Rename
  * and Delete go through actions that resolve the recruiter again on the

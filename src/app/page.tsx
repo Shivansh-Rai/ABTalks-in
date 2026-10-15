@@ -1,27 +1,28 @@
 import Script from "next/script";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { getLandingState } from "@/features/landing/get-landing-state";
+import type { LandingUser } from "@/features/landing/get-landing-state";
 import { getRecruiterState } from "@/features/talent-pool/recruiter-registration";
-import { isClaudeEnabled, isDatabricksEnabled } from "@/lib/feature-flags";
+import { isCandidateRegistered } from "@/features/registration/registration-gate";
+import {
+  hasPreviewAccess,
+  isClaudeEnabled,
+  isDatabricksEnabled,
+  isLaunchOnePagerEnabled,
+  PREVIEW_COOKIE_NAMES,
+} from "@/lib/feature-flags";
 import { LandingPage } from "@/components/landing/site/landing-page";
+import { LaunchOnePager } from "@/components/landing/launch/launch-one-pager";
 
 const GOOGLE_ADS_ID = "AW-18456978326";
 
-export default async function HomePage() {
-  const session = await auth();
-  if (session?.user?.id) {
-    if (session.user.isAdmin || (session.user as { role?: string }).role === "ADMIN") {
-      redirect("/admin");
-    }
-    // RecruiterProfile is the current database-backed recruiter authority.
-    // Checking it here keeps a stale JWT role from sending the wrong account
-    // to its home surface.
-    const recruiter = await getRecruiterState(session.user.id);
-    redirect(recruiter.status === "none" ? "/dashboard" : "/hire");
-  }
-
-  const state = await getLandingState();
+/**
+ * Unchanged by plan 191 and rendered by both home pages — the campaigns
+ * pointing at `/` keep reporting conversions while the one-pager is up.
+ */
+function GoogleAdsScripts() {
   return (
     <>
       <Script
@@ -48,6 +49,90 @@ function gtag_report_conversion(url) {
   return false;
 }`}
       </Script>
+    </>
+  );
+}
+
+export default async function HomePage() {
+  const session = await auth();
+  // Plans 191 + 192, temporary: the launch one-pager stands in for the
+  // marketing landing and the whole platform is closed behind it.
+  const onePager = isLaunchOnePagerEnabled();
+  const isAdmin =
+    session?.user?.isAdmin === true ||
+    (session?.user as { role?: string } | undefined)?.role === "ADMIN";
+
+  if (onePager) {
+    // Who gets past the launch page: an admin, or a browser holding the
+    // candidate preview cookie. Everyone else stays on it — signed in or not,
+    // registered or not. Sending a registered candidate to /dashboard here
+    // would bounce them straight back (middleware gates /dashboard), so the
+    // old redirect must not fire for them.
+    const jar = await cookies();
+    const mayEnter =
+      isAdmin ||
+      hasPreviewAccess(
+        "candidate",
+        jar.get(PREVIEW_COOKIE_NAMES.candidate)?.value,
+      );
+    // /login is behind the gate too, so the button must not be offered to
+    // someone it would only bounce — and it must point at the door that
+    // visitor can actually open. The candidate link opens /login; the
+    // recruiter link opens /talent/login and NOT /login. A stranger gets no
+    // button at all.
+    const hasRecruiterPreview = hasPreviewAccess(
+      "recruiter",
+      jar.get(PREVIEW_COOKIE_NAMES.recruiter)?.value,
+    );
+    const signInHref = mayEnter
+      ? "/login"
+      : hasRecruiterPreview
+        ? "/talent/login"
+        : null;
+
+    if (session?.user?.id && mayEnter) {
+      // Asked for explicitly: an admin lands on the product, not the console.
+      // /admin is still one URL away. An admin with no CandidateProfile is
+      // passed on to /register by the dashboard's own gate, which is open to
+      // them.
+      if (isAdmin || (await isCandidateRegistered(session.user.id))) {
+        redirect("/dashboard");
+      }
+    }
+
+    const user: LandingUser | null = session?.user?.id
+      ? {
+          name: session.user.name ?? null,
+          email: session.user.email ?? "",
+          image: session.user.image ?? null,
+          isAdmin: session.user.isAdmin ?? false,
+        }
+      : null;
+
+    return (
+      <>
+        <GoogleAdsScripts />
+        <LaunchOnePager user={user} signInHref={signInHref} />
+      </>
+    );
+  }
+
+  if (session?.user?.id) {
+    if (isAdmin) {
+      redirect("/admin");
+    }
+
+    // RecruiterProfile is the current database-backed recruiter authority.
+    // Checking it here keeps a stale JWT role from sending the wrong account
+    // to its home surface.
+    const recruiter = await getRecruiterState(session.user.id);
+    redirect(recruiter.status === "none" ? "/dashboard" : "/hire");
+  }
+
+  const state = await getLandingState();
+  return (
+    <>
+      <GoogleAdsScripts />
       <LandingPage
         claudeEnabled={isClaudeEnabled()}
         databricksEnabled={isDatabricksEnabled()}

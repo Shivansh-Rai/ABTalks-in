@@ -10,7 +10,7 @@ export interface WorkshopRegistrationRow {
   role: string;
   organization: string | null;
   graduationYear: number | null;
-  /** True when this account also has a full ABTalks profile (challenge member). */
+  /** True when this account also has a full Klymb AI profile (challenge member). */
   isMember: boolean;
   createdAt: Date;
 }
@@ -48,7 +48,7 @@ export async function getWorkshopRegistrations(
       graduationYear: true,
       createdAt: true,
       // Every row has a userId now (auth is mandatory), so the useful signal is
-      // whether they are a full ABTalks member rather than workshop-only.
+      // whether they are a full Klymb AI member rather than workshop-only.
       user: {
         select: {
           candidateProfile: { select: { id: true } },

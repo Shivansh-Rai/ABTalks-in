@@ -175,8 +175,8 @@ suite("inspector Experience is fetched jobs, not the track", () => {
     "inspector loads work history on open",
   );
   assert(
-    src.includes('label: "ABTalks Evidence"'),
-    "ABTalks Evidence tab exists",
+    src.includes('label: "Klymb AI Evidence"'),
+    "Klymb AI Evidence tab exists",
   );
   const expStart = src.indexOf('data-section="experience"');
   const evStart = src.indexOf('data-section="evidence"');
@@ -202,8 +202,8 @@ suite("inspector Experience is fetched jobs, not the track", () => {
   );
   assert(!ev.includes("Days shipped"), "Evidence is not live days shipped");
   assert(
-    ev.includes("Verified work on ABTalks"),
-    "completions sit in ABTalks Evidence",
+    ev.includes("Verified work on Klymb AI"),
+    "completions sit in Klymb AI Evidence",
   );
 });
 

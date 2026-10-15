@@ -1,5 +1,5 @@
 export const ACCOUNT_DISABLED_MESSAGE =
-  "This account has been disabled. Contact ABTalks support.";
+  "This account has been disabled. Contact Klymb AI support.";
 
 export function isAccountFrozen(user: {
   deletedAt?: Date | null;

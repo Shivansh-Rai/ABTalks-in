@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 import { listAiCohortMemberships } from "@/repositories/program-state";
 
 export const metadata: Metadata = {
-  title: "Your requests | ABTalks Hire",
+  title: "Your requests | Klymb AI Hire",
 };
 
 const STATUS_COPY: Record<string, { label: string; hint: string }> = {

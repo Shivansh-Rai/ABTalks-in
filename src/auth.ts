@@ -2,7 +2,13 @@ import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import { prisma } from "@/lib/db";
-import { isRecruiterAuthEnabled } from "@/lib/feature-flags";
+import {
+  hasPreviewAccess,
+  isLaunchOnePagerEnabled,
+  isRecruiterAuthEnabled,
+} from "@/lib/feature-flags";
+import { ensurePreviewUser } from "@/features/preview/preview-accounts";
+import { consumeHrInvite } from "@/features/hire/hr-invite";
 import authConfig from "@/auth.config";
 import { cookies } from "next/headers";
 import { recordLegalConsents } from "@/features/legal/record-consent";
@@ -23,6 +29,87 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma),
   providers: [
+    /**
+     * Plan 193, TEMPORARY — the preview link as a sign-in.
+     *
+     * A URL that authenticates, deliberately: while the platform is closed
+     * behind the launch page, a preview link opens its side fully, with no
+     * Google sign-in and no recruiter OTP. Everything else about auth is
+     * untouched — this provider is additive and refuses in every case but one.
+     *
+     * The containments, all of them cheap:
+     *   - refuses unless the launch gate is on, so a back door cannot outlive
+     *     the launch page by accident;
+     *   - accepts only a value equal to the configured token for that side;
+     *   - `side` and `token` come from the httpOnly cookie middleware set, not
+     *     from the URL (see app/preview/enter/route.ts);
+     *   - signs in as a dedicated account, never a real person's, and never
+     *     an admin;
+     *   - every success is logged.
+     *
+     * Rotating a token in Vercel revokes every link built from it.
+     */
+    Credentials({
+      id: "preview",
+      name: "Preview link",
+      credentials: {
+        side: { label: "Side", type: "text" },
+        token: { label: "Token", type: "text" },
+      },
+      async authorize(credentials) {
+        if (!isLaunchOnePagerEnabled()) return null;
+
+        const side = String(credentials?.side ?? "");
+        if (side !== "candidate" && side !== "recruiter") return null;
+
+        const token = String(credentials?.token ?? "");
+        if (!hasPreviewAccess(side, token)) return null;
+
+        const user = await ensurePreviewUser(side);
+        logger.info("[preview] signed in through a preview link", {
+          side,
+          userId: user.id,
+        });
+        return {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+        };
+      },
+    }),
+
+    /**
+     * Plan 194 — an HR's one-click sign-in link.
+     *
+     * The token is single use, expires in seven days, is stored only as a
+     * SHA-256 hash, and is spent inside `consumeHrInvite` before this returns.
+     * It carries no identity of its own: the row says which address it was
+     * issued to, so a forged or edited token matches nothing.
+     *
+     * Unlike the shared team preview link, each invite opens ONE named
+     * recruiter's own account, so every action stays attributable to them.
+     */
+    Credentials({
+      id: "hr-invite",
+      name: "Recruiter invite link",
+      credentials: { token: { label: "Token", type: "text" } },
+      async authorize(credentials) {
+        const token = String(credentials?.token ?? "");
+        if (!token) return null;
+
+        const holder = await consumeHrInvite(token);
+        if (!holder) return null;
+
+        return {
+          id: holder.id,
+          email: holder.email,
+          name: holder.name ?? holder.email,
+          role: holder.role,
+        };
+      },
+    }),
+
     /**
      * Recruiter sign-in by emailed code.
      *

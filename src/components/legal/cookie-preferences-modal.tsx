@@ -66,7 +66,7 @@ function CookiePreferencesContent() {
           Cookie Preferences
         </DialogTitle>
         <DialogDescription className="text-xs leading-normal">
-          Manage your cookie choices on ABTalks. Strictly necessary cookies cannot be disabled. Learn more in our{" "}
+          Manage your cookie choices on Klymb AI. Strictly necessary cookies cannot be disabled. Learn more in our{" "}
           <Link
             href="/cookies"
             className="text-primary underline hover:text-primary/80"

@@ -4,9 +4,9 @@ Hi {{recipientName}},
 
 {{body}}
 
-Open ABTalks: {{baseUrl}}{{href}}
+Open Klymb AI: {{baseUrl}}{{href}}
 
 If you have questions, just reply to this email.
 
 ---
-This is a service message about your ABTalks account.
+This is a service message about your Klymb AI account.

@@ -19,7 +19,7 @@ import { MAX_ALERTS_PER_CANDIDATE } from "@/features/job-alerts/service";
 import { prismaJobStore } from "@/features/recruiter-jobs/prisma-store";
 import { formatDateIST } from "@/lib/date-utils";
 
-export const metadata: Metadata = { title: "Jobs | ABTalks" };
+export const metadata: Metadata = { title: "Jobs | Klymb AI" };
 
 type PageProps = {
   searchParams: Promise<{ tab?: string }>;

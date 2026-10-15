@@ -774,7 +774,7 @@ export async function createPublishAndAssign(
 }
 
 /**
- * Publish an ABTalks template (or a combination) and send it to the ticked
+ * Publish an Klymb AI template (or a combination) and send it to the ticked
  * Shortlisted candidates, if any. The client sends preset ids + refs only — question
  * bodies are looked up here so a recruiter cannot smuggle a draft in as a
  * "template".

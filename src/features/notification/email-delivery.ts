@@ -26,15 +26,26 @@ const SERVICE_EVENT_TYPES = new Set([
 /**
  * Brand casing in notification mail. Titles and bodies carry recruiter-typed
  * values (a job's company field) verbatim, which is how candidates got
- * "abtalks has marked you as hired". Any casing of the brand — abtalks,
- * Abtalks, AB Talks, ABTALKS — becomes "ABTalks". Addresses, links and
- * handles (`abtalks.in`, `team@abtalks.in`, `/abtalks-logo.png`,
- * `@abtalksonai`) are left alone.
+ * "Klymb AI has marked you as hired". Any casing of either brand name becomes
+ * the canonical "Klymb AI":
+ *   - current  — klymb, klymb ai, KLYMB AI, Klymb Ai
+ *   - former   — Klymb AI, Klymb AI, Klymb AI, Klymb AI
+ *
+ * The former name still maps, deliberately: plan 189 renamed the platform, but
+ * recruiters will keep typing "Klymb AI" into company fields for months and a
+ * candidate should not receive mail naming a brand that no longer exists.
+ *
+ * Addresses, links and handles are left alone — `abtalks.in`,
+ * `team@abtalks.in`, `/abtalks-logo.png`, `@abtalksonai`, `klymb.ai`,
+ * `app.klymb.ai` — by the same lookaround guards as before.
  */
-const BRAND_PATTERN = /(?<![@/.\-\w])ab ?talks\b(?!\.[a-z]|-)/gi;
+const LEGACY_BRAND_PATTERN = /(?<![@/.\-\w])ab ?talks\b(?!\.[a-z]|-)/gi;
+const BRAND_PATTERN = /(?<![@/.\-\w])klymb(?: ?ai)?\b(?!\.[a-z]|-)/gi;
 
 function normaliseBrand(value: string): string {
-  return value.replace(BRAND_PATTERN, "ABTalks");
+  return value
+    .replace(LEGACY_BRAND_PATTERN, "Klymb AI")
+    .replace(BRAND_PATTERN, "Klymb AI");
 }
 
 const MAX_ATTEMPTS = 5;
@@ -87,7 +98,7 @@ export async function processEmailDelivery(
     return;
   }
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://abtalks.in";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
   const { subject, html, text } = renderTemplate(notification.eventType, {
     title: notification.title,
     body: notification.body ?? "",

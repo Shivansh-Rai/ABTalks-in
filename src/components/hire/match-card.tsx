@@ -133,7 +133,7 @@ export type MatchCardData = {
     interviewProblem?: number | null;
   };
   /** Pre-formatted "₹6–12 LPA". Candidate-stated when `compensationDeclared`
-   *  is true; otherwise an ABTalks estimate — print the disclaimer. */
+   *  is true; otherwise an Klymb AI estimate — print the disclaimer. */
   compensationBand?: string | null;
   /** True only when `compensationBand` is the candidate's own figure. */
   compensationDeclared?: boolean;
@@ -271,7 +271,7 @@ function RealMatchCard({
             {match.importedUnclaimed && (
               <span
                 className="rounded-full border px-2 py-0.5 text-sm font-medium text-muted-foreground"
-                title="Built from a résumé ABTalks imported. The candidate hasn’t signed in to confirm it yet."
+                title="Built from a résumé Klymb AI imported. The candidate hasn’t signed in to confirm it yet."
               >
                 Imported résumé · not yet claimed
               </span>
@@ -460,7 +460,7 @@ function RealMatchCard({
           />
         </button>
         {/* Two different things, deliberately side by side. The intro request
-            asks ABTalks to make an introduction; the unlock buys the contact
+            asks Klymb AI to make an introduction; the unlock buys the contact
             details outright (T-229). Once contact is shared, only the intro
             chip is worth showing — the unlock has nothing left to offer, and
             its slot becomes "Email candidate" (T-232). */}
@@ -565,8 +565,8 @@ function RealMatchCard({
             {isHackathon
               ? "Shipped a hackathon project the platform recorded. Skills and role are self-declared — there is no daily track behind this card."
               : isChallenge
-                ? "Days shipped, streak, assessment scores and the certificate are verified by ABTalks — every day was submitted against a GitHub URL recorded at the time. Experience and skills are self-declared."
-                : "Mission, first-attempt, commit and project figures are verified by ABTalks. Experience, skills and role are self-declared."}
+                ? "Days shipped, streak, assessment scores and the certificate are verified by Klymb AI — every day was submitted against a GitHub URL recorded at the time. Experience and skills are self-declared."
+                : "Mission, first-attempt, commit and project figures are verified by Klymb AI. Experience, skills and role are self-declared."}
             {match.compensationBand ? ` ${COMPENSATION_DISCLAIMER}` : ""}
           </p>
 
