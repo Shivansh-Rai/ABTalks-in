@@ -141,6 +141,27 @@ export function isGreeting(text: string): boolean {
   return normalised.length > 0 && GREETING_MESSAGE.test(normalised);
 }
 
+/**
+ * Words that only make sense against an earlier turn ("can i do it again",
+ * "what about the next one"). Matched on the raw text, since most of them are
+ * stop words and never reach `tokenize`.
+ */
+const FOLLOW_UP_MARKER =
+  /^(?:and|also|but|so|then|what\s+about|how\s+about)\b|\b(?:it|its|that|this|those|these|they|them|there|same|above|again|the\s+one|that\s+one|this\s+one)\b/i;
+
+/**
+ * True when a message leans on the conversation before it, so retrieval
+ * should carry the earlier user turns. A short message counts too: "who do i
+ * tag" has one content word and no subject of its own.
+ *
+ * A self-contained question is searched ALONE. Carrying old turns into it is
+ * how an off-topic question rode in on the score of the on-topic question
+ * before it ("how do i join the challenge" -> "write bubble sort in java").
+ */
+export function isFollowUp(text: string): boolean {
+  return tokenize(text).length <= 2 || FOLLOW_UP_MARKER.test(text.trim());
+}
+
 export function tokenize(text: string): string[] {
   return text
     .toLowerCase()

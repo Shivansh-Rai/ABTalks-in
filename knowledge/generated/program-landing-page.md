@@ -45,33 +45,6 @@ JavaScript & React Fundamentals
 - REST APIs & Backend Development Basics
 - JavaScript & React Fundamentals
 
-## Course Roadmap
-
-- 01Phase 1Days 1–3Env & ToolingLocal AI stack, Git, Ollama
-- 02Phase 2Days 4–6DataCoverage data & structured queries
-- 03Phase 3Days 7–10Embeddings & VectorKnowledge base + retrieval
-- 04Phase 4Days 11–15LLM & PromptingPrompting, fine-tune basics
-- 05Phase 5Days 16–20App BuildStreamlit chatbot + FastAPI
-- 06Phase 6Days 21–24Agentic + MCPTools, agents, MCP servers
-- 07Phase 7Days 25–27Governance & EvalGuardrails, evals, safety
-- 08Phase 8Days 28–31Docker / K8s / ProdShip to production
-
-### Env & Tooling
-
-### Data
-
-### Embeddings & Vector
-
-### LLM & Prompting
-
-### App Build
-
-### Agentic + MCP
-
-### Governance & Eval
-
-### Docker / K8s / Prod
-
 ## How it works
 
 Apply

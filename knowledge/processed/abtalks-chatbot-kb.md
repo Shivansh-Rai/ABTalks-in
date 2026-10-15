@@ -12,7 +12,7 @@
 > registration status or price from this file.
 
 **Purpose:** Ground truth for an ABTalks helper chatbot serving four audiences: students, recruiters, working professionals, and investors.
-**Sources:** abtalks.in (all public pages) + 60-Day Claude AI Challenge tracker + individual challenge task pages (Days 1–60).
+**Sources:** abtalks.in (all public pages) + 60-Day Claude AI Challenge tracker.
 **Currency:** Reflects state as of Aug 10, 2026. Update numbers on `10,000+ members / 500+ projects / 100+ hiring partners` if the site changes.
 **Anti-hallucination rule for the bot:** Never invent numbers, testimonial names, program dates, or curriculum items not present in this document. If asked something outside this KB, say so and offer to route to `team@abtalks.in`.
 
@@ -97,7 +97,7 @@ Four distinct products. Each has its own tagline, audience, cadence, and success
 - **Cost:** Free
 - **Audience:** Anyone — students, working professionals, career switchers
 - **Success outcome:** Portfolio of 50 daily interactive artifacts + 1 deployed v1.0.0 product with docs
-- **Full curriculum:** See **Section 4**.
+- **Structure:** See **Section 4** (general structure only; day-level content is not covered).
 
 **Route this program to:** anyone whose goal is *learning Claude / prompt engineering / building daily* or who wants a habit-forming AI mastery path.
 
@@ -139,17 +139,7 @@ Four distinct products. Each has its own tagline, audience, cadence, and success
 - **Prerequisites:** Python fundamentals · SQL & DB fundamentals · Git/GitHub/CLI · REST APIs & backend basics · JavaScript & React fundamentals
 - **Requirements:** Laptop with ≥8 GB RAM · GitHub account · Ollama / Groq / Chroma (no paid API keys needed)
 
-**Course roadmap — 8 phases across 31 days:**
-| Phase | Days | Title | Focus |
-|---|---|---|---|
-| 1 | 1–3 | Env & Tooling | Local AI stack, Git, Ollama |
-| 2 | 4–6 | Data | Coverage data & structured queries |
-| 3 | 7–10 | Embeddings & Vector | Knowledge base + retrieval |
-| 4 | 11–15 | LLM & Prompting | Prompting, fine-tune basics |
-| 5 | 16–20 | App Build | Streamlit chatbot + FastAPI |
-| 6 | 21–24 | Agentic + MCP | Tools, agents, MCP servers |
-| 7 | 25–27 | Governance & Eval | Guardrails, evals, safety |
-| 8 | 28–31 | Docker / K8s / Prod | Ship to production |
+**What it covers (general):** 31 days in 8 gated phases, taking you from a local AI development setup through data, retrieval, prompting, building the app, agents and MCP, guardrails and evaluation, to shipping it in production. What a specific day or phase contains is not covered here.
 
 **Cohort flow (4 stages):**
 1. **Apply** — Confirm laptop and GitHub setup.
@@ -194,114 +184,11 @@ Four distinct products. Each has its own tagline, audience, cadence, and success
 
 ---
 
-## 4. 60-DAY CLAUDE AI CHALLENGE — FULL CURRICULUM
+## 4. 60-DAY CLAUDE AI CHALLENGE — HOW IT IS STRUCTURED
 
-This is the flagship product. Every day is a single Claude prompt the participant runs, deploys, and publishes. Days 51–60 form a real-SDLC capstone (Requirements → Design → Setup → Implementation → Testing → Deployment → Maintenance).
+This is the flagship product. Each day is one Claude prompt the participant runs, deploys and publishes, and the challenge ends with a capstone in which participants build and ship a real product through a full software lifecycle (requirements, design, build, testing, launch). Free-tier tools only; no paid Anthropic API keys or paid hosting are assumed.
 
-### 4.1 Structure at a glance
-- **Days 1–7:** Prompt Fundamentals
-- **Days 8–15:** Applied Utilities (resumes, jobs, health, portfolio)
-- **Days 16–21:** Data & Analytical Apps
-- **Days 22–25:** Business & Startup Reasoning
-- **Days 26–31:** Healthcare & Ops Simulators
-- **Days 32–38:** Learning & Reflection Games
-- **Days 39–43:** Productivity Tools
-- **Days 44–50:** Advanced Prompting & Systems
-- **Days 51–60:** Capstone (real SDLC)
-
-### 4.2 Full 60-day curriculum table
-
-| Day | Title | Focus / Artifact |
-|---|---|---|
-| 1 | Claude Setup | AI Personality Profile + cinematic portrait |
-| 2 | Prompt Engineering | Beginner explainer + LinkedIn image concept |
-| 3 | Role-based Prompt | Persona cards, expert-level answers |
-| 4 | Chain of Thought | Personalized 4-question career roadmap PDF |
-| 5 | Context Engineering | With-context vs without-context comparison |
-| 6 | ATS Resume | Optimizer with score before/after + A4 one-pager |
-| 7 | Claude AI Guide | Model & effort recommender (Haiku/Sonnet/Opus) |
-| 8 | Health Analyzer | Environmental Health Dashboard (AQI, water quality) |
-| 9 | Nutrition Analysis | NutriScope MVP + enhancements |
-| 10 | Profiling Website | Single-file portfolio with dark/light toggle |
-| 11 | Update Resume (JD) | ATS keyword-matched rewrite |
-| 12 | Cover Letter/Email | 12-section job-search toolkit |
-| 13 | Job Search | 3-stage profile → criteria → discovery |
-| 14 | AI Red Flag Generator | JD toxicity + risk scorer |
-| 15 | Vedic Horoscope | Parashara-based 5-year forecast |
-| 16 | Analyze Any Stock | NSE/BSE fundamental analyzer, no buy/sell calls |
-| 17 | EV vs Petrol vs E85 | CSV → SVG dashboard |
-| 18 | Custom Skill for Meeting | Brain-dump action planner HTML |
-| 19 | FIFA World Cup | Football Intelligence Hub (3-stage) |
-| 20 | Face Puzzle | Webcam-based single-file game |
-| 21 | Digital Footprint | Privacy dashboard from apps list |
-| 22 | Startup Validation | McKinsey-style validation report |
-| 23 | MVP Planning | Customer & MVP Blueprint |
-| 24 | Startup Future | YC-style business strategy + scorecard |
-| 25 | AI Shark Tank | Simulator with 4 judges |
-| 26 | Healthcare Workflow | Prior Authorization drag-and-drop sim |
-| 27 | Prior Authorization | Rahul & Priya story simulator (8 scenes) |
-| 28 | Hospital Operations | Admission Readiness Simulator |
-| 29 | AI Supply Chain | "Operation Lifeline" crisis lab |
-| 30 | Supply Chain Optimizer | Supply Chain Builder |
-| 31 | Supply Chain Control Tower | 3-min alert-response game |
-| 32 | Think Like a Marketing Strategist | Brand growth simulator (incl. personal brand mode) |
-| 33 | Media Integrity Analyzer | Headline Detective + Emotion Detector |
-| 34 | Marketing Detective | Detective-game with 10–20 cases |
-| 35 | Prompt Puzzle | Build/Clean/Choose prompt game |
-| 36 | Cognitive Pattern Explorer | Thinking-styles self-reflection |
-| 37 | Task Compass | Ownership/routing/collaboration 3-stage sim |
-| 38 | Typing Speed Studio | Monkeytype-style typing platform |
-| 39 | PDF Splitter & Merger | Client-side PDF tools |
-| 40 | AI Assistant Builder | Interview-driven Claude-powered assistant |
-| 41 | Interactive Learning Studio | 4-module tutorial with quizzes |
-| 42 | Personal Financial Command Center | Persona-based finance dashboard |
-| 43 | AI Workflow Architect | End-to-end workflow generator |
-| 44 | LinkedIn Profile Optimizer | Roast → Rebuild → 7-day activation plan |
-| 45 | AI Decision Strategist | 4-question interview → HTML Decision Report |
-| 46 | Autonomous Agent Studio | Real multi-agent loop with live API |
-| 47 | Content Intelligence Studio | Multi-reviewer content consultant |
-| 48 | The Verdict Engine | Compare-and-decide builder with real citations |
-| 49 | Personal AI Playbook | Reusable workflow builder (Prompt + Loop) |
-| 50 | Defend Your Experience | Skeptical interviewer for résumé claims |
-| 51 | Product Discovery & Sprint Planning | PRD + 10-Day Implementation Blueprint + Pitch Deck |
-| 52 | System Design | Tech stack, architecture, DB schema, API, wireframes, folder structure |
-| 53 | Project Setup & Foundation | Env, repo, dependencies, "Hello World" scaffold |
-| 54 | Core Feature Implementation | First milestone-by-milestone build |
-| 55 | Continue Core Features | Extend without breaking; free-tools-only constraint locked in |
-| 56 | Complete the MVP | Ship a working end-to-end demo, deployed |
-| 57 | Product Refinement & UX | Senior designer/engineer polish pass; ZIP-based delivery for large changes |
-| 58 | Testing, Debugging & Prod Optimization | Multi-lens QA (QA/Security/Perf); no new features |
-| 59 | Launch & Production Readiness | Release Readiness Review; docs, metadata, branding, SEO, license |
-| 60 | Final Review, Portfolio & Graduation | v1.0.0 release + portfolio artifacts + Certificate of Completion |
-
-### 4.3 Capstone deep-dive (Days 51–60)
-
-**Framing:** A real software-development lifecycle spread across 10 days, carried inside a single Claude conversation (or re-uploaded blueprint/sprint workbook when context is lost). Free-tier tools only — no paid Anthropic API keys, no paid hosting assumed.
-
-- **Day 51 — Product Discovery & Sprint Planning:** Interview-driven idea selection; produce PRD, 10-Day Implementation Blueprint, and Project Pitch Deck. Optimizes for the *most impressive project shippable in 10 days*, not the most ambitious.
-- **Day 52 — System Design:** Finalize tech stack (prefer free), architecture diagrams (Mermaid preferred), DB schema, API endpoints, low-fi wireframes, folder structure. Deliverables: ARCHITECTURE.md, SCHEMA.md, API.md, UI-WIREFRAMES.md, PROJECT-STRUCTURE.md.
-- **Day 53 — Project Setup & Foundation:** Env, GitHub repo, dependencies, config, routing scaffold, "Hello World" running. Deliverables: SETUP.md, ENVIRONMENT.md, DAY3-SUMMARY.md.
-- **Day 54 — Core Feature Implementation:** Milestone-by-milestone, screenshot-gated. Full file contents only — no snippets, TODOs, or "…existing code…". Debug fully before moving forward.
-- **Day 55 — Continue Core Features:** Read prior day's work first; enforce free-tools-only; shift from screenshot-gated to judgment-based pausing. Refactor obvious duplication.
-- **Day 56 — Complete the MVP:** Explicit goal: **end today with a fully functional MVP that runs start-to-finish, deployed, and demonstrable to someone else.** Preferred hosts: Vercel, Netlify, Render, Railway. Preferred free APIs: Gemini, Supabase, Firebase.
-- **Day 57 — Product Refinement & UX:** Review the working MVP as a Senior Product Designer / UI-UX Designer / Senior Software Engineer. Polish layout, typography, colors, responsiveness, loading/empty/error states, accessibility, micro-interactions. **Don't change the core vision.**
-- **Day 58 — Testing, Debugging & Production Optimization:** Review as Senior QA + Senior Software Engineer + Security Reviewer + Performance Engineer. No new features. Bar: "ready to launch publicly tomorrow."
-- **Day 59 — Launch & Production Readiness:** Release Readiness Review — deployment, env vars, README, install docs, GitHub repo hygiene, license, project metadata, SEO/OG tags, favicon, error pages, final UI consistency, perf, accessibility, security. End with a **meaningful final launch commit**.
-- **Day 60 — Final Review, Portfolio & Graduation:** Review from five lenses (Senior SWE / PM / UI-UX / Recruiter / Open Source Maintainer). Produce:
-  - Portfolio-ready README, project descriptions, resume bullets, interview talking points, demo script
-  - `future-scope.md` (3/6/12-month evolution)
-  - `challenge-retrospective.md` (Day 1–10 timeline, real decisions, real pivots, real debugging)
-  - `30-day-growth-plan.md` (day-by-day 30-day roadmap from MVP → complete product)
-  - `daily-build-prompt.md` (one reusable prompt for the 30-day plan)
-  - **Release Version v1.0.0** on GitHub
-  - Premium HTML-to-PDF **Certificate of Completion** (name, project, v1.0.0, date, ABTalks branding, Claude credited as co-creator/mentor, links to abtalks.in + LinkedIn company page)
-  - 200-word graduation reflection, single-file HTML graduation infographic, LinkedIn graduation post
-
-**Key constraints across the capstone (memorize for the bot):**
-- Only free tools. No paid Anthropic API keys or paid hosting assumed. Anything paid requires explicit user approval.
-- One long-running Claude conversation is the intended path; the Blueprint/Sprint Workbook can be re-uploaded if context resets.
-- Screenshot-gated on Day 54; judgment-based pausing from Day 55 onward.
-- Refinement days do not add scope.
+What a specific day or task contains is not covered here. The assistant gives general program information only; enrolled participants see each day's task on their dashboard.
 
 ---
 
@@ -309,45 +196,13 @@ This is the flagship product. Every day is a single Claude prompt the participan
 
 A student who completes the 60-Day Claude AI Challenge has demonstrably built each of the following as a public, deployed artifact:
 
-**Prompt engineering skills:**
-- Role-based prompting, chain-of-thought, context engineering
-- Building agentic loops with stop conditions
-- Writing production-quality system prompts
-- Prompt Puzzle-style deconstruction (build/clean/choose)
-
-**Full-stack shipping skills:**
-- Single-file HTML apps with vanilla JS and no external deps
-- React-via-CDN artifacts
-- Client-side PDF processing
-- Client-side webcam and drag-and-drop
-- Deployed live URLs on Vercel/Netlify/Render/Railway
-- GitHub hygiene: public repos, meaningful commits, README, license, tagged v1.0.0 release
-
-**AI-native product skills:**
-- Building assistants that call the Anthropic Messages API (`/v1/messages`) directly from an artifact
-- Multi-agent orchestration (Planner/Executor/Evaluator/Critic/Improver)
-- Content review pipelines with multi-reviewer agents
-- RAG/embeddings knowledge (from AI Cohort track)
-- MCP server integration (Claude Code / Cursor)
-
-**Real-world domain reasoning:**
-- Startup validation → MVP planning → business strategy → scorecard
-- Financial dashboards, stock fundamental analysis
-- Healthcare workflows (Prior Auth, Hospital Admission Readiness)
-- Supply chain simulation and control tower
-- Marketing strategy, content strategy, media literacy
-
-**Career-adjacent skills:**
-- ATS resume optimization and JD-alignment
-- LinkedIn profile roast/rebuild + 7-day activation plan
-- Interview defense (Defend Your Experience app)
-- Decision-making frameworks (AI Decision Strategist, Verdict Engine)
-
-**SDLC discipline (from capstone):**
-- Requirements → Design → Setup → Implementation → Testing → Deployment → Launch → Retrospective
-- Screenshot-gated milestones, judgment-based pausing
-- Refinement vs stabilization vs launch as distinct passes
-- Producing a versioned v1.0.0 release, not an ambiguous "done-ish" project
+**Skill areas (general, not tied to any specific day):**
+- Prompt engineering and writing production-quality prompts
+- Shipping small web apps and deploying them to a live URL
+- AI-native product building: assistants, agents and tool integrations
+- Applying AI to real-world business, career and analysis problems
+- Software lifecycle discipline from the capstone: plan, build, test, launch and release a versioned product
+- GitHub hygiene: public repos, meaningful commits, README, license, tagged release
 
 **Public artifacts a recruiter can inspect:**
 - 50 single-file HTML artifacts, one per day
@@ -401,7 +256,7 @@ A: Push your code to GitHub, then post progress on LinkedIn. Both links become p
 A: You can keep going, but the missed day breaks your streak. Submissions follow IST day boundaries.
 
 **Q: Do I get a certificate?**
-A: You get **completion recognition** and a public portfolio. The 10-Day Capstone Sprint (Days 51–60 of the Claude Challenge) produces a proper printable HTML-to-PDF Certificate of Completion. The core outcome, though, is visible proof of consistent work — that's what recruiters actually look at.
+A: You get **completion recognition** and a public portfolio. The capstone at the end of the Claude Challenge produces a proper printable HTML-to-PDF Certificate of Completion. The core outcome, though, is visible proof of consistent work — that's what recruiters actually look at.
 
 **Q: How much time per day does it take?**
 A: 31-Day AI Cohort: ~2–4 hours/day. 60-Day Claude Challenge: varies by task, generally 30–90 min. 60-Day Coding Challenge: designed as "one task a day."
@@ -557,7 +412,7 @@ A: Anthropic (Claude is the primary AI stack — programs are Claude-native). Br
 
 **When you don't know:** Say so, and offer `team@abtalks.in` for follow-up or point to the specific program page URL.
 
-**Length default:** 2–5 sentences. Expand only when the user asks for detail (e.g., full curriculum, specific day's prompt, phase-by-phase roadmap).
+**Length default:** 2–5 sentences. Never describe the content of a specific day, week, phase or task, and never list a curriculum; give general program information only.
 
 ---
 

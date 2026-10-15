@@ -97,6 +97,39 @@ function domToMarkdown($: cheerio.CheerioAPI, $el: any): string {
 }
 
 /**
+ * The assistant gives general program information only, never what a specific
+ * day, week or phase contains. Public pages still show roadmaps (the AI Cohort
+ * page lists every phase with its day range), so those are dropped here, at
+ * ingest, or the nightly refresh would put them straight back into the corpus.
+ *
+ * Removes any section whose heading names a roadmap, curriculum or syllabus
+ * (up to the next heading of the same or a higher level), and any remaining
+ * line that maps day or phase numbers to content.
+ */
+// "Course Roadmap" yes; a workshop session called "LinkedIn Growth Roadmap" no.
+const DAY_LEVEL_HEADING =
+  /^(#{1,4})\s.*\b((course|program|programme|cohort|challenge)\s+roadmap|curriculum|syllabus|day[\s-]*by[\s-]*day)\b/i;
+const DAY_LEVEL_LINE = /\b(phase\s*\d+|days?\s*\d+\s*(–|-|to)\s*\d+)/i;
+
+function stripDayLevelContent(markdown: string): string {
+  const out: string[] = [];
+  let skipLevel = 0;
+  for (const line of markdown.split('\n')) {
+    const heading = /^(#{1,4})\s/.exec(line);
+    if (skipLevel && heading && heading[1].length <= skipLevel) skipLevel = 0;
+    if (skipLevel) continue;
+    const dayHeading = DAY_LEVEL_HEADING.exec(line);
+    if (dayHeading) {
+      skipLevel = dayHeading[1].length;
+      continue;
+    }
+    if (DAY_LEVEL_LINE.test(line)) continue;
+    out.push(line);
+  }
+  return out.join('\n');
+}
+
+/**
  * Everything in a generated file except its `ingested_at` stamp. Two runs over
  * an unchanged page must compare equal, or the nightly refresh
  * (.github/workflows/chatbot-knowledge-refresh.yml) opens a PR every night
@@ -145,7 +178,7 @@ async function ingestRoute(route: string, slug: string): Promise<{ success: bool
   const title = $('title').text().trim() || route;
   
   // Extract clean text
-  const markdownBody = domToMarkdown($, $main);
+  const markdownBody = stripDayLevelContent(domToMarkdown($, $main));
 
   const marker = LOGIN_MARKERS.find((m) => markdownBody.includes(m));
   if (marker) {

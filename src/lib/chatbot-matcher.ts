@@ -70,6 +70,82 @@ export const THIRD_PARTY_DATA_REPLY =
   `I can't look up or share anyone else's account, profile or personal details — that information is private to them. ` +
   `I can help with anything about ABTalks itself, or you can reach the team at ${SUPPORT_EMAIL}.`;
 
+/**
+ * Questions about what a specific day, week, mission or task CONTAINS.
+ *
+ * Rudra gives general program information only. Like the third-party rule this
+ * is a scope rule, not a knowledge gap: "what is day 23" is built from words
+ * the corpus uses constantly, so the confidence gate cannot be what stops it.
+ *
+ * The word "day" alone is not enough. "is the day 60 submission compulsory"
+ * and "what is the day 15 interview" are rules about the program and stay
+ * answerable, so a day reference only blocks when it comes with a content
+ * word (task, topic, solution, learn, build...), or as a bare "what is day N"
+ * that is not about a rule (certificate, submission, streak...). A question
+ * about the milestone voice interviews ("what does the day 15 interview
+ * cover") is about the interview, never about a day's content.
+ */
+const DAY_REFERENCE =
+  /\b(?:days?|weeks?|module|mission|task|phase)\s*[-#]?\s*\d{1,2}\b|\b\d{1,2}(?:st|nd|rd|th)\s+(?:day|week)\b/i;
+const RELATIVE_TASK =
+  /\b(?:today'?s?|tomorrow'?s?|yesterday'?s?|next|previous|current)\s+(?:day'?s?\s+)?(?:task|problem|prompt|assignment|mission|topic|lesson)s?\b/i;
+const CURRICULUM =
+  /\b(?:curriculum|syllabus|roadmap|day[\s-]*(?:by|wise)[\s-]*day|day[\s-]*wise|week[\s-]*(?:by|wise)[\s-]*week|(?:list|schedule)\s+of\s+(?:all\s+)?(?:the\s+)?(?:tasks|topics|days|missions))\b/i;
+const DAY_CONTENT_WORD =
+  /\b(?:tasks?|topics?|problems?|prompts?|assignments?|solutions?|solve|answers?|hints?|lessons?|content|covers?|covered|teach|taught|learn|learning|build|built|syllabus|curriculum|kya\s+hai)\b/i;
+const WHAT_IS_DAY =
+  /\bwhat(?:'?s|\s+is|\s+was|\s+are|\s+happens)?\s+(?:on\s+|in\s+)?(?:the\s+)?(?:days?|week|mission|module|phase)\s*\d/i;
+const DAY_RULE_WORD =
+  /\b(?:certificate|cert|submission|submit|deadline|streak|miss|missed|skip|late|folder|repo|unlock)\b/i;
+const INTERVIEW = /\b(?:interview|checkpoint)\b/i;
+
+export function isDayContentRequest(input: string): boolean {
+  const text = input.trim();
+  if (CURRICULUM.test(text) || RELATIVE_TASK.test(text)) return true;
+  if (!DAY_REFERENCE.test(text) || INTERVIEW.test(text)) return false;
+  if (DAY_CONTENT_WORD.test(text)) return true;
+  return WHAT_IS_DAY.test(text) && !DAY_RULE_WORD.test(text);
+}
+
+/**
+ * Anything outside ABTalks itself: coding help, concept tutorials, homework,
+ * general knowledge, and attempts to change the assistant's role.
+ *
+ * The confidence gate cannot catch these on its own. The corpus is full of
+ * Python, GitHub, AI, data science and interview vocabulary because the
+ * programs are about those things, so "write a python function" or "what is
+ * machine learning" score as answerable. Hence a scope rule before retrieval.
+ *
+ * Pasted code and role/jailbreak attempts are refused outright. Task and
+ * concept questions are refused unless they name something ABTalks-specific,
+ * so "can i use python in the coding challenge" still reaches retrieval.
+ * Site and account words count as anchors too: "how do i fix the login
+ * error" is a support question, not a debugging request.
+ *
+ * PASTED_CODE is case-sensitive on purpose: "which one should i select from
+ * the tracks" must not read as SQL.
+ */
+const PASTED_CODE =
+  /```|Traceback \(most recent call last\)|^\s*(?:def|class)\s+\w+.*:\s*$|^\s*import\s+[\w.]+(?:\s+as\s+\w+)?\s*;?\s*$|^\s*from\s+[\w.]+\s+import\s+\w+|#include\s*<|\bpublic\s+(?:static\s+)?(?:void|class|int)\b|\bfunction\s*\w*\s*\([^)]*\)\s*\{|\b(?:const|let|var)\s+\w+\s*=\s*\S|\bconsole\.log\(|\bSystem\.out\.print|\bprint\(.*\)|\bSELECT\s+[\w*,\s]+\s+FROM\s+\w+|\bselect\s+\*\s+from\s+\w+|\w+(?:Error|Exception):\s/m;
+const ROLE_OVERRIDE =
+  /\b(?:ignore|forget|disregard|override|bypass)\s+(?:all\s+|any\s+)?(?:of\s+)?(?:your|the\s+above|above|previous|prior|earlier|these|those|system|my\s+previous)\s+(?:\w+\s+)?(?:instructions?|rules?|prompts?|guidelines?|restrictions?)\b|\bsystem\s+prompt\b|\bjailbreak\b|\bdeveloper\s+mode\b|(?:^|\b(?:you|now|please|pls|can\s+you|could\s+you)\s+)act\s+as\b|\bpretend\s+(?:to\s+be|you\s*(?:are|'re))\b|\byou\s+are\s+now\b|\brole[\s-]?play\b/i;
+const CODING_TASK =
+  /\b(?:write|code|debug|fix|solve|implement|generate|optimi[sz]e|refactor|convert|review|correct|complete|explain)\b[^?.!]*\b(?:code|codes|function|functions|program|programs|script|query|queries|algorithm|method|loop|regex|snippet|bug|error|leetcode|dsa|array|linked\s*list|binary\s*tree|recursion|sorting|sort|stack|queue|hashmap|api|endpoint|component|sql|python|java|javascript|typescript|c\+\+|html|css|react)\b/i;
+const CONCEPT_QUESTION =
+  /\b(?:what\s+is|what\s+are|whats|what's|explain|define|definition\s+of|difference\s+between|how\s+does|how\s+do\s+(?:i|you)\s+(?:use|write)|teach\s+me|meaning\s+of|tutorial|example\s+of)\b[^?.!]*\b(?:python|java|javascript|typescript|c\+\+|golang|rust|react|node\.?js|sql|html|css|recursion|algorithms?|data\s+structures?|linked\s*lists?|arrays?|pointers?|variables?|closures?|oop|object[\s-]oriented|inheritance|polymorphism|big[\s-]o|time\s+complexity|machine\s+learning|deep\s+learning|neural\s+networks?|transformers?|llms?|large\s+language\s+models?|embeddings?|vector\s+databases?|rag|fine[\s-]?tuning|regression|classification|overfitting|gradient\s+descent|pandas|numpy|tensorflow|pytorch|docker|kubernetes|blockchain|cloud\s+computing|operating\s+systems?|dbms|computer\s+networks?)\b/i;
+const GENERAL_TASK =
+  /\b(?:capital\s+of|president\s+of|prime\s+minister\s+of|who\s+(?:won|invented|discovered)|translate|weather|horoscope|recipe)\b|\b(?:solve|calculate|integrate|differentiate|simplify)\b[^?.!]*\d|\d+\s*[-+*/^x]\s*\d+\s*=|\b(?:write|draft|compose|generate)\b[^?.!]*\b(?:essay|poem|story|song|speech|joke|caption|bio|paragraph|article|summary|cover\s+letter)\b/i;
+/** Naming something ABTalks-specific puts a task/concept question back in scope. */
+const ABTALKS_ANCHOR =
+  /\b(?:abtalks|ab\s+talks|rudra|challenges?|cohort|hackathon|vicodathon|workshops?|webinar|bootcamp|certificates?|certs?|streak|submissions?|submit\w*|(?:your|abtalks|which|these|those|the)\s+programs?|leaderboard|dashboard|scout|recruiters?|voice\s+interview|anil|bajpai|enrol+(?:ment)?|register|registration|track|login|log\s+in|sign\s*in|sign\s*up|account|profile|website|site|page|portal)\b/i;
+
+export function isOutOfScopeRequest(input: string): boolean {
+  const text = input.trim();
+  if (PASTED_CODE.test(text) || ROLE_OVERRIDE.test(text)) return true;
+  if (ABTALKS_ANCHOR.test(text)) return false;
+  return CODING_TASK.test(text) || CONCEPT_QUESTION.test(text) || GENERAL_TASK.test(text);
+}
+
 /** Menu / navigation commands. UI affordances, never facts. */
 const MENU_COMMANDS =
   /^(menu|help|options|start|main\s*menu|home|topics|what\s*can\s*you\s*do\??)$/i;
