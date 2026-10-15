@@ -54,7 +54,7 @@ const TX = { maxWait: 20000, timeout: 20000 } as const;
 const OUTREACH_REPLY_TO =
   process.env.OUTREACH_REPLY_TO_EMAIL || "no-reply@abtalks.in";
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.abtalks.in";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
 
 /** How much of a reply the recruiter's notification previews. */
 const SNIPPET_LENGTH = 280;

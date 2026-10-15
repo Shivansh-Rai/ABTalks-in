@@ -1,13 +1,13 @@
 Hi {{recipientName}},
 
-A recruiter on ABTalks looked at your profile today.
+A recruiter on Klymb AI looked at your profile today.
 
 Recruiters see your projects, skills and recent work first, so keeping them current makes it easier to get shortlisted. You can review what they see here:
 
 {{baseUrl}}{{href}}
 
 Thanks,
-Team ABTalks
+Team Klymb AI
 
 --
 You get this email because profile-view emails are on in your account settings. To turn them off, go to {{baseUrl}}/settings/notifications.

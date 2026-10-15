@@ -54,7 +54,7 @@ export function isOutreachEnabled(): boolean {
 }
 
 function appUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? "https://abtalks.in").replace(/\/+$/, "");
+  return (process.env.NEXT_PUBLIC_APP_URL ?? "https://app.klymb.ai").replace(/\/+$/, "");
 }
 
 export function claimUrlFor(importId: string, userId: string, now: Date = new Date()): string {

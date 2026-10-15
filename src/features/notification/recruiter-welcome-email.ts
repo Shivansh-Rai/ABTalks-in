@@ -26,7 +26,7 @@ export async function sendRecruiterWelcomeEmail(input: {
   password: string;
   passwordLoginEnabled: boolean;
 }): Promise<void> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://abtalks.in";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://app.klymb.ai";
   const signInUrl = `${baseUrl}/recruiter-onboarding/signin`;
   const settingsUrl = `${baseUrl}/hire/settings`;
   const firstName = input.fullName.trim().split(/\s+/)[0] || "there";
