@@ -318,9 +318,15 @@ export default auth((req) => {
     req.cookies.get(PREVIEW_COOKIE.recruiter)?.value === recruiterToken;
 
   const isRecruiterSurface = RECRUITER_PATHS.some((p) => matchesPath(pathname, p));
-  const mayPass = isRecruiterSurface
-    ? isAdminSession || hasRecruiterPreview
-    : isAdminSession || hasCandidatePreview;
+  // Where a preview link lands (plan 193). It is not a product surface and
+  // belongs to neither side, so either cookie reaches it — a recruiter-cookie
+  // browser has to get here too, and /preview is not inside RECRUITER_PATHS.
+  const isPreviewEntry = matchesPath(pathname, "/preview");
+  const mayPass = isPreviewEntry
+    ? isAdminSession || hasCandidatePreview || hasRecruiterPreview
+    : isRecruiterSurface
+      ? isAdminSession || hasRecruiterPreview
+      : isAdminSession || hasCandidatePreview;
 
   const gated =
     gateOn &&
@@ -344,6 +350,17 @@ export default auth((req) => {
   if (gateOn && previewParam !== null) {
     const clean = new URL(req.nextUrl);
     clean.searchParams.delete("preview");
+    // A link that matched goes to /preview/enter, which signs the browser in
+    // as that side's preview account (plan 193). Anything else — "off", a
+    // typo, a stranger guessing — lands wherever it was headed, with the
+    // parameter stripped and no cookie, which for a gated path is `/`.
+    const matched =
+      (candidateToken && previewParam === candidateToken) ||
+      (recruiterToken && previewParam === recruiterToken);
+    if (matched) {
+      clean.pathname = "/preview/enter";
+      clean.search = "";
+    }
     response = withTracking(
       NextResponse.redirect(clean),
       ref,
