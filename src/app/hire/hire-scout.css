@@ -11238,8 +11238,18 @@ a.hire-profile__ext-link:focus-visible {
     padding: 16px;
   }
 
+  /* Stretch, not the centre alignment the desktop row carries: stacked, a
+     centred cross-axis sizes the field to its own content while Search is
+     width:100%, so the white box sat visibly narrower than the button under
+     it. Both children now take the card's full inner width. */
   .scout--hero .scout-composer__row {
     flex-direction: column;
+    align-items: stretch;
+  }
+
+  .scout--hero .scout-field {
+    flex: none;
+    width: 100%;
   }
 
   .scout--hero .scout-send {
