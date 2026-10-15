@@ -5,7 +5,11 @@ import { auth } from "@/auth";
 import { getRecruiterState } from "@/features/talent-pool/recruiter-registration";
 import { RecruiterRegisterForm } from "@/components/talent/recruiter-register-form";
 import { RecruiterAuthClosed } from "@/components/talent/recruiter-auth-closed";
-import { isEmailLoginEnabled, isRecruiterAuthEnabled } from "@/lib/feature-flags";
+import {
+  isEmailLoginEnabled,
+  isRecruiterAuthEnabled,
+  isRecruiterSignupEnabled,
+} from "@/lib/feature-flags";
 
 export const metadata: Metadata = {
   title: "Register as a recruiter | Klymb AI",
@@ -37,7 +41,7 @@ export default async function TalentRegisterPage({ searchParams }: Props) {
     if (state.status === "active") redirect(redirectTo);
   }
 
-  if (!isRecruiterAuthEnabled()) {
+  if (!isRecruiterAuthEnabled() || !isRecruiterSignupEnabled()) {
     return <RecruiterAuthClosed />;
   }
 

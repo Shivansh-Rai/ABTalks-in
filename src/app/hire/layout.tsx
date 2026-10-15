@@ -1,6 +1,10 @@
 import type { ReactNode } from "react";
 import { auth } from "@/auth";
-import { isRecruiterAuthEnabled } from "@/lib/feature-flags";
+import {
+  isEmailLoginEnabled,
+  isRecruiterAuthEnabled,
+  isRecruiterSignupEnabled,
+} from "@/lib/feature-flags";
 import { getRecruiterState } from "@/features/talent-pool/recruiter-registration";
 import { getRecruiterAccountSnapshot } from "@/features/hire/recruiter-account";
 import { getWorkspaceCredits } from "@/features/hire/credits";
@@ -172,6 +176,11 @@ export default async function HireLayout({ children }: { children: ReactNode }) 
         approved={active}
         signedIn={Boolean(userId)}
         authEnabled={isRecruiterAuthEnabled()}
+        // Plan 154's password sign-in was never threaded into this dialog, so a
+        // recruiter whose password an admin emailed them had no field to type
+        // it into — only the code tab. /talent/login always passed it.
+        passwordEnabled={isEmailLoginEnabled()}
+        signupEnabled={isRecruiterSignupEnabled()}
         isAdmin={session?.user?.isAdmin === true}
       >
         {/* A recruiter who registered *because* they wanted specific candidates

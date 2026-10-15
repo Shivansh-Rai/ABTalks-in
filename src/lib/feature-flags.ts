@@ -308,3 +308,27 @@ export function hasPreviewAccess(
   const token = previewToken(side);
   return !!token && cookieValue === token;
 }
+
+/**
+ * Plan 194 — recruiter SIGN-UP, separately from recruiter sign-in.
+ *
+ * `ENABLE_RECRUITER_AUTH` governs both, and that conflation is a problem the
+ * moment accounts are created for people rather than by them: turning it off
+ * to stop strangers registering also stops the recruiters you created from
+ * signing in, because `authorizePassword` refuses a recruiter when it is off.
+ *
+ * This closes registration on its own. With `ENABLE_RECRUITER_SIGNUP=false`:
+ * the register panel, /talent/register and /recruiter-onboarding all say the
+ * door is shut, and both register actions refuse — while password and
+ * emailed-code SIGN-IN keep working for accounts an admin made, and invite
+ * links are untouched.
+ *
+ * Unset means "follow ENABLE_RECRUITER_AUTH", so nothing changes until it is
+ * set deliberately.
+ */
+export function isRecruiterSignupEnabled(): boolean {
+  const raw = process.env.ENABLE_RECRUITER_SIGNUP?.trim().toLowerCase();
+  if (raw === "false") return false;
+  if (raw === "true") return true;
+  return isRecruiterAuthEnabled();
+}

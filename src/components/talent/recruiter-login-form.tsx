@@ -26,10 +26,14 @@ import { cn } from "@/lib/utils";
 export function RecruiterLoginForm({
   initialEmail = "",
   passwordEnabled = false,
+  signupEnabled = true,
   registerHref = "/talent/register",
 }: {
   initialEmail?: string;
   passwordEnabled?: boolean;
+  /** When false the desk takes no new registrations, so this must not invite
+   *  anyone to make one — accounts are created by an admin. */
+  signupEnabled?: boolean;
   /** Where "Create an account" goes; the page builds it with its own `from`. */
   registerHref?: string;
 }) {
@@ -217,10 +221,12 @@ export function RecruiterLoginForm({
           Continue
         </button>
 
-        <p className="text-center text-xs text-muted-foreground">
-          No account yet? Registering takes a minute and opens your workspace
-          straight away.
-        </p>
+        {signupEnabled ? (
+          <p className="text-center text-xs text-muted-foreground">
+            No account yet? Registering takes a minute and opens your workspace
+            straight away.
+          </p>
+        ) : null}
       </div>
     );
   }

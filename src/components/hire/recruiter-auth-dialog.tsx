@@ -17,21 +17,27 @@ export function RecruiterAuthDialog({
   open,
   reason,
   authEnabled,
+  passwordEnabled = false,
+  signupEnabled = true,
   onOpenChange,
 }: {
   open: boolean;
   reason: HireAuthReason;
   authEnabled: boolean;
+  /** Plan 154's password tab. Without it the form offers a code and nothing else. */
+  passwordEnabled?: boolean;
+  /** When false the desk takes no new registrations; only sign-in is offered. */
+  signupEnabled?: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   // Checkout opens register. Nav "Sign in" opens sign-in. Never both forms.
   const [panel, setPanel] = useState<HireAuthPanel>(
-    reason === "nav" ? "signin" : "register",
+    reason === "nav" || !signupEnabled ? "signin" : "register",
   );
 
   useEffect(() => {
-    if (open) setPanel(reason === "nav" ? "signin" : "register");
-  }, [open, reason]);
+    if (open) setPanel(reason === "nav" || !signupEnabled ? "signin" : "register");
+  }, [open, reason, signupEnabled]);
 
   const isRegister = panel === "register";
 
@@ -55,7 +61,9 @@ export function RecruiterAuthDialog({
               ? "Recruiter accounts are not taking new sign-ins or registrations yet."
               : isRegister
                 ? "Your cart stays on this page. Create an account to send it to our team."
-                : "We'll email a code to your work address. No password."}
+                : passwordEnabled
+                  ? "Use the password we sent you, or we'll email a code to your work address."
+                  : "We'll email a code to your work address. No password."}
           </DialogDescription>
         </DialogHeader>
 
@@ -73,13 +81,18 @@ export function RecruiterAuthDialog({
           </>
         ) : (
           <>
-            <RecruiterLoginForm />
-            <p className="hire-auth__switch">
-              New here?{" "}
-              <button type="button" onClick={() => setPanel("register")}>
-                Register
-              </button>
-            </p>
+            <RecruiterLoginForm
+              passwordEnabled={passwordEnabled}
+              signupEnabled={signupEnabled}
+            />
+            {signupEnabled ? (
+              <p className="hire-auth__switch">
+                New here?{" "}
+                <button type="button" onClick={() => setPanel("register")}>
+                  Register
+                </button>
+              </p>
+            ) : null}
           </>
         )}
       </DialogContent>

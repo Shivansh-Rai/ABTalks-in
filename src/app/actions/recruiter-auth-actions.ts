@@ -4,7 +4,11 @@ import { headers } from "next/headers";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/db";
 import { deliverEmailCode, emailCodeFailureMessage } from "@/lib/email-code";
-import { isEmailLoginEnabled, isRecruiterAuthEnabled } from "@/lib/feature-flags";
+import {
+  isEmailLoginEnabled,
+  isRecruiterAuthEnabled,
+  isRecruiterSignupEnabled,
+} from "@/lib/feature-flags";
 import { hashPassword } from "@/lib/password";
 import { assertRateLimit, rateLimitSubjectFromHeaders } from "@/lib/rate-limit";
 import { provisionRecruiterIdentity } from "@/features/hire/provision-recruiter";
@@ -150,7 +154,7 @@ export async function registerRecruiterWithOtpAction(
       message: parsed.error.issues[0]?.message ?? "Check the form.",
     };
   }
-  if (!isRecruiterAuthEnabled()) {
+  if (!isRecruiterAuthEnabled() || !isRecruiterSignupEnabled()) {
     return {
       ok: false,
       message: "Recruiter sign-in and registration aren't open yet.",

@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { auth } from "@/auth";
-import { isRecruiterAuthEnabled } from "@/lib/feature-flags";
+import {
+  isRecruiterAuthEnabled,
+  isRecruiterSignupEnabled,
+} from "@/lib/feature-flags";
 import {
   registerRecruiter,
 } from "@/features/talent-pool/recruiter-registration";
@@ -27,7 +30,7 @@ type ActionResult<T = undefined> =
 export async function registerRecruiterAction(
   input: unknown,
 ): Promise<ActionResult> {
-  if (!isRecruiterAuthEnabled()) {
+  if (!isRecruiterAuthEnabled() || !isRecruiterSignupEnabled()) {
     return {
       ok: false,
       message: "Recruiter sign-in and registration aren't open yet.",
