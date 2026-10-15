@@ -101,8 +101,7 @@ anything else material to the role you're targeting.
 A: Indian college students and early-career professionals who ship public
 artifacts through the programs described in `programs.md` — daily builds,
 deployed projects, and (for the Claude Challenge capstone) a full versioned
-v1.0.0 release with documentation. See
-`claude-challenge-curriculum.md` for the graduate skills matrix.
+v1.0.0 release with documentation.
 
 **Q: How do I access candidates?**
 A: Klymb AI maintains a hiring partner network (100+ hiring partners, per

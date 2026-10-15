@@ -618,34 +618,86 @@ export type AccomplishmentsInput = z.infer<typeof accomplishmentsSchema>;
 
 /* ─── Links ──────────────────────────────────────────────────────────────── */
 
+type ProfilePlatform = "LINKEDIN" | "LEETCODE" | "CODECHEF";
+
 /**
- * LeetCode / CodeChef must be real profile hosts — declared links only, no sync.
- * Returns null when the URL is not a valid http(s) URL for that type.
+ * LeetCode's own top-level pages. Its legacy profile form is
+ * `leetcode.com/<username>`, so these are the paths that look like one but
+ * are not a person.
+ */
+const LEETCODE_RESERVED = new Set([
+  "problems", "problemset", "contest", "discuss", "explore", "studyplan",
+  "accounts", "subscribe", "store", "interview", "assessment", "company",
+  "tag", "list", "progress", "points", "submissions", "u", "profile",
+  "notifications", "support", "terms", "privacy", "jobs", "region",
+]);
+
+/**
+ * Where each platform keeps a person's profile. The host must match exactly
+ * and the path must name one profile: a domain alone, or any other page on
+ * the site, is not a profile.
+ */
+const PROFILE_URL_RULES: Record<
+  ProfilePlatform,
+  { host: RegExp; path: RegExp; message: string }
+> = {
+  LINKEDIN: {
+    // linkedin.com, www. and the country subdomains (in.linkedin.com).
+    host: /^(?:www\.|[a-z]{2}\.)?linkedin\.com$/,
+    // /in/<slug>, optionally followed by a locale or a section of that profile.
+    path: /^\/in\/[A-Za-z0-9_%-]{3,100}(?:\/[A-Za-z0-9_%/-]*)?$/,
+    message: "Enter your LinkedIn profile URL (linkedin.com/in/your-name)",
+  },
+  LEETCODE: {
+    host: /^(?:www\.)?leetcode\.com$/,
+    path: /^\/(?:u\/)?([A-Za-z0-9_-]{1,40})\/?$/,
+    message: "Enter your LeetCode profile URL (leetcode.com/u/username)",
+  },
+  CODECHEF: {
+    host: /^(?:www\.)?codechef\.com$/,
+    path: /^\/users\/[A-Za-z0-9_.]{1,40}\/?$/,
+    message: "Enter your CodeChef profile URL (codechef.com/users/username)",
+  },
+};
+
+/**
+ * Null when `url` is a profile on that platform, otherwise the message to
+ * show. Bare hosts are accepted (https:// is assumed); credentials, ports and
+ * any scheme other than http(s) are not.
+ */
+export function profileUrlError(platform: ProfilePlatform, url: string): string | null {
+  const rule = PROFILE_URL_RULES[platform];
+  let parsed: URL;
+  try {
+    parsed = new URL(ensureHttpUrl(url.trim()));
+  } catch {
+    return rule.message;
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return rule.message;
+  if (parsed.username || parsed.password || parsed.port) return rule.message;
+  if (!rule.host.test(parsed.hostname.toLowerCase())) return rule.message;
+  const path = rule.path.exec(parsed.pathname);
+  if (!path) return rule.message;
+  // leetcode.com/<name> is a profile only when <name> is not one of its pages.
+  if (
+    platform === "LEETCODE" &&
+    !parsed.pathname.startsWith("/u/") &&
+    LEETCODE_RESERVED.has((path[1] ?? "").toLowerCase())
+  ) {
+    return rule.message;
+  }
+  return null;
+}
+
+/**
+ * LeetCode / CodeChef must be real profile URLs — declared links only, no sync.
+ * Returns null when the URL is a profile on that site.
  */
 export function assertCodingProfileHost(
   type: "LEETCODE" | "CODECHEF",
   url: string,
 ): string | null {
-  let parsed: URL;
-  try {
-    parsed = new URL(ensureHttpUrl(url.trim()));
-  } catch {
-    return type === "LEETCODE"
-      ? "Enter a LeetCode profile URL (leetcode.com/…)"
-      : "Enter a CodeChef profile URL (codechef.com/users/…)";
-  }
-  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-    return type === "LEETCODE"
-      ? "Enter a LeetCode profile URL (leetcode.com/…)"
-      : "Enter a CodeChef profile URL (codechef.com/users/…)";
-  }
-  const host = parsed.hostname.toLowerCase();
-  if (type === "LEETCODE") {
-    if (host === "leetcode.com" || host === "www.leetcode.com") return null;
-    return "Enter a LeetCode profile URL (leetcode.com/…)";
-  }
-  if (host === "codechef.com" || host === "www.codechef.com") return null;
-  return "Enter a CodeChef profile URL (codechef.com/users/…)";
+  return profileUrlError(type, url);
 }
 
 /**
@@ -700,7 +752,11 @@ const extraLinkSchema = z
   });
 
 export const linksSectionSchema = z.object({
-  linkedinUrl: nullableUrl,
+  linkedinUrl: codingProfileUrl.superRefine((value, ctx) => {
+    if (value === null) return;
+    const error = profileUrlError("LINKEDIN", value);
+    if (error) ctx.addIssue({ code: "custom", message: error });
+  }),
   githubUsername: githubField,
   portfolioUrl: nullableUrl,
   /**

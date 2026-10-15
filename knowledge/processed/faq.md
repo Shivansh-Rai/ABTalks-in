@@ -21,7 +21,7 @@ This is a question index, not a source of truth. Each question points to the can
 - What counts as a completed day in the Claude Challenge? → `claude-challenge.md`
 - What is the AI Cohort? How long is it and what does it cover? → `ai-cohort.md`
 - What is the Vibe Code Hackathon / ViCodathon? → `vicodathon.md`, `events.md`
-- What's the Claude Challenge curriculum / roadmap? → `knowledge/generated/claude-signup-page.md` (auto-extracted from the live `/claude-signup` page — authoritative; do not hand-write a curriculum table here again, see 063)
+- What's the Claude Challenge curriculum / roadmap? → not answered. The assistant gives general program information only and never describes what a specific day, week, phase or task contains. General structure → `claude-challenge.md`, `knowledge/generated/claude-signup-page.md`
 - Can you share a testimonial / success story? → `testimonials.md` (only quote the names listed there, never invent new ones — note: the homepage has its own separate, unnamed testimonials in `knowledge/generated/homepage.md`; don't merge the two)
 
 ## Workshops and events

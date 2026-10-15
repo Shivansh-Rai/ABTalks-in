@@ -19,18 +19,7 @@ Core facts:
 
 Coverage includes RAG, embeddings, agents, MCP, guardrails, Docker, Kubernetes, evaluation, and deployment.
 
-## 8-phase / 31-day breakdown
-
-| Phase | Days | Title | Focus |
-|---|---|---|---|
-| 1 | 1–3 | Env & Tooling | Local AI stack, Git, Ollama |
-| 2 | 4–6 | Data | Coverage data & structured queries |
-| 3 | 7–10 | Embeddings & Vector | Knowledge base + retrieval |
-| 4 | 11–15 | LLM & Prompting | Prompting, fine-tune basics |
-| 5 | 16–20 | App Build | Streamlit chatbot + FastAPI |
-| 6 | 21–24 | Agentic + MCP | Tools, agents, MCP servers |
-| 7 | 25–27 | Governance & Eval | Guardrails, evals, safety |
-| 8 | 28–31 | Docker / K8s / Prod | Ship to production |
+The 8 phases take you from a local AI development setup through data, retrieval, prompting, building the app, agents and MCP, guardrails and evaluation, to shipping it in production. What a specific day or phase contains is not covered here; enrolled participants see each day's mission on their dashboard.
 
 ## Cohort flow
 

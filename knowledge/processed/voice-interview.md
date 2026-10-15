@@ -27,10 +27,8 @@ practice tool, and it is not open to the general public.
 
 ## The two milestone interviews
 
-- **Day 15 Checkpoint Interview** — covers cohort days 1–15 (through the LLM
-  Core, Prompting & Fine-Tuning module).
-- **Day 31 Final Interview** — covers the whole programme including the Day
-  31 capstone. This is the exit interview.
+- **Day 15 Checkpoint Interview** — covers the first half of the cohort.
+- **Day 31 Final Interview** — covers the whole programme. This is the exit interview.
 
 Each is a **one-time, roughly 15-minute** voice conversation. It is scored
 separately from your leaderboard total.

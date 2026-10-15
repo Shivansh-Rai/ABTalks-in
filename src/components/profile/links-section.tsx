@@ -65,6 +65,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
   const { save } = useSectionSave(saveLinksAction, "Links", "links");
   const form = useForm<LinksFormValues>({ defaultValues: initial });
   const { control, register, handleSubmit, watch, setValue, formState } = form;
+  const { errors } = formState;
   const placeIssues = useServerFieldErrors(form);
   const { fields, append, remove } = useFieldArray({
     control,
@@ -87,6 +88,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
           label="LinkedIn"
           required
           htmlFor="ln-linkedin"
+          error={errors.linkedinUrl?.message}
           icon={<BriefcaseIcon />}
         >
           <PwInput
@@ -104,6 +106,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
           label="GitHub"
           required
           htmlFor="ln-github"
+          error={errors.githubUsername?.message}
           icon={<CodeIcon />}
           helper="Username or full profile URL"
         >
@@ -119,6 +122,7 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
         <PwField
           label="Portfolio"
           htmlFor="ln-portfolio"
+          error={errors.portfolioUrl?.message}
           icon={<GlobeIcon />}
         >
           <PwInput
@@ -135,8 +139,8 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
         <PwField
           label="LeetCode"
           htmlFor="ln-leetcode"
+          error={errors.leetcodeUrl?.message}
           icon={<CodeIcon />}
-          
         >
           <PwInput
             id="ln-leetcode"
@@ -152,8 +156,8 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
         <PwField
           label="CodeChef"
           htmlFor="ln-codechef"
+          error={errors.codechefUrl?.message}
           icon={<CodeIcon />}
-          
         >
           <PwInput
             id="ln-codechef"
@@ -205,7 +209,11 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
                     />
                   </PwField>
                   {isOther ? (
-                    <PwField label="Label" htmlFor={`ln-label-${index}`}>
+                    <PwField
+                      label="Label"
+                      htmlFor={`ln-label-${index}`}
+                      error={errors.extra?.[index]?.label?.message}
+                    >
                       <PwInput
                         id={`ln-label-${index}`}
                         placeholder="ex: Personal blog"
@@ -215,7 +223,11 @@ export function LinksSection({ initial }: { initial: LinksFormValues }) {
                   ) : null}
                 </PwRow>
                 <PwRow cols={1}>
-                  <PwField label="URL" htmlFor={`ln-url-${index}`}>
+                  <PwField
+                    label="URL"
+                    htmlFor={`ln-url-${index}`}
+                    error={errors.extra?.[index]?.url?.message}
+                  >
                     <PwInput
                       id={`ln-url-${index}`}
                       type="url"

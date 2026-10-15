@@ -5,16 +5,21 @@ import { logger } from "@/lib/logger";
 import { buildContext, retrieve } from "@/lib/chatbot/retrieve";
 import { generateStream, type ChatTurn } from "@/lib/chatbot/providers";
 import {
+  DAY_CONTENT_MESSAGE,
   FALLBACK_MESSAGE,
   GENERATION_UNAVAILABLE_MESSAGE,
+  OUT_OF_SCOPE_MESSAGE,
   RETRIEVAL_ERROR_MESSAGE,
   buildClarifyMessage,
   buildSystemPrompt,
 } from "@/lib/chatbot/prompt";
 import {
   THIRD_PARTY_DATA_REPLY,
+  isDayContentRequest,
+  isOutOfScopeRequest,
   isThirdPartyDataRequest,
 } from "@/lib/chatbot-matcher";
+import { isFollowUp } from "@/lib/chatbot/text";
 import { buildLiveFacts } from "@/lib/chatbot/live-facts";
 import { learnMoreLine, learnMorePage } from "@/lib/chatbot/page-links";
 
@@ -109,24 +114,43 @@ export async function POST(req: Request) {
     return staticStream(THIRD_PARTY_DATA_REPLY);
   }
 
-  // Retrieval query: the current question plus the last two user turns before
-  // it, so a bare follow-up ("who do I tag?", "i mean the cohort one") still
-  // carries its subject. Assistant text is deliberately excluded — its wording
-  // would drag retrieval toward whatever the last answer happened to mention.
+  // Same reasoning for the content of a specific day or task, and for anything
+  // outside ABTalks (coding help, concept tutorials, general knowledge, role
+  // changes). The corpus speaks the vocabulary of all of these, so the
+  // confidence gate would let them through. See lib/chatbot-matcher.ts.
+  if (isDayContentRequest(last.content)) {
+    return staticStream(DAY_CONTENT_MESSAGE);
+  }
+  if (isOutOfScopeRequest(last.content)) {
+    return staticStream(OUT_OF_SCOPE_MESSAGE);
+  }
+
+  // Retrieval runs on the current question ALONE first. Only when that is not
+  // enough AND the question leans on the conversation ("who do I tag?", "i
+  // mean the cohort one") is it retried with the last two user turns before
+  // it. Searching every question with its history let an off-topic question
+  // pass the gate on the score of the on-topic question before it.
   //
-  // Two turns rather than one because a clarification costs a turn: after
-  // "which did you mean?" -> "the cohort interview", the original question is
-  // already two turns back, and a one-turn window has forgotten it.
+  // Assistant text is deliberately excluded — its wording would drag retrieval
+  // toward whatever the last answer happened to mention. Two turns rather than
+  // one because a clarification costs a turn: after "which did you mean?" ->
+  // "the cohort interview", the original question is already two turns back.
   const priorUserTurns = messages
     .slice(0, -1)
     .filter((m) => m.role === "user")
     .slice(-2)
     .map((m) => m.content);
-  const query = [...priorUserTurns, last.content].join("\n");
 
   let retrieval;
   try {
-    retrieval = await retrieve(query);
+    retrieval = await retrieve(last.content);
+    if (
+      retrieval.verdict !== "answer" &&
+      priorUserTurns.length > 0 &&
+      isFollowUp(last.content)
+    ) {
+      retrieval = await retrieve([...priorUserTurns, last.content].join("\n"));
+    }
   } catch (error) {
     // The search itself broke. Saying the knowledge base has nothing would
     // blame the corpus for a system fault and hide the incident.
@@ -196,12 +220,14 @@ export async function POST(req: Request) {
           }
         }
         // Issue #576: end a real answer with the page it came from. Not on the
-        // model's own "I don't have that" reply, and not when the model
-        // already linked the same page itself.
+        // model's own "I don't have that" or scope refusal, and not when the
+        // model already linked the same page itself.
         if (
           produced &&
           linkPage &&
           !answer.includes(FALLBACK_MESSAGE) &&
+          !answer.includes(OUT_OF_SCOPE_MESSAGE) &&
+          !answer.includes(DAY_CONTENT_MESSAGE) &&
           !answer.includes(`](${linkPage})`)
         ) {
           controller.enqueue(encoder.encode(sseFrame(learnMoreLine(linkPage))));
