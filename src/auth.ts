@@ -8,6 +8,7 @@ import {
   isRecruiterAuthEnabled,
 } from "@/lib/feature-flags";
 import { ensurePreviewUser } from "@/features/preview/preview-accounts";
+import { consumeHrInvite } from "@/features/hire/hr-invite";
 import authConfig from "@/auth.config";
 import { cookies } from "next/headers";
 import { recordLegalConsents } from "@/features/legal/record-consent";
@@ -74,6 +75,37 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           name: user.name,
           role: user.role,
+        };
+      },
+    }),
+
+    /**
+     * Plan 194 — an HR's one-click sign-in link.
+     *
+     * The token is single use, expires in seven days, is stored only as a
+     * SHA-256 hash, and is spent inside `consumeHrInvite` before this returns.
+     * It carries no identity of its own: the row says which address it was
+     * issued to, so a forged or edited token matches nothing.
+     *
+     * Unlike the shared team preview link, each invite opens ONE named
+     * recruiter's own account, so every action stays attributable to them.
+     */
+    Credentials({
+      id: "hr-invite",
+      name: "Recruiter invite link",
+      credentials: { token: { label: "Token", type: "text" } },
+      async authorize(credentials) {
+        const token = String(credentials?.token ?? "");
+        if (!token) return null;
+
+        const holder = await consumeHrInvite(token);
+        if (!holder) return null;
+
+        return {
+          id: holder.id,
+          email: holder.email,
+          name: holder.name ?? holder.email,
+          role: holder.role,
         };
       },
     }),
