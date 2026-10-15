@@ -31,14 +31,31 @@ const HOME: Record<PreviewSide, string> = {
 };
 
 export async function GET(request: Request) {
+  const url = new URL(request.url);
   const home = new URL("/", request.url);
   if (!isLaunchOnePagerEnabled()) {
     return NextResponse.redirect(home);
   }
 
   const jar = await cookies();
-  // Candidate wins when a browser holds both: /dashboard is the more common
-  // destination, and the other side is one link away in the same browser.
+
+  // `?side=` picks which held cookie to use. It grants nothing on its own —
+  // the cookie still has to match the configured token — it only says which
+  // of the two a browser holding both means right now. Middleware sets it
+  // when someone signed in on one side navigates to the other.
+  const asked = url.searchParams.get("side");
+  const wanted: PreviewSide | null =
+    asked === "candidate" || asked === "recruiter" ? asked : null;
+
+  if (
+    wanted &&
+    hasPreviewAccess(wanted, jar.get(PREVIEW_COOKIE_NAMES[wanted])?.value)
+  ) {
+    return enter(wanted, request);
+  }
+
+  // Otherwise candidate wins when a browser holds both: /dashboard is the more
+  // common destination, and the other side is one link away in the same browser.
   const side: PreviewSide | null = hasPreviewAccess(
     "candidate",
     jar.get(PREVIEW_COOKIE_NAMES.candidate)?.value,
@@ -53,6 +70,15 @@ export async function GET(request: Request) {
 
   if (!side) return NextResponse.redirect(home);
 
+  return enter(side, request);
+}
+
+/**
+ * Sign in as `side`'s preview account, unless the session already present can
+ * use that side, in which case it is left alone.
+ */
+async function enter(side: PreviewSide, request: Request) {
+  const home = new URL("/", request.url);
   const destination = new URL(HOME[side], request.url);
 
   // An existing session is kept ONLY when it can actually use this side.
