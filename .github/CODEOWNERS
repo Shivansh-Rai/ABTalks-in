@@ -282,3 +282,26 @@
 /src/app/page.tsx                                   @byteninjaa0
 /src/components/landing/                            @byteninjaa0
 /src/features/landing/                              @byteninjaa0
+
+# ------------------------------------------------------------------------------
+# 14. The test environment (owner: @byteninjaa0, plan 195)
+#
+# A local Postgres database, the seeded cast, the in-app test console, the
+# parametric fixtures, the route-by-role sweep and the Playwright suite. It is
+# infrastructure and it can grant platform admin and rewrite credit ledgers in
+# the environment it runs in, so it sits with Sohail along with the rest of
+# infrastructure, auth and security. Listed explicitly, per CLAUDE.md rule 13.
+#
+# Note for anyone changing a fixture: `scripts/test-env/fixtures.ts` writes
+# through `src/repositories/`, so a change there can touch an owned domain
+# (credits, talent pipeline) even though the file itself is test tooling.
+# ------------------------------------------------------------------------------
+/.env.test                                          @byteninjaa0
+/scripts/test-env/                                  @byteninjaa0
+/src/lib/test-env.ts                                @byteninjaa0
+/src/app/dev/                                       @byteninjaa0
+/src/app/actions/test-console-actions.ts            @byteninjaa0
+/playwright.config.ts                               @byteninjaa0
+/e2e/                                               @byteninjaa0
+/docs/test-environment.md                           @byteninjaa0
+/docs/plans/195-test-environment-and-suite.md       @byteninjaa0

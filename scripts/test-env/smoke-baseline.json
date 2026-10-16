@@ -1,0 +1,416 @@
+{
+  "/": {
+    "anon": "200 page",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/hire",
+    "admin": "307→/admin",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/login": {
+    "anon": "200 page",
+    "candidate": "307→/",
+    "fresh": "307→/",
+    "recruiter": "307→/",
+    "admin": "307→/admin",
+    "program": "307→/",
+    "hackathon": "307→/"
+  },
+  "/register": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "307→/admin",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/terms": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/privacy": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/contact": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/explore": {
+    "anon": "307→/login",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/challenges": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/workshop": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/ai-cohort-register": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/ai-cohort-india": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/dashboard": {
+    "anon": "200 shell",
+    "candidate": "200 page",
+    "fresh": "200 shell",
+    "recruiter": "200 shell",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/challenge/today": {
+    "anon": "307→/login",
+    "candidate": "307→/challenge/:n",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "307→/dashboard",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/profile": {
+    "anon": "200 shell",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/achievements": {
+    "anon": "307→/login",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/settings/security": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/practice": {
+    "anon": "307→/practice/arrays-strings",
+    "candidate": "307→/practice/arrays-strings",
+    "fresh": "307→/practice/arrays-strings",
+    "recruiter": "307→/practice/arrays-strings",
+    "admin": "307→/practice/arrays-strings",
+    "program": "307→/practice/arrays-strings",
+    "hackathon": "307→/practice/arrays-strings"
+  },
+  "/marketplace": {
+    "anon": "307→/login",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/hire": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/hire/pipeline": {
+    "anon": "200 wall",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/hire/credits": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/hire/settings": {
+    "anon": "200 shell",
+    "candidate": "200 shell",
+    "fresh": "200 shell",
+    "recruiter": "200 page",
+    "admin": "200 shell",
+    "program": "200 shell",
+    "hackathon": "200 shell"
+  },
+  "/hire/jobs": {
+    "anon": "200 shell",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/hire/requests": {
+    "anon": "200 shell",
+    "candidate": "200 shell",
+    "fresh": "200 shell",
+    "recruiter": "200 page",
+    "admin": "200 shell",
+    "program": "200 shell",
+    "hackathon": "200 shell"
+  },
+  "/hire/messages": {
+    "anon": "200 shell",
+    "candidate": "200 shell",
+    "fresh": "200 shell",
+    "recruiter": "200 page",
+    "admin": "200 shell",
+    "program": "200 shell",
+    "hackathon": "200 shell"
+  },
+  "/hire/matches": {
+    "anon": "200 shell",
+    "candidate": "200 shell",
+    "fresh": "200 shell",
+    "recruiter": "200 page",
+    "admin": "200 shell",
+    "program": "200 shell",
+    "hackathon": "200 shell"
+  },
+  "/hire/evidence": {
+    "anon": "200 shell",
+    "candidate": "200 shell",
+    "fresh": "200 shell",
+    "recruiter": "200 page",
+    "admin": "200 shell",
+    "program": "200 shell",
+    "hackathon": "200 shell"
+  },
+  "/admin": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "200 page",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/admin/students": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "200 page",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/admin/recruiters": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "200 page",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/admin/credits": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "200 page",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/admin/platform-admins": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "200 page",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/admin/settings": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "200 page",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/admin/program": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "200 page",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/admin/hackathon": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "200 page",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/admin/search": {
+    "anon": "307→/login",
+    "candidate": "307→/dashboard",
+    "fresh": "307→/dashboard",
+    "recruiter": "307→/dashboard",
+    "admin": "200 page",
+    "program": "307→/dashboard",
+    "hackathon": "307→/dashboard"
+  },
+  "/program/ai-cohort": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/program/ai-cohort/dashboard": {
+    "anon": "200 shell",
+    "candidate": "200 shell",
+    "fresh": "200 shell",
+    "recruiter": "200 shell",
+    "admin": "200 shell",
+    "program": "200 shell",
+    "hackathon": "200 shell"
+  },
+  "/program/ai-cohort/curriculum": {
+    "anon": "200 shell",
+    "candidate": "200 shell",
+    "fresh": "200 shell",
+    "recruiter": "200 shell",
+    "admin": "200 shell",
+    "program": "200 shell",
+    "hackathon": "200 shell"
+  },
+  "/program/ai-cohort/leaderboard": {
+    "anon": "200 shell",
+    "candidate": "200 shell",
+    "fresh": "200 shell",
+    "recruiter": "200 shell",
+    "admin": "200 shell",
+    "program": "200 shell",
+    "hackathon": "200 shell"
+  },
+  "/hackathon": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/hackathon/dashboard": {
+    "anon": "307→/login",
+    "candidate": "307→/hackathon",
+    "fresh": "307→/hackathon",
+    "recruiter": "307→/hackathon",
+    "admin": "307→/hackathon",
+    "program": "307→/hackathon",
+    "hackathon": "307→/hackathon"
+  },
+  "/hackathon/submission": {
+    "anon": "307→/hackathon/dashboard",
+    "candidate": "307→/hackathon/dashboard",
+    "fresh": "307→/hackathon/dashboard",
+    "recruiter": "307→/hackathon/dashboard",
+    "admin": "307→/hackathon/dashboard",
+    "program": "307→/hackathon/dashboard",
+    "hackathon": "307→/hackathon/dashboard"
+  },
+  "/talent/login": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 shell",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/talent/shortlist": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  },
+  "/dev/test-console": {
+    "anon": "200 page",
+    "candidate": "200 page",
+    "fresh": "200 page",
+    "recruiter": "200 page",
+    "admin": "200 page",
+    "program": "200 page",
+    "hackathon": "200 page"
+  }
+}
