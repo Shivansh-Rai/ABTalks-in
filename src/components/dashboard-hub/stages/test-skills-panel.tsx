@@ -77,12 +77,20 @@ export function testMilestones(
 }
 
 type TestSkillsPanelProps = {
+  /** The hiring stage is hidden while the recruiter product is invite-only,
+   *  so the "next" link out of this panel has nowhere to go. */
+  hideGetHired?: boolean;
   data: StageData;
   hasActiveTrack: boolean;
   trackHref: string;
 };
 
-export function TestSkillsPanel({ data, hasActiveTrack, trackHref }: TestSkillsPanelProps) {
+export function TestSkillsPanel({
+  data,
+  hasActiveTrack,
+  trackHref,
+  hideGetHired = false,
+}: TestSkillsPanelProps) {
   const milestones = testMilestones(data, hasActiveTrack, trackHref);
   const done = milestones.filter((m) => m.done).length;
   const pending = data.assessments.pending;
@@ -98,7 +106,11 @@ export function TestSkillsPanel({ data, hasActiveTrack, trackHref }: TestSkillsP
             <p className="flex items-baseline gap-2 text-[15px] text-[#4B4B4B]">
               <span className="font-heading text-4xl font-bold text-black">{done}</span> of 3 milestones
             </p>
-            <ArrowLink href="#get-hired">Next: Get hired</ArrowLink>
+            {/* The hiring stage is hidden; pointing at #get-hired would
+                scroll to nothing. */}
+            {hideGetHired ? null : (
+              <ArrowLink href="#get-hired">Next: Get hired</ArrowLink>
+            )}
           </>
         }
       />

@@ -12,7 +12,10 @@ import {
 } from "@/components/dashboard-hub/stages/stage-switcher";
 import { BuildSkillsPanel } from "@/components/dashboard-hub/stages/build-skills-panel";
 import { PracticeDsa } from "@/components/dashboard-hub/practice-dsa";
-import { isCodingPracticeEnabled } from "@/lib/feature-flags";
+import {
+  isCodingPracticeEnabled,
+  isGetHiredHidden,
+} from "@/lib/feature-flags";
 import {
   TestSkillsPanel,
   testMilestones,
@@ -195,7 +198,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const istMinute = istHour * 60 + istMin;
   const todayKey = formatInTimeZone(new Date(), IST, "yyyy-MM-dd");
 
-  // Three stages. Each shows a %, and the first unfinished one is "current".
+  // The stages. Each shows a %, and the first unfinished one is "current".
   const primary = firstActive ?? data.enrollments[0] ?? null;
   const buildDays = primary
     ? primary.lifecycle === "completed"
@@ -204,13 +207,20 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     : 0;
   const milestonesDone = testMilestones(stageData, Boolean(firstActive), trackHref)
     .filter((m) => m.done).length;
+  // The hiring stage is hidden while the recruiter product is invite-only —
+  // see isGetHiredHidden(). Dropping it from this array is all it takes: the
+  // switcher renders the stages it is given, and the panel below is keyed off
+  // the same list.
+  const hideHired = isGetHiredHidden();
   const stages: StageSummary[] = [
     { key: "build", anchor: "build-skills", number: "01", kicker: null, first: "Build", accent: "skills", pct: Math.round((buildDays / 60) * 100), meta: `${buildDays} of 60 days` },
     { key: "test", anchor: "test-skills", number: "02", kicker: "then", first: "Test", accent: "skills", pct: Math.round((milestonesDone / 3) * 100), meta: `${milestonesDone} of 3 milestones` },
-    { key: "hired", anchor: "get-hired", number: "03", kicker: "finally", first: "Get", accent: "hired", pct: stageData.profile.score, meta: "profile strength" },
+    ...(hideHired
+      ? []
+      : [{ key: "hired" as const, anchor: "get-hired", number: "03", kicker: "finally", first: "Get", accent: "hired", pct: stageData.profile.score, meta: "profile strength" }]),
   ];
   const currentStage: StageKey =
-    stages.find((s) => s.pct < 100)?.key ?? "hired";
+    stages.find((s) => s.pct < 100)?.key ?? (hideHired ? "test" : "hired");
 
   return (
     <DashboardShell user={shellUser} isAdmin={isAdmin} collapsible startCollapsed>
@@ -225,6 +235,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             firstName={firstName}
             istHour={istHour}
             synergyPoints={stageData.synergyPoints}
+                      hideGetHired={hideHired}
           />
 
           {reviewPending ? <ProfileReviewBanner /> : null}
@@ -273,16 +284,21 @@ export default async function DashboardPage({ searchParams }: PageProps) {
                     data={stageData}
                     hasActiveTrack={Boolean(firstActive)}
                     trackHref={trackHref}
+                    hideGetHired={hideHired}
                   />
                   <FaqSection items={STAGE_FAQ.test} />
                   </>
                 ),
-                hired: (
-                  <>
-                  <GetHiredPanel profile={stageData.profile} jobs={jobs} />
-                  <FaqSection items={STAGE_FAQ.hired} />
-                  </>
-                ),
+                ...(hideHired
+                  ? {}
+                  : {
+                      hired: (
+                        <>
+                          <GetHiredPanel profile={stageData.profile} jobs={jobs} />
+                          <FaqSection items={STAGE_FAQ.hired} />
+                        </>
+                      ),
+                    }),
               }}
             />
           </div>

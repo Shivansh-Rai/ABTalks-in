@@ -80,7 +80,9 @@ type StageSwitcherProps = {
   profileNext?: string | null;
   /** The first unfinished stage — gets "You are here" and opens by default. */
   current: StageKey;
-  panels: Record<StageKey, ReactNode>;
+  /** Keyed by stage. Partial: the hiring stage is hidden while the
+   *  recruiter product is invite-only, so only two arrive. */
+  panels: Partial<Record<StageKey, ReactNode>>;
 };
 
 /**

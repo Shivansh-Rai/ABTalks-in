@@ -332,3 +332,19 @@ export function isRecruiterSignupEnabled(): boolean {
   if (raw === "true") return true;
   return isRecruiterAuthEnabled();
 }
+
+/**
+ * TEMPORARY: the hiring side is hidden from candidates.
+ *
+ * Hides the dashboard's third stage ("Get hired"), the panel behind it — which
+ * is also what carries the open-to-work toggle — the link to it from stage 2,
+ * and the job board it leads to. The recruiter product is already invite-only;
+ * this removes the candidate's half of the same thing, so the platform reads
+ * as somewhere you learn rather than somewhere you are hired.
+ *
+ * Hidden unless `HIDE_GET_HIRED=false`, which restores all of it with no code
+ * change. See `docs/launch-gate.md` for the full picture and how to undo it.
+ */
+export function isGetHiredHidden(): boolean {
+  return process.env.HIDE_GET_HIRED !== "false";
+}

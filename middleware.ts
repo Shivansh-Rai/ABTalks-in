@@ -114,38 +114,20 @@ const GATE_PUBLIC_PATHS = [
 ] as const;
 
 /**
- * What a signed-in candidate may open while the platform is otherwise closed.
+ * The candidate product is OPEN. Registration, the tracks, the dashboard and
+ * everything around them behave exactly as they did before the launch gate —
+ * the one-pager is simply what `/` shows.
  *
- * Deliberately a short list rather than "everything that is not the recruiter
- * side": jobs, the marketplace, assessments, practice, mock interviews,
- * explore and messages stay shut until Sohail says otherwise. Anything not
- * here sends a signed-in candidate to their dashboard rather than to the
- * launch page — they are a member, not a stranger.
- *
- * The learning tracks are listed, but listing them opens nobody's track but
- * their own: TrackPage redirects a candidate with no enrolment for that
- * domain to /dashboard, requireProgramMember does the same for the cohort,
- * and the hackathon dashboard checks its own registration. So "only the track
- * he has been doing" is the product's existing rule, not a new one here —
- * which is also why this needs no database read in the edge.
+ * What the gate still holds is the recruiter product below, and the job board,
+ * which is the candidate's half of the same thing (see HIRING_PATHS).
  */
-const CANDIDATE_SESSION_PATHS = [
-  "/dashboard",
-  "/profile",
-  "/settings",
-  "/achievements",
-  // Signing in with an account that has no CandidateProfile has to be able to
-  // finish, or the sign-in is a dead end.
-  "/register",
-  "/challenges",
-  "/challenge",
-  "/ai",
-  "/ds",
-  "/se",
-  "/claude",
-  "/program/ai-cohort",
-  "/hackathon",
-] as const;
+
+/**
+ * The hiring side, as a candidate meets it. Hidden with the dashboard's "Get
+ * hired" stage so the platform reads as somewhere you learn, not somewhere you
+ * are hired. `HIDE_GET_HIRED=false` restores it; nothing is deleted.
+ */
+const HIRING_PATHS = ["/jobs"] as const;
 
 /** The recruiter product. The candidate preview link does NOT open these. */
 const RECRUITER_PATHS = ["/hire", "/talent", "/recruiter-onboarding"] as const;
@@ -395,29 +377,28 @@ export default auth((req) => {
   const isRecruiterSession =
     (req.auth?.user as { role?: string } | undefined)?.role === "RECRUITER";
 
-  // A candidate who already had an account may sign in and use their own
-  // track again. Role STUDENT is every non-recruiter, non-admin account, and
-  // a session can still only be had by passing /login with real credentials.
   const isCandidateSession =
     !!req.auth?.user &&
     (req.auth.user as { role?: string }).role !== "RECRUITER" &&
     !isAdminSession;
-  const isCandidateArea = CANDIDATE_SESSION_PATHS.some((p) =>
-    matchesPath(pathname, p),
-  );
 
+  // The job board goes with the dashboard's hiring stage. Read by hand rather
+  // than through isGetHiredHidden(), for the usual Edge-bundle reason.
+  const hideHiring = process.env.HIDE_GET_HIRED !== "false";
+  const isHiringPath = HIRING_PATHS.some((p) => matchesPath(pathname, p));
+
+  // Only the recruiter side still asks this question — the candidate product
+  // is open — plus /preview/enter, which belongs to neither side.
   const mayPass = isPreviewEntry
     ? isAdminSession || hasCandidatePreview || hasRecruiterPreview
-    : isRecruiterSurface
-      ? isAdminSession || hasRecruiterPreview || isRecruiterSession
-      : isAdminSession ||
-        hasCandidatePreview ||
-        (isCandidateSession && isCandidateArea);
+    : isAdminSession || hasRecruiterPreview || isRecruiterSession;
 
+  // Only two things are still held back: the recruiter product, and the
+  // hiring paths a candidate would meet. Everything else on the candidate side
+  // is open to everyone, signed in or not.
   const gated =
-    gateOn &&
-    !mayPass &&
-    !GATE_PUBLIC_PATHS.some((p) => matchesPath(pathname, p));
+    (gateOn && isRecruiterSurface && !mayPass) ||
+    (hideHiring && isHiringPath && !isAdminSession);
 
   /**
    * Signed in as one side's preview account, asking for the other side's
@@ -525,6 +506,8 @@ export default auth((req) => {
     // A signed-in candidate is not a stranger, though: an area that is still
     // shut sends them back to their own dashboard rather than out to the
     // countdown.
+    // A signed-in candidate who opens the job board belongs back on their
+    // dashboard; a stranger at the recruiter door belongs on the launch page.
     const closedFor =
       isCandidateSession && !isRecruiterSurface ? "/dashboard" : "/";
     response = withTracking(

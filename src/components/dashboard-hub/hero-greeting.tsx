@@ -1,6 +1,9 @@
 import { Star } from "lucide-react";
 
 type HeroGreetingProps = {
+  /** The hiring stage is hidden while the recruiter product is invite-only,
+   *  so there are two stages and the last one is not a job. */
+  hideGetHired?: boolean;
   firstName: string | null;
   /** Current IST hour (0–23), from the page — shared with the greeting sky. */
   istHour: number;
@@ -18,7 +21,12 @@ function displayName(name: string): string {
   return name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
 }
 
-export function HeroGreeting({ firstName, istHour, synergyPoints }: HeroGreetingProps) {
+export function HeroGreeting({
+  firstName,
+  istHour,
+  synergyPoints,
+  hideGetHired = false,
+}: HeroGreetingProps) {
   const greeting = getGreeting(istHour);
 
   return (
@@ -38,7 +46,9 @@ export function HeroGreeting({ firstName, istHour, synergyPoints }: HeroGreeting
           )}
         </h1>
         <p className="mt-2 text-[15px] text-[color:var(--hero-ink-soft,#4B4B4B)] transition-colors duration-700">
-          Three stages from your first task to your first job. Pick one to open it.
+          {hideGetHired
+            ? "Two stages, from your first task to proving what you've learned. Pick one to open it."
+            : "Three stages from your first task to your first job. Pick one to open it."}
         </p>
       </div>
       <p className="inline-flex shrink-0 items-center gap-2 self-start rounded-full border border-[#E6E9E9] bg-white px-4 py-2 text-xs text-black shadow-[0_4px_14px_-8px_rgba(0,0,0,0.25)] sm:self-auto">
