@@ -219,6 +219,72 @@ async function main() {
     );
   });
 
+  console.log("\nreturning candidates: what the login button opens");
+
+  const candidate = async () => [await sessionCookie("someone@example.com")];
+
+  await suite("the sign-in page answers for everyone again", async () => {
+    const res = await run("/login", []);
+    assert(
+      !location(res).endsWith("app.klymb.ai/"),
+      `the launch page offers Sign in, so /login must answer; got ${location(res)}`,
+    );
+  });
+
+  await suite("a signed-in candidate reaches their dashboard", async () => {
+    const res = await run("/dashboard", await candidate());
+    assert(
+      !location(res).endsWith("app.klymb.ai/"),
+      `a member is not a stranger; got ${location(res) || res.status}`,
+    );
+  });
+
+  await suite("and the learning tracks", async () => {
+    for (const path of ["/challenges", "/claude", "/program/ai-cohort", "/hackathon"]) {
+      const res = await run(path, await candidate());
+      assert(
+        !location(res).endsWith("app.klymb.ai/"),
+        `${path} must open for a signed-in candidate; got ${location(res) || res.status}`,
+      );
+    }
+  });
+
+  await suite("areas still shut send them to their dashboard, not the launch page", async () => {
+    for (const path of ["/jobs", "/marketplace", "/assessments", "/explore"]) {
+      const res = await run(path, await candidate());
+      assert(
+        location(res).endsWith("/dashboard"),
+        `${path} should land on /dashboard while it is closed; got ${location(res) || res.status}`,
+      );
+    }
+  });
+
+  await suite("a signed-out stranger is still shut out of all of it", async () => {
+    for (const path of ["/dashboard", "/claude", "/hackathon"]) {
+      const res = await run(path, []);
+      assert(
+        location(res).endsWith("app.klymb.ai/"),
+        `${path} must stay closed to the public; got ${location(res) || res.status}`,
+      );
+    }
+  });
+
+  await suite("a candidate session does NOT open the recruiter desk", async () => {
+    const res = await run("/hire", await candidate());
+    assert(
+      location(res).endsWith("app.klymb.ai/"),
+      `the recruiter side is invite-only; got ${location(res) || res.status}`,
+    );
+  });
+
+  await suite("the recruiter door stays behind the gate", async () => {
+    const res = await run("/talent/login", []);
+    assert(
+      location(res).endsWith("app.klymb.ai/"),
+      `only the candidate door reopened; got ${location(res) || res.status}`,
+    );
+  });
+
   console.log(`\n${passed} passed, ${failed} failed\n`);
   if (failed > 0) process.exitCode = 1;
 }

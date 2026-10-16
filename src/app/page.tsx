@@ -75,20 +75,17 @@ export default async function HomePage() {
         "candidate",
         jar.get(PREVIEW_COOKIE_NAMES.candidate)?.value,
       );
-    // /login is behind the gate too, so the button must not be offered to
-    // someone it would only bounce — and it must point at the door that
-    // visitor can actually open. The candidate link opens /login; the
-    // recruiter link opens /talent/login and NOT /login. A stranger gets no
-    // button at all.
+    // The candidate door is open to everyone again: people who already have
+    // an account can sign in and carry on with the track they were doing.
+    // Only a browser holding the RECRUITER preview link — and no candidate
+    // one — is pointed at /talent/login instead, since that is the door its
+    // cookie opens.
     const hasRecruiterPreview = hasPreviewAccess(
       "recruiter",
       jar.get(PREVIEW_COOKIE_NAMES.recruiter)?.value,
     );
-    const signInHref = mayEnter
-      ? "/login"
-      : hasRecruiterPreview
-        ? "/talent/login"
-        : null;
+    const signInHref =
+      !mayEnter && hasRecruiterPreview ? "/talent/login" : "/login";
 
     if (session?.user?.id && mayEnter) {
       // Asked for explicitly: an admin lands on the product, not the console.
