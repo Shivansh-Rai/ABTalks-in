@@ -133,10 +133,10 @@ async function main() {
   });
 
   await suite("the gate's own redirect carries the id too", async () => {
-    // With the launch gate on — the default — a signed-out /dashboard is sent
-    // to the launch page instead. That is another `return`, and it has to
-    // carry the id like every other one.
-    const res = await run("https://abtalks.in/dashboard");
+    // The gate holds the recruiter side (the candidate product is open again),
+    // so /hire is where it still redirects a stranger. That is another
+    // `return`, and it has to carry the id like every other one.
+    const res = await run("https://abtalks.in/hire");
     assert(
       res.status === 307 || res.status === 302,
       `expected the gate to redirect, got ${res.status}`,

@@ -193,13 +193,16 @@ async function main() {
     );
   });
 
-  await suite("that rule does NOT open the candidate side", async () => {
-    const res = await run("/dashboard", [
+  await suite("the recruiter rule grants nothing beyond the desk", async () => {
+    // The candidate product is open to everyone now, so /dashboard is not the
+    // question any more. What must stay true is that a recruiter session is
+    // not an admin session: /admin still refuses it.
+    const res = await run("/admin", [
       await sessionCookie("hr@acme-test.com", "RECRUITER"),
     ]);
     assert(
-      location(res).endsWith("app.klymb.ai/"),
-      `a recruiter has no business on /dashboard; got ${location(res) || res.status}`,
+      !location(res).includes("/admin") || location(res).includes("/login"),
+      `a recruiter session must not walk into /admin; got ${location(res) || res.status}`,
     );
   });
 
@@ -249,24 +252,48 @@ async function main() {
     }
   });
 
-  await suite("areas still shut send them to their dashboard, not the launch page", async () => {
-    for (const path of ["/jobs", "/marketplace", "/assessments", "/explore"]) {
+  await suite("the job board goes with the hiring stage", async () => {
+    const res = await run("/jobs", await candidate());
+    assert(
+      location(res).endsWith("/dashboard"),
+      `/jobs is hidden with Get hired, and a member belongs on their dashboard; got ${location(res) || res.status}`,
+    );
+  });
+
+  await suite("the rest of the candidate product is open again", async () => {
+    for (const path of ["/marketplace", "/assessments", "/explore", "/practice"]) {
       const res = await run(path, await candidate());
       assert(
-        location(res).endsWith("/dashboard"),
-        `${path} should land on /dashboard while it is closed; got ${location(res) || res.status}`,
+        !location(res).endsWith("app.klymb.ai/") && !location(res).endsWith("/dashboard"),
+        `${path} should behave as it did before the gate; got ${location(res) || res.status}`,
       );
     }
   });
 
-  await suite("a signed-out stranger is still shut out of all of it", async () => {
-    for (const path of ["/dashboard", "/claude", "/hackathon"]) {
-      const res = await run(path, []);
-      assert(
-        location(res).endsWith("app.klymb.ai/"),
-        `${path} must stay closed to the public; got ${location(res) || res.status}`,
-      );
-    }
+  await suite("a stranger meets the product's own rules, not the gate", async () => {
+    // Open does not mean unguarded: /dashboard still wants a session, and the
+    // answer is the login page it always was — not the launch page.
+    const res = await run("/dashboard", []);
+    assert(
+      location(res).includes("/login"),
+      `a signed-out /dashboard belongs at /login again; got ${location(res) || res.status}`,
+    );
+  });
+
+  await suite("and can browse what was always public", async () => {
+    const res = await run("/challenges", []);
+    assert(
+      !location(res).endsWith("app.klymb.ai/"),
+      `/challenges is public again; got ${location(res) || res.status}`,
+    );
+  });
+
+  await suite("the job board stays hidden from strangers too", async () => {
+    const res = await run("/jobs", []);
+    assert(
+      location(res).endsWith("app.klymb.ai/"),
+      `/jobs is hidden; got ${location(res) || res.status}`,
+    );
   });
 
   await suite("a candidate session does NOT open the recruiter desk", async () => {
