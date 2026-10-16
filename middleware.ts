@@ -98,6 +98,11 @@ const { auth } = NextAuth(authConfig);
  */
 const GATE_PUBLIC_PATHS = [
   "/",
+  // The launch page offers "Sign in" again, so the candidate door answers for
+  // everyone. It is a form, not a surface: passing it needs an account, and
+  // what an account then opens is the short list below. The RECRUITER door,
+  // /talent/login, stays behind the gate.
+  "/login",
   // Plan 194: where an invited HR's emailed sign-in link lands. Public of
   // necessity — an invited recruiter holds no preview cookie — and worthless
   // without a live token, which the route itself spends and verifies.
@@ -106,6 +111,40 @@ const GATE_PUBLIC_PATHS = [
   "/privacy",
   "/cookies",
   "/verify",
+] as const;
+
+/**
+ * What a signed-in candidate may open while the platform is otherwise closed.
+ *
+ * Deliberately a short list rather than "everything that is not the recruiter
+ * side": jobs, the marketplace, assessments, practice, mock interviews,
+ * explore and messages stay shut until Sohail says otherwise. Anything not
+ * here sends a signed-in candidate to their dashboard rather than to the
+ * launch page — they are a member, not a stranger.
+ *
+ * The learning tracks are listed, but listing them opens nobody's track but
+ * their own: TrackPage redirects a candidate with no enrolment for that
+ * domain to /dashboard, requireProgramMember does the same for the cohort,
+ * and the hackathon dashboard checks its own registration. So "only the track
+ * he has been doing" is the product's existing rule, not a new one here —
+ * which is also why this needs no database read in the edge.
+ */
+const CANDIDATE_SESSION_PATHS = [
+  "/dashboard",
+  "/profile",
+  "/settings",
+  "/achievements",
+  // Signing in with an account that has no CandidateProfile has to be able to
+  // finish, or the sign-in is a dead end.
+  "/register",
+  "/challenges",
+  "/challenge",
+  "/ai",
+  "/ds",
+  "/se",
+  "/claude",
+  "/program/ai-cohort",
+  "/hackathon",
 ] as const;
 
 /** The recruiter product. The candidate preview link does NOT open these. */
@@ -356,11 +395,24 @@ export default auth((req) => {
   const isRecruiterSession =
     (req.auth?.user as { role?: string } | undefined)?.role === "RECRUITER";
 
+  // A candidate who already had an account may sign in and use their own
+  // track again. Role STUDENT is every non-recruiter, non-admin account, and
+  // a session can still only be had by passing /login with real credentials.
+  const isCandidateSession =
+    !!req.auth?.user &&
+    (req.auth.user as { role?: string }).role !== "RECRUITER" &&
+    !isAdminSession;
+  const isCandidateArea = CANDIDATE_SESSION_PATHS.some((p) =>
+    matchesPath(pathname, p),
+  );
+
   const mayPass = isPreviewEntry
     ? isAdminSession || hasCandidatePreview || hasRecruiterPreview
     : isRecruiterSurface
       ? isAdminSession || hasRecruiterPreview || isRecruiterSession
-      : isAdminSession || hasCandidatePreview;
+      : isAdminSession ||
+        hasCandidatePreview ||
+        (isCandidateSession && isCandidateArea);
 
   const gated =
     gateOn &&
@@ -469,8 +521,14 @@ export default auth((req) => {
     // Ahead of the session gate on purpose: a signed-out visitor to /hire or
     // /dashboard must land on the launch page, not on a login form for a
     // product that is currently closed.
+    //
+    // A signed-in candidate is not a stranger, though: an area that is still
+    // shut sends them back to their own dashboard rather than out to the
+    // countdown.
+    const closedFor =
+      isCandidateSession && !isRecruiterSurface ? "/dashboard" : "/";
     response = withTracking(
-      NextResponse.redirect(new URL("/", req.nextUrl)),
+      NextResponse.redirect(new URL(closedFor, req.nextUrl)),
       ref,
       src,
       alreadyAttributed,

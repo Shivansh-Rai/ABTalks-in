@@ -144,14 +144,6 @@
   color: var(--lp-color-text-secondary);
 }
 
-.launch__actions {
-  margin-top: var(--lp-space-32);
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: var(--lp-space-12);
-}
-
 /* ---------- three points ---------- */
 .launch__points {
   padding-block: var(--lp-space-16) var(--lp-space-64);
@@ -235,8 +227,7 @@
     text-align: left;
   }
   .launch__clock,
-  .launch__cells,
-  .launch__actions {
+  .launch__cells {
     align-items: stretch;
     justify-content: flex-start;
   }
@@ -249,8 +240,5 @@
   }
   .launch__body {
     margin-inline: 0;
-  }
-  .launch__actions .btn {
-    flex: 1 1 100%;
   }
 }

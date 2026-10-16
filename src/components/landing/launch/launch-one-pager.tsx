@@ -36,10 +36,11 @@ export function LaunchOnePager({
 }: {
   user: LandingUser | null;
   /**
-   * The sign-in door this visitor can actually open, or null for none. /login
-   * is behind the gate, so a stranger gets no button rather than one that
-   * bounces, and a recruiter-link holder is sent to /talent/login, which is
-   * the door their cookie opens.
+   * The sign-in door this visitor can actually open, or null for none.
+   * Normally /login — the candidate door is open so returning candidates can
+   * sign in — except for a browser holding only the recruiter preview link,
+   * which is sent to /talent/login. Null still hides the button, for whenever
+   * the door closes again.
    */
   signInHref: string | null;
 }) {
@@ -85,13 +86,10 @@ export function LaunchOnePager({
 
             <p className="launch__body">{LAUNCH_HERO.body}</p>
 
-            {!user && signInHref ? (
-              <div className="launch__actions">
-                <Link href={signInHref} className="btn btn--ghost btn--lg">
-                  Sign in
-                </Link>
-              </div>
-            ) : null}
+            {/* Sign-in lives in the nav only. A second button under the
+                countdown would read as a way INTO the new challenge, which it
+                is not — it is the door back in for people who already have an
+                account. */}
           </div>
         </section>
 
