@@ -55,7 +55,7 @@ const ICON: Record<LibraryArt, typeof Code2> = {
 const ROWS = {
   job: {
     title: "Get job-ready, fast",
-    sub: "Mentor-led cohorts on the tools employers hire for — finish with a project recruiters can see.",
+    sub: "Mentor-led cohorts on the tools employers hire for finish with a project recruiters can see.",
   },
   personal: {
     title: "Level up, one day at a time",
