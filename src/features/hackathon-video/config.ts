@@ -35,6 +35,8 @@ export const VIDEOTHON = {
   kickoffLabel: "Friday, 9 Oct · 8:00 PM IST",
   deadlineLabel: "Saturday, 10 Oct · 8:00 PM IST",
   resultsLabel: "Winners announced: Friday, 16 Oct",
+  // Event over: the hero swaps the countdown for a "winners declared" notice.
+  resultsAnnounced: true,
   registrationClosesLabel: "Registration closes Friday, 9 Oct · 6:00 PM IST",
 
   // Live WhatsApp group link (locked in 2026-09-25). The Coming Soon that
