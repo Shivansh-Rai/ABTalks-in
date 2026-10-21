@@ -224,21 +224,23 @@ export default async function HackathonPage() {
             </div>
           )}
 
-          <div className="vt-hero__ctas">
-            <VideothonRegisterCTA
-              isAuthed={isAuthed}
-              registered={registered}
-              registrationOpen={registrationOpen}
-              prefill={prefill}
-              variant="cta"
-            />
-            <Link className="ab-btn ab-btn--ghost vt-hero__learn" href="#hk-how">
-              Learn more
-              <svg viewBox="0 0 24 24" aria-hidden focusable="false">
-                <path d="M4 12h15M13 6l6 6-6 6" />
-              </svg>
-            </Link>
-          </div>
+          {VIDEOTHON.resultsAnnounced ? null : (
+            <div className="vt-hero__ctas">
+              <VideothonRegisterCTA
+                isAuthed={isAuthed}
+                registered={registered}
+                registrationOpen={registrationOpen}
+                prefill={prefill}
+                variant="cta"
+              />
+              <Link className="ab-btn ab-btn--ghost vt-hero__learn" href="#hk-how">
+                Learn more
+                <svg viewBox="0 0 24 24" aria-hidden focusable="false">
+                  <path d="M4 12h15M13 6l6 6-6 6" />
+                </svg>
+              </Link>
+            </div>
+          )}
 
           <dl className="vt-hero__meta" aria-label="Event window">
             <div>
