@@ -205,12 +205,24 @@ export default async function HackathonPage() {
 
           <p className="vt-hero__lede">{VIDEOTHON.tagline}</p>
 
-          <div className="vt-hero__timer">
-            <VideothonCountdown
-              kickoffUtc={VIDEOTHON.kickoffUtc}
-              deadlineUtc={VIDEOTHON.deadlineUtc}
-            />
-          </div>
+          {VIDEOTHON.resultsAnnounced ? (
+            <div className="vt-hero__ended" role="status">
+              <span className="vt-hero__ended-tag">Results are out</span>
+              <p className="vt-hero__ended-title">
+                Winners are declared and notified.
+              </p>
+              <p className="vt-hero__ended-text">
+                Thank you for participating.
+              </p>
+            </div>
+          ) : (
+            <div className="vt-hero__timer">
+              <VideothonCountdown
+                kickoffUtc={VIDEOTHON.kickoffUtc}
+                deadlineUtc={VIDEOTHON.deadlineUtc}
+              />
+            </div>
+          )}
 
           <div className="vt-hero__ctas">
             <VideothonRegisterCTA
