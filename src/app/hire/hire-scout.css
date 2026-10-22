@@ -17703,8 +17703,9 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-found strong {
   font-size: calc(13 * var(--u));
 }
 
-/* A row. Hover is a whisper of teal; the open candidate gets a tinted row and
-   a teal bar on its leading edge, so the list says who the panel is showing. */
+/* A row. Hover is a whisper of teal. The open candidate is marked by the row
+   itself rather than a decorative edge bar: a soft tint, the avatar filled
+   solid teal and the name in teal, so the list says who the panel is showing. */
 .desk-row {
   position: relative;
   display: grid;
@@ -17724,15 +17725,37 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-found strong {
 
 .desk-row.is-selected,
 .desk-row.is-selected:hover {
-  background: var(--h-peach-wash);
+  background: #f3f9f9;
 }
 
-.desk-row.is-selected::before {
-  content: "";
-  position: absolute;
-  inset: 0 auto 0 0;
-  width: 3px;
+.desk-row.is-selected .desk-row__avatar {
   background: var(--h-primary);
+  color: #ffffff;
+}
+
+.desk-row.is-selected .desk-row__name {
+  color: var(--h-primary);
+}
+
+.desk-row__avatar,
+.desk-row__name {
+  transition:
+    background-color 150ms var(--ease),
+    color 150ms var(--ease);
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row.is-selected,
+html.dark:not(:has(.theme-abtalks-light)) .desk-row.is-selected:hover {
+  background: #1a2627;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row.is-selected .desk-row__avatar {
+  background: #a6d2d5;
+  color: #000000;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row.is-selected .desk-row__name {
+  color: #a6d2d5;
 }
 
 .desk-row__avatar {
@@ -18116,4 +18139,35 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-row__meta svg {
   line-height: calc(18px / var(--hire-zoom, 1));
   font-weight: 400;
   color: var(--h-gray-500);
+}
+
+/* The recruiter's own turns in a bubble, like Scout's, in the light brand
+   green. Same shape and padding as .scout-ask__q so the two sides read as one
+   conversation; the corner beside the avatar is tighter to point at who spoke. */
+.scout-turn--user .scout-turn__text {
+  display: inline-block;
+  max-width: min(78%, 640px);
+  margin: 0;
+  padding: 10px 16px;
+  border: 1px solid #cdeadf;
+  border-radius: 16px 16px 4px 16px;
+  background: #e6f6f0;
+  color: #0b3b33;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .scout-turn--user .scout-turn__text {
+  border-color: transparent;
+  background: #17403a;
+  color: #e7f2f3;
+}
+
+@media (max-width: 640px) {
+  .scout-turn--user .scout-turn__text {
+    max-width: 88%;
+  }
 }
