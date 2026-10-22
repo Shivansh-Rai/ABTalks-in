@@ -48,9 +48,9 @@ export function DeskShortlistButton({
         onClick={toggle}
       >
         {on ? (
-          <BookmarkCheck className="size-4" aria-hidden="true" />
+          <BookmarkCheck className="size-4" strokeWidth={1.75} aria-hidden="true" />
         ) : (
-          <Bookmark className="size-4" aria-hidden="true" />
+          <Bookmark className="size-4" strokeWidth={1.75} aria-hidden="true" />
         )}
       </button>
     );

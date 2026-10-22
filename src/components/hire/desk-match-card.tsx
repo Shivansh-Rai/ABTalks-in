@@ -8,6 +8,7 @@ import {
   Clock,
   GraduationCap,
   MapPin,
+  Sparkles,
   UserCheck,
   UserRound,
 } from "lucide-react";
@@ -53,14 +54,14 @@ const CARD_SKILLS = 8;
 const SUMMARY_PREVIEW_CHARS = 280;
 
 /**
- * The card's share of the AI summary — a 3-line preview of the same prose the
+ * The card's share of the AI summary â€” a 3-line preview of the same prose the
  * View Details panel shows (session-cached Gemini when present, otherwise
  * `recruiterSummary`). Full text stays in the sidebar; cards never call Gemini.
  *
  * Cuts on a sentence end where there is one in range, so the preview reads as
  * a finished thought rather than a severed clause; falls back to a word
  * boundary otherwise. The CSS line-clamp behind this is a second safety net
- * for a single very long sentence, not the primary mechanism — clamping alone
+ * for a single very long sentence, not the primary mechanism â€” clamping alone
  * would still ship the whole string to the browser and still break mid-word.
  */
 export function summaryPreview(text: string): string {
@@ -68,7 +69,7 @@ export function summaryPreview(text: string): string {
   if (flat.length <= SUMMARY_PREVIEW_CHARS) return flat;
 
   const window = flat.slice(0, SUMMARY_PREVIEW_CHARS);
-  // A sentence end, but only if it lands in the back half — cutting at the
+  // A sentence end, but only if it lands in the back half â€” cutting at the
   // first full stop of a long paragraph would throw away most of the preview.
   const sentence = Math.max(
     window.lastIndexOf(". "),
@@ -79,7 +80,7 @@ export function summaryPreview(text: string): string {
     return flat.slice(0, sentence + 1);
   }
   const space = window.lastIndexOf(" ");
-  return `${flat.slice(0, space > 0 ? space : SUMMARY_PREVIEW_CHARS).trimEnd()}…`;
+  return `${flat.slice(0, space > 0 ? space : SUMMARY_PREVIEW_CHARS).trimEnd()}â€¦`;
 }
 
 const WORK_MODE: Record<string, string> = {
@@ -93,7 +94,7 @@ const WORK_MODE: Record<string, string> = {
  * A stable tint index for a skill name.
  *
  * Same hash the design mockup uses, so "React" is the same hue on every card,
- * in the inspector, and between sessions — the colour is information about the
+ * in the inspector, and between sessions â€” the colour is information about the
  * skill, not about where it happened to be rendered.
  */
 function skillTint(skill: string): string {
@@ -108,7 +109,7 @@ function skillTint(skill: string): string {
  * A stand-in surname of the same length as the real one.
  *
  * Deterministic from the name itself, so a candidate's block does not change
- * shape between renders, and never derived from the real letters — the point is
+ * shape between renders, and never derived from the real letters â€” the point is
  * that the actual surname is not written into the page at all. It is only ever
  * seen through a blur, so the letters carry no meaning; what matters is that the
  * word is the right length and has a name-like silhouette.
@@ -131,7 +132,7 @@ function decoySurname(seedText: string, length: number): string {
 /**
  * Given name in the clear, family name behind a blur.
  *
- * The blur is CSS, but the text under it is a decoy — the real surname is never
+ * The blur is CSS, but the text under it is a decoy â€” the real surname is never
  * put in the DOM, so this is not the "blur over real text" that `LockedField`
  * warns about. Reading the page source yields nothing.
  *
@@ -200,7 +201,7 @@ export function DeskMatchCard({
   sampleDemand?: SampleDemand;
   onDecision?: (decision: MatchDecision) => void;
   requestId?: string | null;
-  /** Active desk search — used only to key the session Gemini cache. */
+  /** Active desk search â€” used only to key the session Gemini cache. */
   searchSpec?: JobSpec | null;
 }) {
   const sample = match.candidateRef.startsWith("SAMPLE:");
@@ -217,7 +218,7 @@ export function DeskMatchCard({
   const e = match.evidence ?? {};
   // The skills the recruiter actually asked for, hoisted to the front. The card
   // draws eight chips out of a list that is routinely fifteen or twenty long,
-  // and stored order is the order the candidate typed their stack in — so a
+  // and stored order is the order the candidate typed their stack in â€” so a
   // search for "snowflake" could return a card whose chips never say Snowflake.
   // To the reader that is a wrong result, not a truncated one.
   const needles = match.highlightSkills ?? [];
@@ -253,8 +254,8 @@ export function DeskMatchCard({
   );
 
   // The card is the click target, not just the "View more details" link.
-  // Everything interactive inside it — the two shortlist buttons, the intro
-  // button, the locked-field reveals — must keep its own click, and a click that
+  // Everything interactive inside it â€” the two shortlist buttons, the intro
+  // button, the locked-field reveals â€” must keep its own click, and a click that
   // ends a text selection is a read, not a request to open the panel.
   function openFromCard(event: MouseEvent<HTMLElement>) {
     if (!onOpen) return;
@@ -290,7 +291,7 @@ export function DeskMatchCard({
               <p className="desk-card__ref">
                 {match.jobRole}
                 {typeof e.yearsExperience === "number" && e.yearsExperience > 0
-                  ? ` · ${e.yearsExperience}+ yrs`
+                  ? ` Â· ${e.yearsExperience}+ yrs`
                   : ""}
               </p>
               <p className="desk-card__stack">
@@ -299,7 +300,7 @@ export function DeskMatchCard({
                   label="Location"
                   onReveal={openUpgrade}
                 />
-                {" · "}
+                {" Â· "}
                 <LockedField
                   value={p.educationLine}
                   label="Education"
@@ -385,7 +386,7 @@ export function DeskMatchCard({
     );
   }
 
-  // The result card (Figma 1646:209). Score and evidence pills are not on it —
+  // The result card (Figma 1646:209). Score and evidence pills are not on it â€”
   // the profile panel carries both; the card is who, where, which skills, and
   // Scout's reason. A missing fact drops out of the meta row rather than
   // printing a placeholder.
@@ -466,8 +467,7 @@ export function DeskMatchCard({
                   <li key={key}>
                     <Icon
                       size={14}
-                      strokeWidth={2}
-                      absoluteStrokeWidth
+                      strokeWidth={1.75}
                       aria-hidden="true"
                     />
                     {label}
@@ -515,12 +515,11 @@ export function DeskMatchCard({
                 )}
               >
                 {shortlisted ? (
-                  <Check className="size-3.5" aria-hidden="true" />
+                  <Check className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
                 ) : (
                   <UserCheck
                     size={14}
-                    strokeWidth={2}
-                    absoluteStrokeWidth
+                    strokeWidth={1.75}
                     aria-hidden="true"
                   />
                 )}
@@ -558,7 +557,7 @@ export function DeskMatchCard({
               const hit = skillHighlighted(s, needles);
               return (
                 <li key={s} className={cn("desk-row__chip", hit && "is-hit")}>
-                  {hit && <Check className="size-3" aria-hidden="true" />}
+                  {hit && <Check className="size-3" strokeWidth={1.75} aria-hidden="true" />}
                   {s}
                 </li>
               );
@@ -575,7 +574,10 @@ export function DeskMatchCard({
           {/* The sparkle alone marks the AI summary; the words repeated on
               every row were noise. Screen readers still hear the label. */}
           <span className="desk-row__summary-label" title="AI summary">
-            <img src="/hire/ai-summary-sparkle.svg" alt="AI summary:" width={13} height={13} />
+            {/* A line icon rather than ai-summary-sparkle.svg: that file is
+                drawn at a 2px stroke on a 15px box and read as bold here. */}
+            <Sparkles size={15} strokeWidth={1.75} aria-hidden="true" />
+            <span className="sr-only">AI summary:</span>
           </span>
           {summary}
         </p>

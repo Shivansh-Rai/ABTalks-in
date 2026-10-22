@@ -18033,9 +18033,10 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-found strong {
   vertical-align: calc(-2 * var(--u));
 }
 
-.desk-row__summary-label img {
+.desk-row__summary-label svg {
   width: calc(15 * var(--u));
   height: calc(15 * var(--u));
+  color: var(--h-primary);
 }
 
 /* Rejected: still there to undo, but stepped back. */
