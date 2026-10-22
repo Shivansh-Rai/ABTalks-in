@@ -18664,3 +18664,16 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-row__badge {
 .desk-list__bar.is-bulk {
   border-color: var(--pool-teal-line);
 }
+
+/* New search / New project sat tight under the header. Room above them,
+   divided by the desk zoom so it paints at 16px (12px on phones). */
+.hire-app--results .scout__toolbar {
+  padding-top: calc(16px / var(--hire-zoom, 1));
+}
+
+@media (max-width: 900px) {
+  .hire-app .scout__toolbar,
+  .hire-app--results .scout__toolbar {
+    padding-top: 12px;
+  }
+}
