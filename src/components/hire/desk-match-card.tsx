@@ -3,18 +3,17 @@
 import { useEffect, useMemo, useState, type MouseEvent } from "react";
 import {
   Briefcase,
-  ChevronDown,
+  Check,
   ChevronRight,
   Clock,
   GraduationCap,
   MapPin,
+  Sparkles,
   UserCheck,
   UserRound,
-  X,
 } from "lucide-react";
 import { DeskShortlistButton } from "@/components/hire/desk-shortlist-button";
 import { ShortlistButton } from "@/components/talent/shortlist-button";
-import { buttonVariants } from "@/components/ui/button";
 import {
   SampleCardNotice,
   type SampleDemand,
@@ -55,14 +54,14 @@ const CARD_SKILLS = 8;
 const SUMMARY_PREVIEW_CHARS = 280;
 
 /**
- * The card's share of the AI summary — a 3-line preview of the same prose the
+ * The card's share of the AI summary â€” a 3-line preview of the same prose the
  * View Details panel shows (session-cached Gemini when present, otherwise
  * `recruiterSummary`). Full text stays in the sidebar; cards never call Gemini.
  *
  * Cuts on a sentence end where there is one in range, so the preview reads as
  * a finished thought rather than a severed clause; falls back to a word
  * boundary otherwise. The CSS line-clamp behind this is a second safety net
- * for a single very long sentence, not the primary mechanism — clamping alone
+ * for a single very long sentence, not the primary mechanism â€” clamping alone
  * would still ship the whole string to the browser and still break mid-word.
  */
 export function summaryPreview(text: string): string {
@@ -70,7 +69,7 @@ export function summaryPreview(text: string): string {
   if (flat.length <= SUMMARY_PREVIEW_CHARS) return flat;
 
   const window = flat.slice(0, SUMMARY_PREVIEW_CHARS);
-  // A sentence end, but only if it lands in the back half — cutting at the
+  // A sentence end, but only if it lands in the back half â€” cutting at the
   // first full stop of a long paragraph would throw away most of the preview.
   const sentence = Math.max(
     window.lastIndexOf(". "),
@@ -81,7 +80,7 @@ export function summaryPreview(text: string): string {
     return flat.slice(0, sentence + 1);
   }
   const space = window.lastIndexOf(" ");
-  return `${flat.slice(0, space > 0 ? space : SUMMARY_PREVIEW_CHARS).trimEnd()}…`;
+  return `${flat.slice(0, space > 0 ? space : SUMMARY_PREVIEW_CHARS).trimEnd()}â€¦`;
 }
 
 const WORK_MODE: Record<string, string> = {
@@ -95,7 +94,7 @@ const WORK_MODE: Record<string, string> = {
  * A stable tint index for a skill name.
  *
  * Same hash the design mockup uses, so "React" is the same hue on every card,
- * in the inspector, and between sessions — the colour is information about the
+ * in the inspector, and between sessions â€” the colour is information about the
  * skill, not about where it happened to be rendered.
  */
 function skillTint(skill: string): string {
@@ -110,7 +109,7 @@ function skillTint(skill: string): string {
  * A stand-in surname of the same length as the real one.
  *
  * Deterministic from the name itself, so a candidate's block does not change
- * shape between renders, and never derived from the real letters — the point is
+ * shape between renders, and never derived from the real letters â€” the point is
  * that the actual surname is not written into the page at all. It is only ever
  * seen through a blur, so the letters carry no meaning; what matters is that the
  * word is the right length and has a name-like silhouette.
@@ -133,7 +132,7 @@ function decoySurname(seedText: string, length: number): string {
 /**
  * Given name in the clear, family name behind a blur.
  *
- * The blur is CSS, but the text under it is a decoy — the real surname is never
+ * The blur is CSS, but the text under it is a decoy â€” the real surname is never
  * put in the DOM, so this is not the "blur over real text" that `LockedField`
  * warns about. Reading the page source yields nothing.
  *
@@ -202,7 +201,7 @@ export function DeskMatchCard({
   sampleDemand?: SampleDemand;
   onDecision?: (decision: MatchDecision) => void;
   requestId?: string | null;
-  /** Active desk search — used only to key the session Gemini cache. */
+  /** Active desk search â€” used only to key the session Gemini cache. */
   searchSpec?: JobSpec | null;
 }) {
   const sample = match.candidateRef.startsWith("SAMPLE:");
@@ -219,7 +218,7 @@ export function DeskMatchCard({
   const e = match.evidence ?? {};
   // The skills the recruiter actually asked for, hoisted to the front. The card
   // draws eight chips out of a list that is routinely fifteen or twenty long,
-  // and stored order is the order the candidate typed their stack in — so a
+  // and stored order is the order the candidate typed their stack in â€” so a
   // search for "snowflake" could return a card whose chips never say Snowflake.
   // To the reader that is a wrong result, not a truncated one.
   const needles = match.highlightSkills ?? [];
@@ -255,8 +254,8 @@ export function DeskMatchCard({
   );
 
   // The card is the click target, not just the "View more details" link.
-  // Everything interactive inside it — the two shortlist buttons, the intro
-  // button, the locked-field reveals — must keep its own click, and a click that
+  // Everything interactive inside it â€” the two shortlist buttons, the intro
+  // button, the locked-field reveals â€” must keep its own click, and a click that
   // ends a text selection is a read, not a request to open the panel.
   function openFromCard(event: MouseEvent<HTMLElement>) {
     if (!onOpen) return;
@@ -292,7 +291,7 @@ export function DeskMatchCard({
               <p className="desk-card__ref">
                 {match.jobRole}
                 {typeof e.yearsExperience === "number" && e.yearsExperience > 0
-                  ? ` · ${e.yearsExperience}+ yrs`
+                  ? ` Â· ${e.yearsExperience}+ yrs`
                   : ""}
               </p>
               <p className="desk-card__stack">
@@ -301,7 +300,7 @@ export function DeskMatchCard({
                   label="Location"
                   onReveal={openUpgrade}
                 />
-                {" · "}
+                {" Â· "}
                 <LockedField
                   value={p.educationLine}
                   label="Education"
@@ -387,7 +386,7 @@ export function DeskMatchCard({
     );
   }
 
-  // The result card (Figma 1646:209). Score and evidence pills are not on it —
+  // The result card (Figma 1646:209). Score and evidence pills are not on it â€”
   // the profile panel carries both; the card is who, where, which skills, and
   // Scout's reason. A missing fact drops out of the meta row rather than
   // printing a placeholder.
@@ -406,215 +405,182 @@ export function DeskMatchCard({
     { key: "education", Icon: GraduationCap, label: e.educationLevel },
   ].filter((m) => Boolean(m.label));
   const shownSkills = skills.slice(0, CARD_SKILLS);
+  // The row's avatar: the candidate's initial, the same treatment as the
+  // thread's avatars, instead of a stock silhouette photo.
+  const initial =
+    (match.displayName?.trim() || match.jobRole || "").charAt(0).toUpperCase() ||
+    null;
+  const name = match.displayName ? (
+    <MaskedName
+      name={match.displayName}
+      revealed={match.engagementStatus === "CONTACT_SHARED"}
+    />
+  ) : (
+    match.jobRole
+  );
+  const shortlisted = decision === "SHORTLISTED";
 
+  // One row of the results panel (plan: results as one divided list). Same
+  // content as the card it replaced: who, where, which skills, Scout's reason.
+  // Clicking the row (or the name, for keyboards) opens the profile, so there
+  // is no separate View More Details button.
   return (
     <article
       className={cn(
-        "desk-card",
-        "desk-card--result",
-        rank === 1 && "desk-card--top",
+        "desk-row",
+        rank === 1 && "desk-row--top",
         selected && "is-selected",
-        onOpen && "desk-card--clickable",
-        rejected && "desk-card--rejected",
+        onOpen && "is-clickable",
+        rejected && "is-rejected",
       )}
       onClick={openFromCard}
     >
-      <div className="desk-card__row">
-        <img
-          src="/hire/avatar-card.png"
-          alt=""
-          width={55}
-          height={55}
-          className="desk-card__photo"
-        />
-        <div className="desk-card__body">
-          <header className="desk-card__namerow">
-            <div className="desk-card__nameblock">
-              <div className="desk-card__header">
-                <h3 className="desk-card__name">
-                  {match.displayName ? (
-                    <MaskedName
-                      name={match.displayName}
-                      revealed={match.engagementStatus === "CONTACT_SHARED"}
-                    />
-                  ) : (
-                    match.jobRole
-                  )}
-                </h3>
-                <OpenToWorkBadge openToWork={match.openToWork} />
-                {rank === 1 && <span className="desk-card__badge">Top match</span>}
-              </div>
-              {meta.length > 0 && (
-                <ul className="desk-card__meta">
-                  {meta.map(({ key, Icon, label }) => (
-                    <li key={key}>
-                      <Icon
-                        size={16}
-                        strokeWidth={2}
-                        absoluteStrokeWidth
-                        aria-hidden="true"
-                      />
-                      {label}
-                    </li>
-                  ))}
-                </ul>
-              )}
+      <span className="desk-row__avatar" aria-hidden="true">
+        {initial ?? <UserRound className="size-4" />}
+      </span>
+
+      <div className="desk-row__main">
+        <header className="desk-row__head">
+          <div className="desk-row__who">
+            <div className="desk-row__title">
+              <h3 className="desk-row__name">
+                {onOpen ? (
+                  <button type="button" className="desk-row__open" onClick={onOpen}>
+                    {name}
+                  </button>
+                ) : (
+                  name
+                )}
+              </h3>
+              <OpenToWorkBadge openToWork={match.openToWork} />
+              {rank === 1 && <span className="desk-row__badge">Top match</span>}
+              {showTriage &&
+                (match.viewedAt ? (
+                  <span className="desk-badge desk-badge--viewed">Viewed</span>
+                ) : match.isNew ? (
+                  <span className="desk-badge desk-badge--new">New</span>
+                ) : null)}
             </div>
-            {/* Save for later keeps its own label: "Shortlist" on this button
-                as well as on the cart button below would be two controls with
-                one name writing to different stores (TC-R-004). */}
+            {meta.length > 0 && (
+              <ul className="desk-row__meta">
+                {meta.map(({ key, Icon, label }) => (
+                  <li key={key}>
+                    <Icon
+                      size={14}
+                      strokeWidth={1.75}
+                      aria-hidden="true"
+                    />
+                    {label}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          <div className="desk-row__actions" onClick={(ev) => ev.stopPropagation()}>
+            {/* Save for later keeps its own name (as the icon's label): two
+                controls both called "Shortlist", writing to different stores,
+                is what TC-R-004 caught. */}
             <DeskShortlistButton
+              icon
               candidateRef={match.candidateRef}
               jobRole={match.jobRole}
               match={match}
             />
-          </header>
-
-          {skills.length > 0 && (
-            <section className="desk-card__skills" aria-label="Skills">
-              <h4 className="desk-card__skills-h">Skills</h4>
-              <ul className="desk-card__chips">
-                {shownSkills.map((s) => (
-                  <li
-                    key={s}
-                    className={cn(
-                      "desk-chip",
-                      skillHighlighted(s, needles) && "desk-chip--hit",
-                    )}
-                  >
-                    {s}
-                  </li>
-                ))}
-                {skills.length > shownSkills.length && (
-                  <li className="desk-chip">
-                    +{skills.length - shownSkills.length}
-                  </li>
+            {showTriage && (
+              <button
+                type="button"
+                className="desk-row__btn desk-row__btn--quiet"
+                onClick={() => pickDecision("REJECTED")}
+              >
+                {rejected ? "Undo" : "Reject"}
+              </button>
+            )}
+            {showTriage ? (
+              // PROJECT CONTEXT (T-149). Writes TalentRequestMatch.decision via
+              // setMatchDecisionAction, keyed on requestId + candidateUserId, so
+              // it works for every track. `decision` is read back from the
+              // persisted row and survives reload. The legacy cart button is
+              // deliberately not rendered here: it would be a second,
+              // differently-persisted shortlist on the same row.
+              <button
+                type="button"
+                aria-pressed={shortlisted}
+                aria-label={shortlisted ? "In shortlist" : "Add to shortlist"}
+                title={shortlisted ? "In shortlist" : "Add to shortlist"}
+                onClick={() => pickDecision("SHORTLISTED")}
+                className={cn(
+                  "desk-row__btn desk-row__btn--primary",
+                  shortlisted && "is-on",
                 )}
-              </ul>
-            </section>
-          )}
-
-          <div className="desk-card__ai">
-            <p className="desk-card__ai-tab">
-              <img
-                src="/hire/ai-summary-sparkle.svg"
-                alt=""
-                width={15}
-                height={15}
-              />
-              AI Summary
-            </p>
-            <p className="desk-card__ai-text">{summary}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="desk-card__cta">
-        {showTriage && (
-          <div className="desk-card__triage" onClick={(e) => e.stopPropagation()}>
-            {match.viewedAt ? (
-              <span className="desk-badge desk-badge--viewed">Viewed</span>
-            ) : match.isNew ? (
-              <span className="desk-badge desk-badge--new">New</span>
-            ) : null}
-            {rejected ? (
-              <button
-                type="button"
-                className="desk-ghost"
-                onClick={() => pickDecision("REJECTED")}
               >
-                Undo
+                {shortlisted ? (
+                  <Check className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
+                ) : (
+                  <UserCheck
+                    size={14}
+                    strokeWidth={1.75}
+                    aria-hidden="true"
+                  />
+                )}
+                {shortlisted ? "Shortlisted" : "Shortlist"}
               </button>
             ) : (
-              // Only Reject here. The shortlist action is the labelled button
-              // beside it — two controls both reading "Shortlist" on one card,
-              // writing to different stores, is what made the first TC-R-004
-              // run untestable.
-              <button
-                type="button"
-                className="desk-ghost"
-                onClick={() => pickDecision("REJECTED")}
-              >
-                Reject
-              </button>
-            )}
-          </div>
-        )}
-        <button type="button" className="desk-ghost" onClick={onOpen}>
-          View More Details
-          <ChevronDown
-            size={12}
-            strokeWidth={2}
-            absoluteStrokeWidth
-            aria-hidden="true"
-          />
-        </button>
-        {showTriage ? (
-          // PROJECT CONTEXT (T-149). This writes TalentRequestMatch.decision
-          // through setMatchDecisionAction, keyed on requestId +
-          // candidateUserId — no ProgramMember, no cohort, so it works for
-          // every track. `decision` is read back from the persisted row, so
-          // the state survives reload and a different browser rather than
-          // living in React.
-          //
-          // The legacy cart button below is deliberately NOT rendered here:
-          // it writes RecruiterShortlistItem (or localStorage) and would be a
-          // second, differently-persisted "shortlist" on the same card.
-          <button
-            type="button"
-            aria-pressed={decision === "SHORTLISTED"}
-            aria-label={
-              decision === "SHORTLISTED" ? "In shortlist" : "Add to shortlist"
-            }
-            title={
-              decision === "SHORTLISTED" ? "In shortlist" : "Add to shortlist"
-            }
-            onClick={() => pickDecision("SHORTLISTED")}
-            className={cn(
-              buttonVariants({ variant: "secondary", size: "lg" }),
-              "shrink-0 gap-1.5 desk-pod",
-              decision === "SHORTLISTED" && "desk-pod--on",
-            )}
-          >
-            {decision === "SHORTLISTED" ? (
-              <X className="size-3.5" aria-hidden="true" />
-            ) : (
-              <UserCheck
-                size={14}
-                strokeWidth={2}
-                absoluteStrokeWidth
-                aria-hidden="true"
+              // No project = no TalentRequestMatch row to decide on, so the desk
+              // keeps its existing device/cart behaviour untouched.
+              <ShortlistButton
+                candidateRef={match.candidateRef}
+                programMemberId={match.programMemberId}
+                initialShortlisted={match.shortlisted ?? false}
+                jobRole={match.jobRole}
+                totalScore={match.score}
+                displayName={match.displayName}
+                skills={e.skills ?? []}
+                snapshot={match}
+                onToggle={onCartToggle}
+                className={cn(
+                  "desk-row__btn desk-row__btn--primary",
+                  match.shortlisted && "is-on",
+                )}
+                podLabel
               />
             )}
-            {decision === "SHORTLISTED" ? "In shortlist" : "Add to shortlist"}
-          </button>
-        ) : (
-          // No project = no TalentRequestMatch row to decide on, so the desk
-          // keeps its existing device/cart behaviour untouched.
-          <ShortlistButton
-            candidateRef={match.candidateRef}
-            programMemberId={match.programMemberId}
-            initialShortlisted={match.shortlisted ?? false}
-            jobRole={match.jobRole}
-            totalScore={match.score}
-            displayName={match.displayName}
-            skills={e.skills ?? []}
-            snapshot={match}
-            onToggle={onCartToggle}
-            className={cn("desk-pod", match.shortlisted && "desk-pod--on")}
-            podLabel
-          />
-        )}
-        {/*
-          "Request an intro" is deliberately not on this card.
+            {/* "Request an intro" stays off the desk row on purpose: the
+                recruiter reads the profile before asking for an introduction.
+                `RequestIntroButton` still renders in `MatchCard`. */}
+          </div>
+        </header>
 
-          The button, its server action and the whole engagement flow are
-          untouched — `RequestIntroButton` still renders in `MatchCard`, which
-          is what the guest-matches and request pages use. Only the Scout
-          desk's own card stops offering it, so the recruiter reads the profile
-          before asking for an introduction rather than firing one off the
-          results list.
-        */}
+        {skills.length > 0 && (
+          <ul className="desk-row__skills" aria-label="Skills">
+            {shownSkills.map((s) => {
+              const hit = skillHighlighted(s, needles);
+              return (
+                <li key={s} className={cn("desk-row__chip", hit && "is-hit")}>
+                  {hit && <Check className="size-3" strokeWidth={1.75} aria-hidden="true" />}
+                  {s}
+                </li>
+              );
+            })}
+            {skills.length > shownSkills.length && (
+              <li className="desk-row__chip desk-row__chip--more">
+                +{skills.length - shownSkills.length}
+              </li>
+            )}
+          </ul>
+        )}
+
+        <p className="desk-row__summary">
+          {/* The sparkle alone marks the AI summary; the words repeated on
+              every row were noise. Screen readers still hear the label. */}
+          <span className="desk-row__summary-label" title="AI summary">
+            {/* A line icon rather than ai-summary-sparkle.svg: that file is
+                drawn at a 2px stroke on a 15px box and read as bold here. */}
+            <Sparkles size={15} strokeWidth={1.75} aria-hidden="true" />
+            <span className="sr-only">AI summary:</span>
+          </span>
+          {summary}
+        </p>
       </div>
     </article>
   );

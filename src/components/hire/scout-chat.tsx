@@ -9,10 +9,16 @@ import {
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Sparkles } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { suggestChips } from "@/features/hire/scout-chips";
 import { detectSpokenBrief } from "@/features/hire/spoken-brief";
-import { NO_FLAGS, type SpokenBriefFlags } from "@/features/hire/hire-brief";
+import {
+  NO_FLAGS,
+  REVIEW_MIN_ELEMENTS,
+  briefElementCount,
+  mergeBriefPatch,
+  type SpokenBriefFlags,
+} from "@/features/hire/hire-brief";
 import { toast } from "sonner";
 import {
   applyHireFiltersAction,
@@ -34,7 +40,13 @@ import { MatchResults } from "@/components/hire/match-results";
 import {
   HireFilterDialog,
   filterSummary,
+  mergeFilterDraft,
+  specToFilterDraft,
 } from "@/components/hire/hire-filter-dialog";
+import {
+  SearchReviewCard,
+  type ReviewCount,
+} from "@/components/hire/search-review-card";
 import { CandidateInspector } from "@/components/hire/candidate-inspector";
 import { GapReport } from "@/components/hire/gap-report";
 import {
@@ -103,6 +115,8 @@ type RecentRequest = {
 type Props = {
   /** Persist turns as a TalentRequest. False for guests and pending recruiters. */
   persist?: boolean;
+  /** The signed-in recruiter's name, for their initial beside their turns. */
+  viewerName?: string | null;
   initialRequestId: string | null;
   initialMessages: Msg[];
   initialSpec: JobSpec;
@@ -215,8 +229,32 @@ const LIVE_BRIEF_MIN_CHARS = 3;
 const CHIP_PROTOCOL = /^(skip|salary|action|edit):/i;
 
 type LiveBriefResponse =
-  | { ok: true; data: { flags: SpokenBriefFlags } }
+  | { ok: true; data: { specPatch: JobSpec; flags: SpokenBriefFlags } }
   | { ok: false; message: string; disabled?: boolean };
+
+type MatchCountResponse =
+  | { ok: true; data: { count: number; partial: boolean } }
+  | { ok: false; message: string };
+
+/**
+ * A long first search, paused for review before it runs. "reading" while the
+ * brief's Gemini parse is still on its way (Search was pressed before the
+ * debounced parse landed); "ready" once the card can show what was read.
+ */
+type Review =
+  | { text: string; status: "reading" }
+  | { text: string; status: "ready"; spec: JobSpec; edited: boolean };
+
+/** How long Search waits on a parse before giving up and sending as usual. */
+const REVIEW_READ_TIMEOUT_MS = 6000;
+
+/** What `send` should do beyond a normal Scout turn. */
+type SendOpts = {
+  /** Run the search after this turn even if Scout would ask a question first. */
+  forceSearch?: boolean;
+  /** Filters the recruiter set in the review card's dialog, applied on top. */
+  filterSpec?: JobSpec;
+};
 
 function toLpa(rupees: number): string {
   const lakhs = rupees / 100_000;
@@ -291,6 +329,7 @@ function specRows(spec: JobSpec): { label: string; value: string }[] {
 
 export function ScoutChat({
   persist = false,
+  viewerName = null,
   initialRequestId,
   initialMessages,
   initialSpec,
@@ -329,6 +368,15 @@ export function ScoutChat({
   );
   /** The server has no key: stop asking for this page view. */
   const liveDisabled = useRef(false);
+  /** The last live parse as a spec patch, and the exact text it read. */
+  const [liveRead, setLiveRead] = useState<{ text: string; patch: JobSpec } | null>(
+    null,
+  );
+  /** A long first search waiting on Run search. Null when nothing is paused. */
+  const [review, setReview] = useState<Review | null>(null);
+  const [reviewCount, setReviewCount] = useState<ReviewCount>({ state: "loading" });
+  /** Bumped by Reset so a parse still in flight cannot reopen the card. */
+  const reviewSeq = useRef(0);
   const [pending, startTransition] = useTransition();
   const [searched, setSearched] = useState(
     initialSearched || (results?.length ?? 0) > 0,
@@ -627,9 +675,9 @@ export function ScoutChat({
       landing:
         view === "scout" &&
         !freshChat &&
-        !(searched || messages.some((m) => m.role === "user")),
+        !(searched || review != null || messages.some((m) => m.role === "user")),
     });
-  }, [searched, matchCount, deskGap, setDesk, view, messages, freshChat]);
+  }, [searched, matchCount, deskGap, setDesk, view, messages, freshChat, review]);
 
   // The nav card names the open project; off-project it keeps its own
   // "Current Project" label.
@@ -702,7 +750,7 @@ export function ScoutChat({
       });
     });
     return () => window.cancelAnimationFrame(frame);
-  }, [messages.length, pending, searched, deskMatches.length]);
+  }, [messages.length, pending, searched, deskMatches.length, review?.status]);
 
   useEffect(() => {
     if (!detailsOpen) return;
@@ -754,9 +802,16 @@ export function ScoutChat({
    * value behind it ("Within 30 days" → "30"). It drives the bubble and what is
    * stored; the engine always parses `value`.
    */
-  function send(value: string, label?: string) {
+  function send(value: string, label?: string, opts: SendOpts = {}) {
     const message = value.trim();
     if (!message || pending) return;
+    const force = opts.forceSearch === true;
+    // The review dialog edits only its own fields; lay exactly those over
+    // whatever this turn's spec turns out to be.
+    const withFilters = (base: JobSpec): JobSpec =>
+      opts.filterSpec
+        ? mergeFilterDraft(base, specToFilterDraft(opts.filterSpec))
+        : base;
     if (message === "action:search") {
       runSearch(undefined, searched);
       return;
@@ -789,7 +844,8 @@ export function ScoutChat({
         setRequestId(res.data.requestId);
         setSessionId(res.data.sessionId);
         const openedSession = res.data.sessionId !== sessionId;
-        setSpec(res.data.spec);
+        const filtered = opts.filterSpec ? withFilters(res.data.spec) : null;
+        setSpec(filtered ?? res.data.spec);
         setSummary(res.data.summary);
         setReadyToSearch(res.data.readyToSearch);
         if (!hideThread) {
@@ -806,11 +862,19 @@ export function ScoutChat({
         // chat; if we kicked search off after it, the first brief never
         // wrote matches and the new page said "No matches yet".
         // On the results screen, a new query always re-runs search after parse.
-        if (res.data.action === "search" || hideThread) {
-          const match = await runMatchAction({
-            requestId: res.data.requestId,
-            sessionId: res.data.sessionId,
-          });
+        if (res.data.action === "search" || hideThread || force) {
+          // Filters edited on the review card are saved with the search they
+          // ran, through the same action the results' Edit filters uses.
+          const match = filtered
+            ? await applyHireFiltersAction({
+                requestId: res.data.requestId,
+                sessionId: res.data.sessionId,
+                spec: filtered,
+              })
+            : await runMatchAction({
+                requestId: res.data.requestId,
+                sessionId: res.data.sessionId,
+              });
           if (!match.ok) {
             toast.error(match.message);
           } else {
@@ -828,7 +892,9 @@ export function ScoutChat({
         // nav card both land on this search. Same session: refresh in place.
         if (!requestId || openedSession) {
           router.replace(`/hire/${res.data.requestId}?session=${res.data.sessionId}`);
-        } else if (res.data.action === "search" || hideThread) router.refresh();
+        } else if (res.data.action === "search" || hideThread || force) {
+          router.refresh();
+        }
         return;
       }
 
@@ -845,12 +911,13 @@ export function ScoutChat({
         toast.error(res.message);
         return;
       }
-      setSpec(res.data.spec);
+      const guestSpec = withFilters(res.data.spec);
+      setSpec(guestSpec);
       setSummary(res.data.summary);
       setReadyToSearch(res.data.readyToSearch);
       if (hideThread) {
         writeGuestSession({
-          spec: res.data.spec,
+          spec: guestSpec,
           messages,
           summary: res.data.summary,
           readyToSearch: res.data.readyToSearch,
@@ -867,7 +934,7 @@ export function ScoutChat({
             },
           ];
           writeGuestSession({
-            spec: res.data.spec,
+            spec: guestSpec,
             messages: next,
             summary: res.data.summary,
             readyToSearch: res.data.readyToSearch,
@@ -878,8 +945,8 @@ export function ScoutChat({
       }
       // Same rule as the signed-in path: the engine says when to search.
       // After results, a new NL query always re-runs.
-      if (res.data.action === "search" || hideThread) {
-        runSearch(res.data.spec, hideThread);
+      if (res.data.action === "search" || hideThread || force) {
+        runSearch(guestSpec, hideThread);
       }
     });
   }
@@ -1055,7 +1122,8 @@ export function ScoutChat({
   const lastMsg = messages[lastIndex];
   const activeOptions =
     lastMsg?.role === "assistant" ? (lastMsg.options ?? []) : [];
-  const askOpen = lastMsg?.role === "assistant" && !pending && !openMatch;
+  const askOpen =
+    lastMsg?.role === "assistant" && !pending && !openMatch && review == null;
   // Same chips the conversation engine sent for this turn. Show me is
   // `action:search` and only lands when the brief is searchable — do not
   // invent extra pills here. An empty options list still gets the ladder so
@@ -1099,6 +1167,7 @@ export function ScoutChat({
         if (controller.signal.aborted) return;
         if (body.ok) {
           setLiveBrief(body.data.flags);
+          setLiveRead({ text: q, patch: body.data.specPatch });
           setLiveState("ok");
         } else {
           if (body.disabled) liveDisabled.current = true;
@@ -1114,7 +1183,189 @@ export function ScoutChat({
     };
   }, [text]);
 
-  const talked = messages.some((m) => m.role === "user") || searched;
+  // ─── Long-brief review ──────────────────────────────────────────────────────
+
+  /** Count the matches for the spec on the card. Newest spec wins. */
+  const reviewSpec = review?.status === "ready" ? review.spec : null;
+  useEffect(() => {
+    if (!reviewSpec) return;
+    const controller = new AbortController();
+    fetch("/api/hire/match-count", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ spec: reviewSpec }),
+      signal: controller.signal,
+    })
+      .then((res) => res.json() as Promise<MatchCountResponse>)
+      .then((body) => {
+        if (controller.signal.aborted) return;
+        setReviewCount(
+          body.ok
+            ? { state: "done", value: body.data.count, partial: body.data.partial }
+            : { state: "error" },
+        );
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setReviewCount({ state: "error" });
+      });
+    return () => controller.abort();
+  }, [reviewSpec]);
+
+  /**
+   * "I have found N matching candidates" above the results: the same pool count
+   * the review card shows, for the spec on the desk. Keyed by the spec so a
+   * stale number is never shown for a newer search while the next one loads.
+   */
+  const foundKey = searched ? JSON.stringify(spec) : null;
+  const [found, setFound] = useState<{ key: string; count: number | null } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!foundKey) return;
+    const controller = new AbortController();
+    fetch("/api/hire/match-count", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ spec: JSON.parse(foundKey) as JobSpec }),
+      signal: controller.signal,
+    })
+      .then((res) => res.json() as Promise<MatchCountResponse>)
+      .then((body) => {
+        if (controller.signal.aborted) return;
+        setFound({ key: foundKey, count: body.ok ? body.data.count : null });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setFound({ key: foundKey, count: null });
+      });
+    return () => controller.abort();
+  }, [foundKey]);
+  const foundReady = found != null && found.key === foundKey;
+  // The pool count when it came back; the shown results if it could not.
+  const foundCount = foundReady ? (found.count ?? matchCount) : null;
+
+  /** Show the card for this brief, merged over anything already captured. */
+  function openReview(q: string, patch: JobSpec) {
+    setReviewCount({ state: "loading" });
+    setReview({
+      text: q,
+      status: "ready",
+      spec: mergeBriefPatch(spec, patch),
+      edited: false,
+    });
+  }
+
+  /** One parse for a brief that was sent before its debounced parse landed. */
+  async function readBrief(q: string): Promise<JobSpec | null> {
+    const controller = new AbortController();
+    const timer = window.setTimeout(
+      () => controller.abort(),
+      REVIEW_READ_TIMEOUT_MS,
+    );
+    try {
+      const res = await fetch("/api/hire/brief", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: q }),
+        signal: controller.signal,
+      });
+      const body = (await res.json()) as LiveBriefResponse;
+      if (body.ok) return body.data.specPatch;
+      if (body.disabled) liveDisabled.current = true;
+      return null;
+    } catch {
+      return null;
+    } finally {
+      window.clearTimeout(timer);
+    }
+  }
+
+  /**
+   * Search pressed with text. A long first brief (4+ parsed elements) pauses on
+   * the review card; everything else is sent exactly as before. Refinements on
+   * the results screen never pause.
+   */
+  function submitComposer() {
+    const q = text.trim();
+    if (!q) {
+      runSearch(undefined, searched);
+      return;
+    }
+    if (pending || searched || review?.status === "reading" || CHIP_PROTOCOL.test(q)) {
+      send(text);
+      return;
+    }
+    const ready = liveRead?.text === q ? liveRead.patch : null;
+    if (ready) {
+      if (briefElementCount(ready) >= REVIEW_MIN_ELEMENTS) {
+        setText("");
+        setLiveBrief(null);
+        openReview(q, ready);
+      } else {
+        setReview(null);
+        send(text);
+      }
+      return;
+    }
+    // No live parsing this page view (no key, or the last parse failed): never
+    // hold a search on a parse that is unlikely to come.
+    if (liveDisabled.current || liveState === "fallback") {
+      setReview(null);
+      send(text);
+      return;
+    }
+    // Pressed before the debounced parse landed (a paste, then Enter). Hold
+    // the press as Scout's usual "thinking" turn while it does, then either
+    // open the card or carry on into the normal send.
+    const seq = ++reviewSeq.current;
+    setText("");
+    setLiveBrief(null);
+    setReview({ text: q, status: "reading" });
+    void readBrief(q).then((patch) => {
+      if (seq !== reviewSeq.current) return;
+      if (patch && briefElementCount(patch) >= REVIEW_MIN_ELEMENTS) {
+        openReview(q, patch);
+        return;
+      }
+      setReview(null);
+      send(q);
+    });
+  }
+
+  /** Run search on the card: save the brief and go straight to results. */
+  function runReview() {
+    if (review?.status !== "ready" || pending) return;
+    const { text: q, spec: reviewed, edited } = review;
+    reviewSeq.current += 1;
+    setReview(null);
+    send(q, undefined, {
+      forceSearch: true,
+      filterSpec: edited ? reviewed : undefined,
+    });
+  }
+
+  /** Edit filters / Edit criteria on the card: update it, recount, no search. */
+  function applyReviewFilters(next: JobSpec) {
+    setFiltersOpen(false);
+    setReviewCount({ state: "loading" });
+    setReview((r) =>
+      r?.status === "ready" ? { ...r, spec: next, edited: true } : r,
+    );
+  }
+
+  /** Reset search on the card: drop the paused brief and start over. */
+  function resetReview() {
+    reviewSeq.current += 1;
+    beginReturn(() => {
+      setReview(null);
+      setText("");
+      setLiveBrief(null);
+      setFiltersOpen(false);
+      promptRef.current?.focus();
+    });
+  }
+
+  const talked =
+    messages.some((m) => m.role === "user") || searched || review != null;
   // Live parse working: it reads the composer, and earlier messages are already
   // in `spec` (the turn merged the same parse). Not working: the local detector
   // over everything the recruiter said, as before. Between a keystroke and the
@@ -1234,6 +1485,8 @@ export function ScoutChat({
     setActiveSearchId("");
     setText("");
     setLiveBrief(null);
+    reviewSeq.current += 1;
+    setReview(null);
     setDetailsOpen(false);
     setFiltersOpen(false);
     setOpenMatch(null);
@@ -1688,6 +1941,33 @@ export function ScoutChat({
                   change it. "Edit filters" belongs here beside the criteria it
                   edits — as a loose button by the composer it read as an
                   unrelated floating link. */}
+              <p className="hire-found" role="status">
+                {foundReady ? (
+                  foundCount != null && (
+                    <>
+                      I have found{" "}
+                      <strong>{foundCount.toLocaleString("en-IN")}</strong>{" "}
+                      matching {foundCount === 1 ? "candidate" : "candidates"}
+                      {/* The list is the ranked top slice of that pool. Say so,
+                          or "2,768 found" over a list of 60 reads as a bug. */}
+                      {foundCount > deskMatches.length && deskMatches.length > 0 && (
+                        <span className="hire-found__sub">
+                          Showing the top {deskMatches.length} candidates
+                        </span>
+                      )}
+                    </>
+                  )
+                ) : (
+                  <>
+                    I have found{" "}
+                    <span
+                      className="hire-review__count-skel hire-found__skel"
+                      aria-label="Counting matching candidates"
+                    />{" "}
+                    matching candidates
+                  </>
+                )}
+              </p>
               <div className="hire-filter-bar">
                 <p className="hire-filter-bar__title">Filters from this search</p>
                 <div className="hire-filter-bar__chips">
@@ -1749,6 +2029,7 @@ export function ScoutChat({
                 )}
                 <MatchResults
                   desk
+                  totalFound={foundCount}
                   matches={visibleDeskMatches}
                   samples={deskSamples}
                   sampleDemand={{
@@ -1832,15 +2113,7 @@ export function ScoutChat({
                       m.role === "user" && "scout-turn--user",
                     )}
                   >
-                    {m.role === "assistant" && (
-                      // `scout-mark--id` gives this the header's identity:
-                      // same Sparkles, same solid orange plate. Plain
-                      // `scout-mark` is the shared geometry, still used by the
-                      // user's "You" chip and by the loader core.
-                      <span className="scout-mark scout-mark--id">
-                        <Sparkles className="size-3" />
-                      </span>
-                    )}
+                    {m.role === "assistant" && <ScoutAvatar />}
                     <div className="scout-turn__body">
                       <p
                         className={
@@ -1880,13 +2153,49 @@ export function ScoutChat({
                         </div>
                       )}
                     </div>
-                    {m.role === "user" && (
-                      <span className="scout-mark">You</span>
-                    )}
+                    {m.role === "user" && <ViewerAvatar name={viewerName} />}
                   </div>
                   </Fragment>
                 );
               })}
+
+              {/* A long first brief, paused before it runs: the recruiter's
+                  words as their turn, then Scout's reading of them. While the
+                  parse is still on its way this is Scout's usual thinking
+                  turn, so a brief that turns out short carries on into the
+                  normal send without anything on screen changing. */}
+              {review && (
+                <>
+                  <div className="scout-turn scout-turn--user">
+                    <div className="scout-turn__body">
+                      <p className="scout-turn__text">{review.text}</p>
+                    </div>
+                    <ViewerAvatar name={viewerName} />
+                  </div>
+                  {review.status === "reading" ? (
+                    <div className="scout-turn">
+                      <ScoutLoader />
+                      <p className="scout-turn__text scout-loader__label">
+                        Looking through verified work…
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="scout-turn">
+                      <ScoutAvatar />
+                      <div className="scout-turn__body">
+                        <SearchReviewCard
+                          spec={review.spec}
+                          count={reviewCount}
+                          pending={pending}
+                          onEdit={() => setFiltersOpen(true)}
+                          onRun={runReview}
+                          onReset={resetReview}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
 
               {pending && (
                 <div className="scout-turn">
@@ -1972,8 +2281,7 @@ export function ScoutChat({
           className="scout-composer"
           onSubmit={(e) => {
             e.preventDefault();
-            if (text.trim()) send(text);
-            else runSearch(undefined, searched);
+            submitComposer();
           }}
         >
           <div className="scout-composer__row">
@@ -1994,18 +2302,21 @@ export function ScoutChat({
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
-                    if (text.trim()) send(text);
-                    else runSearch(undefined, searched);
+                    submitComposer();
                   }
                 }}
                 placeholder="Type here...."
-                disabled={pending}
+                disabled={pending || review?.status === "reading"}
                 maxLength={2000}
               />
             </div>
             <button
               type="submit"
-              disabled={pending || (persist && !requestId && !text.trim())}
+              disabled={
+                pending ||
+                review?.status === "reading" ||
+                (persist && !requestId && !text.trim())
+              }
               className="scout-send"
             >
               {/* An inline SVG, not the 500×500 search-glass.png this used to
@@ -2085,28 +2396,45 @@ export function ScoutChat({
       <HireFilterDialog
         open={filtersOpen}
         onOpenChange={setFiltersOpen}
-        spec={spec}
+        // On the review card the dialog edits the paused brief and recounts;
+        // it never runs a search from there.
+        spec={reviewSpec ?? spec}
         pending={pending}
-        onApply={applyFilters}
+        onApply={reviewSpec ? applyReviewFilters : applyFilters}
       />
     </section>
   );
 }
 
+/** Klymb AI's mark beside Scout's turns: a K on the brand's dark plate. */
+function ScoutAvatar() {
+  return (
+    <span className="scout-mark scout-mark--id scout-mark--k" aria-hidden="true">
+      K
+    </span>
+  );
+}
+
+/** The recruiter's initial beside their turns; a person glyph for guests. */
+function ViewerAvatar({ name }: { name: string | null }) {
+  const initial = name?.trim().charAt(0).toUpperCase() || null;
+  return (
+    <span className="scout-mark scout-mark--viewer" aria-hidden="true">
+      {initial ?? <User className="size-3.5" />}
+    </span>
+  );
+}
+
+/**
+ * Scout thinking: the K mark inside a teal arc that sweeps round it, with the
+ * label shimmering. Replaces the shard burst, whose clip-path fragments read
+ * as stray squares at this size.
+ */
 function ScoutLoader() {
   return (
-    <span className="scout-loader" aria-label="Scout is thinking">
-      <span className="scout-loader__burst" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-      </span>
-      <span className="scout-mark scout-loader__core">
-        <Sparkles className="size-3" />
-      </span>
+    <span className="scout-loader" role="status" aria-label="Scout is thinking">
+      <span className="scout-loader__ring" aria-hidden="true" />
+      <ScoutAvatar />
     </span>
   );
 }

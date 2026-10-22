@@ -6,6 +6,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  REVIEW_MIN_ELEMENTS,
+  briefElementCount,
   briefFlags,
   geminiBriefSchema,
   mergeBriefPatch,
@@ -363,6 +365,40 @@ async function main() {
     const c = await extractHireBrief(`  ${text.toUpperCase()} `, { apiKey: "k", fetchImpl: impl });
     assert(a.ok && b.ok && c.ok, "all ok");
     assert(calls.length === 1, `expected 1 call, got ${calls.length}`);
+  });
+
+  console.log("\nlong-brief review");
+
+  await test("the concept brief clears the review threshold", () => {
+    const text =
+      "ai engineer with 4+ years experience willing to locate to bay area san francisco and has expertise in java, python and springboot";
+    const patch = patchOf(
+      {
+        isHiringBrief: true,
+        title: "AI engineer",
+        locationCity: "San Francisco",
+        minExperience: 4,
+        mustHaveStack: ["java", "python", "springboot"],
+      },
+      text,
+    );
+    // role + city + experience + three skills
+    assert(briefElementCount(patch) === 6, `got ${briefElementCount(patch)}`);
+    assert(briefElementCount(patch) >= REVIEW_MIN_ELEMENTS, "should pause for review");
+  });
+
+  await test("a short brief searches straight away", () => {
+    const patch: JobSpec = { title: "React developer", locationCity: "Pune" };
+    assert(briefElementCount(patch) < REVIEW_MIN_ELEMENTS, "should not pause");
+  });
+
+  await test("years and seniority are one experience element", () => {
+    const patch: JobSpec = { seniority: "SENIOR", minExperience: 5, maxExperience: 8 };
+    assert(briefElementCount(patch) === 1, `got ${briefElementCount(patch)}`);
+  });
+
+  await test("an empty patch counts nothing", () => {
+    assert(briefElementCount({}) === 0, "empty is zero");
   });
 
   console.log("\nboundaries");

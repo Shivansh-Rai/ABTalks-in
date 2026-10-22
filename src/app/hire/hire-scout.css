@@ -939,214 +939,56 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
 
 .scout-loader {
   position: relative;
-  width: 40px;
-  height: 40px;
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
   flex: none;
 }
 
-.scout-loader__core {
+/* A teal arc sweeping round the K mark: one smooth, continuous motion that
+   reads as working, not as a burst. */
+.scout-loader__ring {
   position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  animation: scout-crack 1.7s cubic-bezier(0.42, 0.02, 0.28, 1) infinite;
+  inset: -4px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(3, 83, 95, 0) 0deg, rgba(3, 83, 95, 0.15) 120deg, #03535f 330deg, rgba(3, 83, 95, 0) 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px));
+  animation: scout-ring 1s linear infinite;
 }
 
-.scout-loader__burst {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
+.scout-loader .scout-mark--id {
+  position: relative;
+  animation: none;
 }
 
-.scout-loader__burst i {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 5px;
-  height: 5px;
-  margin: -2.5px 0 0 -2.5px;
-  background: var(--h-primary);
-  clip-path: polygon(50% 0, 100% 38%, 82% 100%, 18% 100%, 0 38%);
-  box-shadow: 0 0 6px rgba(3, 83, 95, 0.85);
-  opacity: 0;
-  animation: scout-shard-a 1.7s ease-in-out infinite;
-}
-
-.scout-loader__burst i:nth-child(2) {
-  width: 4px;
-  height: 4px;
-  animation-name: scout-shard-b;
-  animation-delay: 70ms;
-}
-
-.scout-loader__burst i:nth-child(3) {
-  width: 3px;
-  height: 6px;
-  animation-name: scout-shard-c;
-  animation-delay: 40ms;
-}
-
-.scout-loader__burst i:nth-child(4) {
-  width: 6px;
-  height: 3px;
-  animation-name: scout-shard-d;
-  animation-delay: 110ms;
-}
-
-.scout-loader__burst i:nth-child(5) {
-  width: 3px;
-  height: 3px;
-  animation-name: scout-shard-e;
-  animation-delay: 20ms;
-}
-
-.scout-loader__burst i:nth-child(6) {
-  width: 4px;
-  height: 5px;
-  animation-name: scout-shard-f;
-  animation-delay: 90ms;
-}
-
+/* The label shimmers left to right, in step with the arc. */
 .scout-loader__label {
-  color: var(--h-gray-500);
+  align-self: center;
+  margin: 0;
   font-size: 13px;
+  font-weight: 500;
+  color: var(--h-gray-500);
+  background: linear-gradient(90deg, var(--h-gray-500) 0%, var(--h-gray-500) 40%, var(--h-primary) 50%, var(--h-gray-500) 60%, var(--h-gray-500) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: scout-label-shimmer 1.8s linear infinite;
 }
 
-@keyframes scout-crack {
-  0%,
-  100% {
-    transform: translate(-50%, -50%) scale(1) rotate(0deg);
-    filter: drop-shadow(0 0 0 transparent);
-    opacity: 0.9;
-  }
-  18% {
-    transform: translate(-50%, -50%) scale(1.22) rotate(-12deg);
-    filter: drop-shadow(0 0 10px rgba(3, 83, 95, 0.95));
-    opacity: 1;
-  }
-  36% {
-    transform: translate(-50%, -50%) scale(0.86) rotate(8deg);
-  }
-  58% {
-    transform: translate(-50%, -50%) scale(1.12) rotate(-6deg);
-    filter: drop-shadow(0 0 8px rgba(3, 83, 95, 0.7));
-  }
-  78% {
-    transform: translate(-50%, -50%) scale(0.96) rotate(3deg);
+@keyframes scout-ring {
+  to {
+    transform: rotate(360deg);
   }
 }
 
-@keyframes scout-shard-a {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg) scale(0.3);
-    opacity: 0;
+@keyframes scout-label-shimmer {
+  from {
+    background-position: 100% 0;
   }
-  16% {
-    opacity: 1;
-  }
-  44% {
-    transform: translate(13px, -15px) rotate(42deg) scale(1);
-    opacity: 1;
-  }
-  78% {
-    transform: translate(5px, -6px) rotate(-18deg) scale(0.55);
-    opacity: 0.25;
-  }
-}
-
-@keyframes scout-shard-b {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg) scale(0.3);
-    opacity: 0;
-  }
-  14% {
-    opacity: 1;
-  }
-  46% {
-    transform: translate(-14px, -11px) rotate(-50deg) scale(1);
-    opacity: 1;
-  }
-  80% {
-    transform: translate(-6px, -4px) rotate(16deg) scale(0.5);
-    opacity: 0.2;
-  }
-}
-
-@keyframes scout-shard-c {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(20deg) scale(0.25);
-    opacity: 0;
-  }
-  18% {
-    opacity: 1;
-  }
-  48% {
-    transform: translate(9px, 14px) rotate(70deg) scale(1.1);
-    opacity: 1;
-  }
-  82% {
-    transform: translate(3px, 6px) rotate(-8deg) scale(0.45);
-    opacity: 0.2;
-  }
-}
-
-@keyframes scout-shard-d {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(-10deg) scale(0.25);
-    opacity: 0;
-  }
-  12% {
-    opacity: 1;
-  }
-  42% {
-    transform: translate(-12px, 12px) rotate(-64deg) scale(1);
-    opacity: 1;
-  }
-  76% {
-    transform: translate(-4px, 5px) rotate(22deg) scale(0.5);
-    opacity: 0.25;
-  }
-}
-
-@keyframes scout-shard-e {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg) scale(0.2);
-    opacity: 0;
-  }
-  20% {
-    opacity: 1;
-  }
-  50% {
-    transform: translate(16px, 2px) rotate(28deg) scale(0.95);
-    opacity: 0.9;
-  }
-  84% {
-    transform: translate(7px, 1px) rotate(-20deg) scale(0.4);
-    opacity: 0.15;
-  }
-}
-
-@keyframes scout-shard-f {
-  0%,
-  100% {
-    transform: translate(0, 0) rotate(0deg) scale(0.2);
-    opacity: 0;
-  }
-  15% {
-    opacity: 1;
-  }
-  40% {
-    transform: translate(-8px, -16px) rotate(-36deg) scale(1);
-    opacity: 1;
-  }
-  74% {
-    transform: translate(-3px, -7px) rotate(14deg) scale(0.45);
-    opacity: 0.2;
+  to {
+    background-position: -150% 0;
   }
 }
 
@@ -1154,15 +996,9 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-node--off {
   .scout-mark--id {
     animation: none;
   }
-  .scout-loader__core,
-  .scout-loader__burst i {
+  .scout-loader__ring,
+  .scout-loader__label {
     animation: none;
-    opacity: 1;
-    transform: translate(-50%, -50%);
-  }
-  .scout-loader__burst i {
-    transform: none;
-    opacity: 0;
   }
 }
 
@@ -17491,4 +17327,793 @@ a.hire-credits:hover { border-color: var(--h-primary); }
 .hire-attempt-opt[data-state="correct"] .hire-attempt-opt__letter {
   background: #dcfce7;
   color: #15803d;
+}
+
+/* Long-brief review card (/hire first search, 4+ parsed elements).
+   Two panels in Scout's turn: Filters with the match count, then Criteria,
+   then Reset / Run search. Chips reuse `.hire-filter-chip` from the results
+   filter bar so the card reads as the same filters the results will show. */
+.hire-review {
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+  animation: hire-results-in 320ms var(--ease) both;
+}
+
+.hire-review__panel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--h-border);
+  border-radius: 16px;
+  background: var(--h-surface);
+  animation: hire-results-in 320ms var(--ease) both;
+}
+
+.hire-review__panel + .hire-review__panel {
+  animation-delay: 80ms;
+}
+
+.hire-review__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.hire-review__lead {
+  flex: 1 1 260px;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--h-gray-700);
+}
+
+.hire-review__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--h-primary);
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-review__tag,
+html.dark:not(:has(.theme-abtalks-light)) .hire-review__edit {
+  color: var(--h-toolbar);
+}
+
+.hire-review__icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.hire-review__count {
+  color: var(--h-gray-700);
+}
+
+.hire-review__count-skel {
+  display: inline-block;
+  width: 120px;
+  height: 14px;
+  margin-left: 10px;
+  vertical-align: -2px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #eeeeef 0%, #f7f7f8 50%, #eeeeef 100%);
+  background-size: 200% 100%;
+  animation: hire-skel-shimmer 1.4s linear infinite;
+}
+
+.hire-review__edit {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 600;
+  color: var(--h-primary);
+  cursor: pointer;
+}
+
+.hire-review__edit:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.hire-review__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hire-review__word {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--h-gray-700);
+}
+
+.hire-review__more {
+  border: 0;
+  cursor: pointer;
+}
+
+.hire-review__more:hover {
+  background: #d4ebec;
+}
+
+.hire-review__empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--h-gray-500);
+}
+
+.hire-review__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 4px;
+  animation: hire-results-in 320ms var(--ease) 140ms both;
+}
+
+.hire-review__reset,
+.hire-review__run {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--ease),
+    transform 160ms var(--ease);
+}
+
+.hire-review__reset {
+  border: 0;
+  background: transparent;
+  color: var(--h-ink);
+}
+
+.hire-review__reset:hover:not(:disabled) {
+  background: var(--h-gray-100);
+}
+
+.hire-review__run {
+  border: 0;
+  background: var(--h-primary);
+  color: #ffffff;
+}
+
+.hire-review__run:hover:not(:disabled) {
+  background: var(--h-primary-hover);
+  transform: translateY(-1px);
+}
+
+.hire-review__reset:disabled,
+.hire-review__run:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.hire-review__edit:focus-visible,
+.hire-review__more:focus-visible,
+.hire-review__reset:focus-visible,
+.hire-review__run:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .hire-review__panel {
+    padding: 14px 16px;
+  }
+
+  .hire-review__lead,
+  .hire-review__word {
+    font-size: 14px;
+  }
+
+  .hire-review__actions {
+    flex-wrap: nowrap;
+  }
+
+  .hire-review__reset,
+  .hire-review__run {
+    flex: 1 1 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-review,
+  .hire-review__panel,
+  .hire-review__actions,
+  .hire-review__count-skel {
+    animation: none;
+  }
+
+  .hire-review__run:hover:not(:disabled) {
+    transform: none;
+  }
+}
+/* Turn avatars. Scout is Klymb AI's K on the brand's dark plate, with the
+   teal accent dot the `klymb.AI` wordmark uses; the recruiter is their own
+   initial on a soft teal tint, so the two sides of the thread never read as
+   the same thing. */
+.scout-mark--k {
+  position: relative;
+  background: #111414;
+  color: #ffffff;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.scout-mark--k::after {
+  content: "";
+  position: absolute;
+  right: 4px;
+  bottom: 5px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #2dd4bf;
+}
+
+.scout-mark--viewer,
+.scout-turn--user .scout-mark--viewer {
+  background: #d4ebec;
+  color: #03535f;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .scout-mark--k {
+  background: #f4f4f4;
+  color: #111414;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .scout-mark--viewer {
+  background: #02434d;
+  color: #e7f2f3;
+}
+
+/* New search / New project: secondary actions, sized as such. They were
+   41px pills at 14px type, heavier than the filters they sit above. */
+@media (min-width: 901px) {
+  .hire-app--results .scout__toolbar .scout-filters {
+    height: calc(32px / var(--hire-zoom, 1));
+    padding: 0 calc(12px / var(--hire-zoom, 1));
+    border-radius: calc(8px / var(--hire-zoom, 1));
+    font-size: calc(13px / var(--hire-zoom, 1));
+    line-height: calc(18px / var(--hire-zoom, 1));
+  }
+
+  .hire-app--results .scout__toolbar {
+    gap: calc(8px / var(--hire-zoom, 1));
+  }
+}
+
+/* "I have found N matching candidates" above the results' filter bar. */
+.hire-found {
+  margin: 0 0 12px;
+  font-family: var(--font-outfit), sans-serif;
+  /* Divided by the desk zoom so it paints at 18px, like the toolbar above. */
+  font-size: calc(18px / var(--hire-zoom, 1));
+  line-height: calc(24px / var(--hire-zoom, 1));
+  font-weight: 500;
+  color: var(--h-gray-700);
+}
+
+.hire-found strong {
+  font-weight: 700;
+  color: var(--h-primary);
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-found strong {
+  color: var(--h-toolbar);
+}
+
+.hire-found:empty {
+  display: none;
+}
+
+.hire-found__skel {
+  width: 56px;
+  height: 16px;
+  margin: 0 2px;
+  vertical-align: -2px;
+}
+
+@media (max-width: 640px) {
+  .hire-found {
+    font-size: 16px;
+    line-height: 22px;
+  }
+}
+
+/* --- Results as one divided panel -------------------------------------------
+   One white sheet with a row per candidate, divided by hairlines, the pager as
+   its footer. Replaces a stack of separate shadowed cards, which read as noise
+   at ten per page. Row content is unchanged from the card; only the layout is.
+
+   --u is one painted pixel. The results shell is zoomed on desktop
+   (zoom: var(--hire-zoom), 0.75 at 1440px), so there it is divided back out
+   and every size below paints at the value written; on phones there is no
+   zoom and it is a plain pixel. */
+.desk-list {
+  --u: 1px;
+  overflow: hidden;
+  border: 1px solid var(--h-border);
+  border-radius: calc(16 * var(--u));
+  background: var(--h-surface);
+}
+
+@media (min-width: 901px) {
+  .hire-app--results .desk-list {
+    --u: calc(1px / var(--hire-zoom, 1));
+  }
+}
+
+.desk-list:empty {
+  display: none;
+}
+
+.desk-list__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-list__rows > li + li {
+  border-top: 1px solid var(--h-border);
+}
+
+.desk-list .scout-pager {
+  margin: 0;
+  padding: calc(12 * var(--u)) calc(20 * var(--u));
+  border-top: 1px solid var(--h-border);
+  background: var(--h-peach-wash);
+}
+
+.desk-list .scout-pager__n,
+.desk-list .scout-pager__step {
+  min-width: calc(32 * var(--u));
+  height: calc(32 * var(--u));
+  border-radius: calc(8 * var(--u));
+  font-size: calc(13 * var(--u));
+}
+
+.desk-list .scout-pager__count {
+  font-size: calc(13 * var(--u));
+}
+
+/* A row. Hover is a whisper of teal; the open candidate gets a tinted row and
+   a teal bar on its leading edge, so the list says who the panel is showing. */
+.desk-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: calc(40 * var(--u)) minmax(0, 1fr);
+  gap: calc(16 * var(--u));
+  padding: calc(18 * var(--u)) calc(22 * var(--u));
+  transition: background-color 150ms var(--ease);
+}
+
+.desk-row.is-clickable {
+  cursor: pointer;
+}
+
+.desk-row.is-clickable:hover {
+  background: #f7fbfb;
+}
+
+.desk-row.is-selected,
+.desk-row.is-selected:hover {
+  background: var(--h-peach-wash);
+}
+
+.desk-row.is-selected::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--h-primary);
+}
+
+.desk-row__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(40 * var(--u));
+  height: calc(40 * var(--u));
+  border-radius: 50%;
+  background: #d4ebec;
+  color: #03535f;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: calc(16 * var(--u));
+  font-weight: 600;
+}
+
+.desk-row__main {
+  display: grid;
+  gap: calc(12 * var(--u));
+  min-width: 0;
+}
+
+.desk-row__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(12 * var(--u)) calc(16 * var(--u));
+}
+
+.desk-row__who {
+  display: grid;
+  gap: calc(4 * var(--u));
+  min-width: 0;
+}
+
+.desk-row__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(6 * var(--u)) calc(8 * var(--u));
+  min-width: 0;
+}
+
+.desk-row__name {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: calc(18 * var(--u));
+  line-height: calc(24 * var(--u));
+  font-weight: 600;
+  color: var(--h-ink);
+}
+
+.desk-row__open {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.desk-row__open:hover {
+  color: var(--h-primary);
+}
+
+.desk-row__open:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.desk-row__badge {
+  display: inline-flex;
+  align-items: center;
+  height: calc(20 * var(--u));
+  padding: 0 calc(8 * var(--u));
+  border-radius: 999px;
+  background: var(--h-primary);
+  color: #ffffff;
+  font-size: calc(11 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.desk-row .hire-open-to-work,
+.desk-row .desk-badge {
+  height: calc(20 * var(--u));
+  font-size: calc(11 * var(--u));
+}
+
+.desk-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: calc(13 * var(--u));
+  line-height: calc(18 * var(--u));
+  color: var(--h-gray-700);
+}
+
+.desk-row__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(5 * var(--u));
+}
+
+/* Facts read as one line, separated by a dot rather than wide gaps. */
+.desk-row__meta li + li::before {
+  content: "";
+  width: 3px;
+  height: 3px;
+  margin: 0 calc(10 * var(--u));
+  border-radius: 50%;
+  background: var(--h-gray-400);
+}
+
+.desk-row__meta svg {
+  width: calc(14 * var(--u));
+  height: calc(14 * var(--u));
+  color: var(--h-primary);
+  flex: none;
+}
+
+/* Actions: save (icon), reject (quiet), shortlist (the one primary). */
+.desk-row__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: calc(6 * var(--u));
+}
+
+.desk-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(32 * var(--u));
+  height: calc(32 * var(--u));
+  padding: 0;
+  border: 1px solid var(--h-border);
+  border-radius: calc(8 * var(--u));
+  background: var(--h-surface);
+  color: var(--h-gray-700);
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    color 150ms var(--ease);
+}
+
+.desk-save svg {
+  width: calc(16 * var(--u));
+  height: calc(16 * var(--u));
+}
+
+.desk-save:hover {
+  border-color: var(--h-primary);
+  color: var(--h-primary);
+}
+
+.desk-save.is-on {
+  border-color: transparent;
+  background: var(--h-peach);
+  color: var(--h-primary);
+}
+
+.hire-app .desk-row__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(6 * var(--u));
+  width: auto;
+  min-width: 0;
+  height: calc(32 * var(--u));
+  min-height: 0;
+  padding: 0 calc(12 * var(--u));
+  border-radius: calc(8 * var(--u));
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13 * var(--u));
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: none;
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    color 150ms var(--ease);
+}
+
+.hire-app .desk-row__btn svg {
+  width: calc(14 * var(--u));
+  height: calc(14 * var(--u));
+}
+
+.hire-app .desk-row__btn--quiet {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--h-gray-700);
+}
+
+.hire-app .desk-row__btn--quiet:hover {
+  background: var(--h-gray-100);
+  color: var(--h-ink);
+}
+
+.hire-app .desk-row__btn--primary {
+  border: 1px solid var(--h-primary);
+  background: var(--h-primary);
+  color: #ffffff;
+}
+
+.hire-app .desk-row__btn--primary:hover:not(:disabled) {
+  border-color: var(--h-primary-hover);
+  background: var(--h-primary-hover);
+  color: #ffffff;
+}
+
+.hire-app .desk-row__btn--primary.is-on {
+  border-color: rgba(3, 83, 95, 0.28);
+  background: var(--h-peach);
+  color: var(--h-primary);
+}
+
+.hire-app .desk-row__btn--primary.is-on:hover:not(:disabled) {
+  background: #d4ebec;
+  color: var(--h-primary);
+}
+
+.desk-save:focus-visible,
+.hire-app .desk-row__btn:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 2px;
+}
+
+/* Skills: the ones searched for lead, ticked, in teal. */
+.desk-row__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(6 * var(--u));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-row__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(4 * var(--u));
+  height: calc(26 * var(--u));
+  padding: 0 calc(10 * var(--u));
+  border: 1px solid var(--h-border);
+  border-radius: 999px;
+  background: var(--h-surface);
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(12.5 * var(--u));
+  font-weight: 500;
+  color: var(--h-pill-ink);
+}
+
+.desk-row__chip svg {
+  width: calc(12 * var(--u));
+  height: calc(12 * var(--u));
+}
+
+.desk-row__chip.is-hit {
+  border-color: rgba(3, 83, 95, 0.28);
+  background: var(--h-peach);
+  color: var(--h-primary);
+  font-weight: 600;
+}
+
+.desk-row__chip--more {
+  background: var(--h-pill);
+  color: var(--h-gray-700);
+}
+
+/* AI summary: a labelled line of prose, clamped to two lines in the list. */
+.desk-row__summary {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13.5 * var(--u));
+  line-height: calc(20 * var(--u));
+  color: var(--h-gray-700);
+}
+
+.desk-row__summary-label {
+  display: inline-flex;
+  align-items: center;
+  margin-right: calc(6 * var(--u));
+  vertical-align: calc(-2 * var(--u));
+}
+
+.desk-row__summary-label svg {
+  width: calc(15 * var(--u));
+  height: calc(15 * var(--u));
+  color: var(--h-primary);
+}
+
+/* Rejected: still there to undo, but stepped back. */
+.desk-row.is-rejected .desk-row__avatar,
+.desk-row.is-rejected .desk-row__who,
+.desk-row.is-rejected .desk-row__skills,
+.desk-row.is-rejected .desk-row__summary {
+  opacity: 0.5;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row.is-clickable:hover {
+  background: #1d1f1f;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row__avatar {
+  background: #02434d;
+  color: #e7f2f3;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row__chip.is-hit,
+html.dark:not(:has(.theme-abtalks-light)) .desk-save.is-on,
+html.dark:not(:has(.theme-abtalks-light)) .hire-app .desk-row__btn--primary.is-on {
+  border-color: transparent;
+  background: #a6d2d5;
+  color: #000000;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row__summary-label,
+html.dark:not(:has(.theme-abtalks-light)) .desk-row__meta svg {
+  color: var(--h-toolbar);
+}
+
+/* Phones: actions move under the name as a full-width row, so the name keeps
+   the line and every button stays a comfortable target. */
+@media (max-width: 640px) {
+  .desk-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .desk-row__avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .desk-row__head {
+    flex-direction: column;
+  }
+
+  .desk-row__actions {
+    width: 100%;
+  }
+
+  .hire-app .desk-row__btn {
+    flex: 1 1 0;
+    height: 38px;
+  }
+
+  .desk-save {
+    width: 38px;
+    height: 38px;
+  }
+
+  .desk-list .scout-pager {
+    padding: 12px 16px;
+  }
+}
+
+/* "Showing the top 60" under the found line. */
+.hire-found__sub {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13px / var(--hire-zoom, 1));
+  line-height: calc(18px / var(--hire-zoom, 1));
+  font-weight: 400;
+  color: var(--h-gray-500);
 }

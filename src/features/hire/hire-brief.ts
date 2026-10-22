@@ -268,6 +268,38 @@ export function briefFlags(patch: JobSpec, rawText: string): SpokenBriefFlags {
   };
 }
 
+// ─── Long-brief review ───────────────────────────────────────────────────────
+
+/**
+ * A first search whose brief parses into this many elements pauses on Search
+ * and shows the Filters / Criteria review card before anything runs. Shorter
+ * briefs ("react dev in Pune") search exactly as before.
+ */
+export const REVIEW_MIN_ELEMENTS = 4;
+
+/**
+ * How many separate things a brief asks for. Each named skill counts on its
+ * own; years and a seniority word are one "experience" element.
+ */
+export function briefElementCount(patch: JobSpec): number {
+  let n = patch.mustHaveStack?.length ?? 0;
+  if (patch.title?.trim()) n += 1;
+  if (patch.locationCity?.trim()) n += 1;
+  if (patch.workMode) n += 1;
+  if (
+    patch.minExperience != null ||
+    patch.maxExperience != null ||
+    patch.seniority != null
+  ) {
+    n += 1;
+  }
+  if (patch.employmentType) n += 1;
+  if (patch.noticePeriodDays != null) n += 1;
+  if (patch.requiresDegree != null) n += 1;
+  if (patch.salaryMin != null || patch.salaryMax != null) n += 1;
+  return n;
+}
+
 // ─── Merge ───────────────────────────────────────────────────────────────────
 
 /**

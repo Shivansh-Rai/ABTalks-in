@@ -44,7 +44,13 @@ export function MatchResults({
   requestId,
   selectedRef,
   searchSpec = null,
+  totalFound = null,
 }: {
+  /**
+   * Desk only: how many candidates the pool holds for this search. When it is
+   * larger than `matches`, the pager says the list is the top slice of it.
+   */
+  totalFound?: number | null;
   matches: (MatchCardData & Partial<MatchTriage>)[];
   /**
    * Server-rendered, and correct after every toggle because the shortlist
@@ -166,8 +172,11 @@ export function MatchResults({
         </div>
       )}
 
+      {/* Desk: one white panel, a row per candidate divided by hairlines, the
+          pager as the panel's footer. Elsewhere: the separate cards as before. */}
+      <div className={desk ? "desk-list" : "space-y-4"}>
       {visible.length > 0 && (
-        <ul ref={listRef} className={desk ? "scout-results" : "space-y-4"}>
+        <ul ref={listRef} className={desk ? "desk-list__rows" : "space-y-4"}>
           {visible.map((m, i) => (
             <li key={m.candidateRef}>
               {desk ? (
@@ -242,10 +251,13 @@ export function MatchResults({
           </button>
           <span className="scout-pager__count">
             {start + 1}&ndash;{Math.min(start + MATCHES_PER_PAGE, matches.length)} of{" "}
-            {matches.length}
+            {desk && totalFound != null && totalFound > matches.length
+              ? `top ${matches.length}`
+              : matches.length}
           </span>
         </nav>
       )}
+      </div>
 
       {viewAllHref && hidden > 0 && (
         <Link
