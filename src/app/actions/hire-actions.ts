@@ -50,6 +50,7 @@ import {
   specFromJson,
   specToJson,
 } from "@/features/hire/search-sessions";
+import { writeSearchSummary } from "@/features/hire/search-summary";
 
 type ActionOk<T> = { ok: true; data: T };
 type ActionErr = { ok: false; message: string };
@@ -342,13 +343,15 @@ const MATCH_REQUEST_SELECT = {
 async function executeMatchForOwnedRequest(
   requestId: string,
   recruiterUserId: string,
-  options: { persistGapMessage?: boolean; sessionId?: string } = {},
+  options: { persistGapMessage?: boolean; sessionId?: string; summary?: boolean } = {},
 ): Promise<
   ActionResult<{
     requestId: string;
     sessionId: string;
     matchCount: number;
     overallGap: string;
+    /** Scout's search summary, when it was asked for; otherwise null. */
+    summary: string | null;
   }>
 > {
   const req = await prisma.talentRequest.findFirst({
@@ -388,6 +391,15 @@ async function executeMatchForOwnedRequest(
       stage: search.data.stage,
     },
   );
+
+  // Scout's search summary for a first search: facts from the pool, worded by
+  // Gemini and checked, or the template. Refinements skip it.
+  const summary = options.summary
+    ? await writeSearchSummary(search.data.facts, {
+        shown: explained.matches.length,
+        strong: explained.matches.filter((m) => m.tier === "STRONG").length,
+      })
+    : null;
 
   // A track the DB enum does not know yet cannot be stored. It is still shown
   // and still ranked — only the persisted copy is skipped — and it is logged,
@@ -494,13 +506,15 @@ async function executeMatchForOwnedRequest(
     data: { status },
   });
 
-  if (options.persistGapMessage !== false) {
+  // The summary, when written, is the message the recruiter read; it replaces
+  // the gap paragraph in the conversation rather than sitting beside it.
+  if (options.persistGapMessage !== false || summary) {
     await prisma.talentRequestMessage.create({
       data: {
         requestId: req.id,
         sessionId,
         role: "assistant",
-        content: explained.overallGap,
+        content: summary ?? explained.overallGap,
       },
     });
   }
@@ -515,6 +529,7 @@ async function executeMatchForOwnedRequest(
       sessionId,
       matchCount: explained.matches.length,
       overallGap: explained.overallGap,
+      summary,
     },
   };
 }
@@ -528,6 +543,7 @@ export async function runMatchAction(
     sessionId: string;
     matchCount: number;
     overallGap: string;
+    summary: string | null;
   }>
 > {
   const gate = await requireApprovedRecruiter();
@@ -544,7 +560,7 @@ export async function runMatchAction(
     return await executeMatchForOwnedRequest(
       parsed.data.requestId,
       gate.data.userId,
-      { sessionId: parsed.data.sessionId },
+      { sessionId: parsed.data.sessionId, summary: parsed.data.summary },
     );
   } catch (error) {
     logger.error("[hire] runMatchAction", { error: String(error) });
@@ -567,6 +583,7 @@ export async function applyHireFiltersAction(
     sessionId: string;
     matchCount: number;
     overallGap: string;
+    summary: string | null;
   }>
 > {
   const gate = await requireApprovedRecruiter();
@@ -612,6 +629,7 @@ export async function applyHireFiltersAction(
     return await executeMatchForOwnedRequest(owned.id, gate.data.userId, {
       persistGapMessage: false,
       sessionId,
+      summary: parsed.data.summary,
     });
   } catch (error) {
     logger.error("[hire] applyHireFiltersAction", { error: String(error) });

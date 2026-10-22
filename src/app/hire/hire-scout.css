@@ -18171,3 +18171,98 @@ html.dark:not(:has(.theme-abtalks-light)) .scout-turn--user .scout-turn__text {
     max-width: 88%;
   }
 }
+
+/* Open the Pool: under Scout's search summary, the one way on to the results.
+   Same teal primary as Run search; it arrives with the summary. */
+.scout-pool-open {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  margin-top: 12px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--h-primary);
+  color: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  animation: hire-results-in 320ms var(--ease) 120ms both;
+  transition:
+    background-color 160ms var(--ease),
+    transform 160ms var(--ease);
+}
+
+.scout-pool-open:hover {
+  background: var(--h-primary-hover);
+  transform: translateY(-1px);
+}
+
+.scout-pool-open:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 2px;
+}
+
+.scout-pool-open svg {
+  transition: transform 160ms var(--ease);
+}
+
+.scout-pool-open:hover svg {
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scout-pool-open,
+  .scout-pool-open svg {
+    animation: none;
+    transition: none;
+  }
+
+  .scout-pool-open:hover,
+  .scout-pool-open:hover svg {
+    transform: none;
+  }
+}
+
+/* Scout's typed "working" line beside the ring loader. The typing is the
+   motion, so the label itself stays still and plain; a teal caret blinks at
+   the end of what has been typed. */
+.scout-typing {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  min-height: 20px;
+  margin: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--h-gray-700);
+  white-space: nowrap;
+}
+
+.scout-typing__caret {
+  display: inline-block;
+  width: 2px;
+  height: 14px;
+  margin-left: 2px;
+  border-radius: 1px;
+  background: var(--h-primary);
+  animation: scout-caret 1s steps(1, end) infinite;
+}
+
+@keyframes scout-caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .scout-typing__caret {
+  background: var(--h-toolbar);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scout-typing__caret {
+    animation: none;
+  }
+}
