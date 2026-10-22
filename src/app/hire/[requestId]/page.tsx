@@ -34,7 +34,7 @@ export const metadata: Metadata = {
  * search becomes Session 1.
  */
 export default async function HireRequestPage({ params, searchParams }: Props) {
-  const { userId } = await requireRecruiter();
+  const { userId, profile } = await requireRecruiter();
   const { requestId } = await params;
   const { session: sessionParam } = await searchParams;
 
@@ -103,6 +103,7 @@ export default async function HireRequestPage({ params, searchParams }: Props) {
       // let one session's local state leak into the next.
       key={selected?.id ?? "new"}
       persist
+      viewerName={profile.fullName}
       initialRequestId={request.id}
       initialSessionId={selected?.id ?? null}
       initialMessages={messages}

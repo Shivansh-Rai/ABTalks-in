@@ -9,7 +9,7 @@ import {
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Sparkles } from "lucide-react";
+import { Search, User } from "lucide-react";
 import { suggestChips } from "@/features/hire/scout-chips";
 import { detectSpokenBrief } from "@/features/hire/spoken-brief";
 import {
@@ -115,6 +115,8 @@ type RecentRequest = {
 type Props = {
   /** Persist turns as a TalentRequest. False for guests and pending recruiters. */
   persist?: boolean;
+  /** The signed-in recruiter's name, for their initial beside their turns. */
+  viewerName?: string | null;
   initialRequestId: string | null;
   initialMessages: Msg[];
   initialSpec: JobSpec;
@@ -327,6 +329,7 @@ function specRows(spec: JobSpec): { label: string; value: string }[] {
 
 export function ScoutChat({
   persist = false,
+  viewerName = null,
   initialRequestId,
   initialMessages,
   initialSpec,
@@ -1208,6 +1211,38 @@ export function ScoutChat({
     return () => controller.abort();
   }, [reviewSpec]);
 
+  /**
+   * "I have found N matching candidates" above the results: the same pool count
+   * the review card shows, for the spec on the desk. Keyed by the spec so a
+   * stale number is never shown for a newer search while the next one loads.
+   */
+  const foundKey = searched ? JSON.stringify(spec) : null;
+  const [found, setFound] = useState<{ key: string; count: number | null } | null>(
+    null,
+  );
+  useEffect(() => {
+    if (!foundKey) return;
+    const controller = new AbortController();
+    fetch("/api/hire/match-count", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ spec: JSON.parse(foundKey) as JobSpec }),
+      signal: controller.signal,
+    })
+      .then((res) => res.json() as Promise<MatchCountResponse>)
+      .then((body) => {
+        if (controller.signal.aborted) return;
+        setFound({ key: foundKey, count: body.ok ? body.data.count : null });
+      })
+      .catch(() => {
+        if (!controller.signal.aborted) setFound({ key: foundKey, count: null });
+      });
+    return () => controller.abort();
+  }, [foundKey]);
+  const foundReady = found != null && found.key === foundKey;
+  // The pool count when it came back; the shown results if it could not.
+  const foundCount = foundReady ? (found.count ?? matchCount) : null;
+
   /** Show the card for this brief, merged over anything already captured. */
   function openReview(q: string, patch: JobSpec) {
     setReviewCount({ state: "loading" });
@@ -1906,6 +1941,26 @@ export function ScoutChat({
                   change it. "Edit filters" belongs here beside the criteria it
                   edits — as a loose button by the composer it read as an
                   unrelated floating link. */}
+              <p className="hire-found" role="status">
+                {foundReady ? (
+                  foundCount != null && (
+                    <>
+                      I have found{" "}
+                      <strong>{foundCount.toLocaleString("en-IN")}</strong>{" "}
+                      matching {foundCount === 1 ? "candidate" : "candidates"}
+                    </>
+                  )
+                ) : (
+                  <>
+                    I have found{" "}
+                    <span
+                      className="hire-review__count-skel hire-found__skel"
+                      aria-label="Counting matching candidates"
+                    />{" "}
+                    matching candidates
+                  </>
+                )}
+              </p>
               <div className="hire-filter-bar">
                 <p className="hire-filter-bar__title">Filters from this search</p>
                 <div className="hire-filter-bar__chips">
@@ -2050,15 +2105,7 @@ export function ScoutChat({
                       m.role === "user" && "scout-turn--user",
                     )}
                   >
-                    {m.role === "assistant" && (
-                      // `scout-mark--id` gives this the header's identity:
-                      // same Sparkles, same solid orange plate. Plain
-                      // `scout-mark` is the shared geometry, still used by the
-                      // user's "You" chip and by the loader core.
-                      <span className="scout-mark scout-mark--id">
-                        <Sparkles className="size-3" />
-                      </span>
-                    )}
+                    {m.role === "assistant" && <ScoutAvatar />}
                     <div className="scout-turn__body">
                       <p
                         className={
@@ -2098,9 +2145,7 @@ export function ScoutChat({
                         </div>
                       )}
                     </div>
-                    {m.role === "user" && (
-                      <span className="scout-mark">You</span>
-                    )}
+                    {m.role === "user" && <ViewerAvatar name={viewerName} />}
                   </div>
                   </Fragment>
                 );
@@ -2117,7 +2162,7 @@ export function ScoutChat({
                     <div className="scout-turn__body">
                       <p className="scout-turn__text">{review.text}</p>
                     </div>
-                    <span className="scout-mark">You</span>
+                    <ViewerAvatar name={viewerName} />
                   </div>
                   {review.status === "reading" ? (
                     <div className="scout-turn">
@@ -2128,9 +2173,7 @@ export function ScoutChat({
                     </div>
                   ) : (
                     <div className="scout-turn">
-                      <span className="scout-mark scout-mark--id">
-                        <Sparkles className="size-3" />
-                      </span>
+                      <ScoutAvatar />
                       <div className="scout-turn__body">
                         <SearchReviewCard
                           spec={review.spec}
@@ -2355,20 +2398,35 @@ export function ScoutChat({
   );
 }
 
+/** Klymb AI's mark beside Scout's turns: a K on the brand's dark plate. */
+function ScoutAvatar() {
+  return (
+    <span className="scout-mark scout-mark--id scout-mark--k" aria-hidden="true">
+      K
+    </span>
+  );
+}
+
+/** The recruiter's initial beside their turns; a person glyph for guests. */
+function ViewerAvatar({ name }: { name: string | null }) {
+  const initial = name?.trim().charAt(0).toUpperCase() || null;
+  return (
+    <span className="scout-mark scout-mark--viewer" aria-hidden="true">
+      {initial ?? <User className="size-3.5" />}
+    </span>
+  );
+}
+
+/**
+ * Scout thinking: the K mark inside a teal arc that sweeps round it, with the
+ * label shimmering. Replaces the shard burst, whose clip-path fragments read
+ * as stray squares at this size.
+ */
 function ScoutLoader() {
   return (
-    <span className="scout-loader" aria-label="Scout is thinking">
-      <span className="scout-loader__burst" aria-hidden="true">
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-        <i />
-      </span>
-      <span className="scout-mark scout-loader__core">
-        <Sparkles className="size-3" />
-      </span>
+    <span className="scout-loader" role="status" aria-label="Scout is thinking">
+      <span className="scout-loader__ring" aria-hidden="true" />
+      <ScoutAvatar />
     </span>
   );
 }

@@ -48,6 +48,7 @@ export default async function HirePage() {
   return (
     <ScoutChat
       persist={persist}
+      viewerName={session?.user?.name ?? null}
       proPreview={isHireProPreviewEnabled()}
       virtualCandidates={isVirtualCandidatesEnabled()}
       initialRequestId={null}
