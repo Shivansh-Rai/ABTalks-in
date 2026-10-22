@@ -122,6 +122,8 @@ export type MatchCardData = {
     totalTrackDays?: number | null;
     /** Declared education level only — never the university name. */
     educationLevel?: string | null;
+    /** The degree's specialisation ("Computer Science"). Never the university. */
+    educationField?: string | null;
     /** Candidate preference (ONSITE / HYBRID / REMOTE / FLEXIBLE). */
     workMode?: string | null;
     /** Booleans, never profile URLs. */

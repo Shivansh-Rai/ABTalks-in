@@ -88,6 +88,7 @@ export async function buildProfileDossierSet(
       yearsExperience: declared(p.yearsExperience ?? 0),
       education: declared({
         level: p.education,
+        field: p.educationField,
         university: p.university,
         gradYear: p.graduationYear ?? null,
       }),

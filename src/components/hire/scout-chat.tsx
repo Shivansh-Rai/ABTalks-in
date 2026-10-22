@@ -9,7 +9,7 @@ import {
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
-import { Search, User } from "lucide-react";
+import { ArrowRight, Search, ShieldCheck, User } from "lucide-react";
 import { suggestChips } from "@/features/hire/scout-chips";
 import { detectSpokenBrief } from "@/features/hire/spoken-brief";
 import {
@@ -47,6 +47,13 @@ import {
   SearchReviewCard,
   type ReviewCount,
 } from "@/components/hire/search-review-card";
+import {
+  POOL_LOADER_MIN_MS,
+  POOL_PHRASES,
+  SEARCH_LOADER_MIN_MS,
+  SEARCH_PHRASES,
+  ScoutTypingLabel,
+} from "@/components/hire/scout-typing-loader";
 import { CandidateInspector } from "@/components/hire/candidate-inspector";
 import { GapReport } from "@/components/hire/gap-report";
 import {
@@ -256,6 +263,12 @@ type SendOpts = {
   filterSpec?: JobSpec;
 };
 
+/** Milliseconds a loader started at `startedAt` (0: just now) still owes `minMs`. */
+function loaderTimeLeft(startedAt: number, minMs: number): number {
+  const now = Date.now();
+  return Math.max(0, minMs - (now - (startedAt || now)));
+}
+
 function toLpa(rupees: number): string {
   const lakhs = rupees / 100_000;
   return Number.isInteger(lakhs) ? String(lakhs) : lakhs.toFixed(1);
@@ -377,6 +390,21 @@ export function ScoutChat({
   const [reviewCount, setReviewCount] = useState<ReviewCount>({ state: "loading" });
   /** Bumped by Reset so a parse still in flight cannot reopen the card. */
   const reviewSeq = useRef(0);
+  /**
+   * A first search has finished and Scout has posted its summary; the results
+   * wait for Open the Pool. `href` is the URL a new session lives at (null: the
+   * same page, refreshed). Navigating or refreshing earlier would flip straight
+   * to the results, because the desk switches the moment results arrive.
+   */
+  const [poolReady, setPoolReady] = useState<{ href: string | null } | null>(null);
+  /** The search loader kept up after the answer came back, to its minimum time. */
+  const [holdLoader, setHoldLoader] = useState(false);
+  /** Open the Pool was pressed; its loader runs until the results are on screen. */
+  const [openingPool, setOpeningPool] = useState(false);
+  /** When the current search loader appeared; 0 while none is up. */
+  const loaderStartedAt = useRef(0);
+  /** Bumped by a reset so a held summary or a pending open cannot land late. */
+  const loaderSeq = useRef(0);
   const [pending, startTransition] = useTransition();
   const [searched, setSearched] = useState(
     initialSearched || (results?.length ?? 0) > 0,
@@ -647,6 +675,16 @@ export function ScoutChat({
     }
   }, [persist, results]);
 
+  // When the search loader first appeared, so the summary can wait out the
+  // rest of SEARCH_LOADER_MIN_MS rather than cutting the phrases short.
+  useEffect(() => {
+    if (pending || holdLoader) {
+      if (!loaderStartedAt.current) loaderStartedAt.current = Date.now();
+    } else {
+      loaderStartedAt.current = 0;
+    }
+  }, [pending, holdLoader]);
+
   useEffect(() => {
     if (!inspect) return;
     openMatchPanel(inspect);
@@ -818,6 +856,8 @@ export function ScoutChat({
     }
 
     const shown = label?.trim() || message;
+    // A new message moves the conversation on past the last summary.
+    setPoolReady(null);
     // After a search the thread is gone: parse NL once, then re-run search
     // without painting Scout bubbles.
     const hideThread = searched;
@@ -848,7 +888,9 @@ export function ScoutChat({
         setSpec(filtered ?? res.data.spec);
         setSummary(res.data.summary);
         setReadyToSearch(res.data.readyToSearch);
-        if (!hideThread) {
+        // Run search already decided to search: Scout's follow-up question
+        // would only sit above the summary that answers it.
+        if (!hideThread && !force) {
           setMessages((m) => [
             ...m,
             {
@@ -865,27 +907,35 @@ export function ScoutChat({
         if (res.data.action === "search" || hideThread || force) {
           // Filters edited on the review card are saved with the search they
           // ran, through the same action the results' Edit filters uses.
+          // A first search (from the conversation) asks for Scout's summary;
+          // a refinement on the results screen does not.
+          const firstSearch = !hideThread;
           const match = filtered
             ? await applyHireFiltersAction({
                 requestId: res.data.requestId,
                 sessionId: res.data.sessionId,
                 spec: filtered,
+                summary: firstSearch,
               })
             : await runMatchAction({
                 requestId: res.data.requestId,
                 sessionId: res.data.sessionId,
+                summary: firstSearch,
               });
           if (!match.ok) {
             toast.error(match.message);
+          } else if (firstSearch) {
+            setMatchCount(match.data.matchCount);
+            showPoolSummary(
+              match.data.summary ?? match.data.overallGap,
+              !requestId || openedSession
+                ? `/hire/${res.data.requestId}?session=${res.data.sessionId}`
+                : null,
+            );
+            return;
           } else {
             setSearched(true);
             setMatchCount(match.data.matchCount);
-            if (!hideThread) {
-              setMessages((m) => [
-                ...m,
-                { role: "assistant", content: match.data.overallGap },
-              ]);
-            }
           }
         }
         // A new project or a new session gets its own URL, so reload and the
@@ -923,7 +973,7 @@ export function ScoutChat({
           readyToSearch: res.data.readyToSearch,
           searched: true,
         });
-      } else {
+      } else if (!force) {
         setMessages((m) => {
           const next: Msg[] = [
             ...m,
@@ -962,9 +1012,21 @@ export function ScoutChat({
         const res = await runMatchAction({
           requestId: requestId!,
           sessionId: sessionId ?? undefined,
+          summary: !quiet,
         });
         if (!res.ok) {
           toast.error(res.message);
+          return;
+        }
+        // A first search: Scout's summary, then the pool on request.
+        if (!quiet) {
+          const href =
+            res.data.sessionId !== sessionId
+              ? `/hire/${requestId}?session=${res.data.sessionId}`
+              : null;
+          setSessionId(res.data.sessionId);
+          setMatchCount(res.data.matchCount);
+          showPoolSummary(res.data.summary ?? res.data.overallGap, href);
           return;
         }
         // No session yet (a new search run straight from the button): the
@@ -986,7 +1048,7 @@ export function ScoutChat({
         return;
       }
 
-      const res = await runGuestMatchAction({ spec: active });
+      const res = await runGuestMatchAction({ spec: active, summary: !quiet });
       if (!res.ok) {
         toast.error(res.message);
         return;
@@ -996,6 +1058,7 @@ export function ScoutChat({
         ...m,
         shortlisted: cart.has(m.candidateRef),
       }));
+      const searchSummary = res.data.summary ?? res.data.overallGap;
       const payload = {
         label: labelGuestSearch(active, cards.length),
         title: active.title?.trim() || "your requirement",
@@ -1020,24 +1083,28 @@ export function ScoutChat({
         setSearchTabs(readGuestMatchCollection().tabs);
         setActiveSearchId(tab.id);
       }
-      setSearched(true);
       setMatchCount(cards.length);
       if (!quiet) {
-        setMessages((m) => {
-          const next: Msg[] = [
-            ...m,
-            { role: "assistant", content: res.data.overallGap },
-          ];
-          writeGuestSession({
-            spec: active,
-            messages: next,
-            summary,
-            readyToSearch: true,
-            searched: true,
+        // The results are stored; they open from the summary's button.
+        afterSearchLoader(() => {
+          setPoolReady({ href: null });
+          setMessages((m) => {
+            const next: Msg[] = [
+              ...m,
+              { role: "assistant", content: searchSummary },
+            ];
+            writeGuestSession({
+              spec: active,
+              messages: next,
+              summary,
+              readyToSearch: true,
+              searched: true,
+            });
+            return next;
           });
-          return next;
         });
       } else {
+        setSearched(true);
         writeGuestSession({
           spec: active,
           messages,
@@ -1047,6 +1114,69 @@ export function ScoutChat({
         });
       }
     });
+  }
+
+  /**
+   * Post Scout's search summary and hold the results behind Open the Pool.
+   * The results page is prefetched meanwhile, so the click opens it quickly.
+   */
+  function showPoolSummary(text: string, href: string | null) {
+    if (href) router.prefetch(href);
+    afterSearchLoader(() => {
+      setMessages((m) => [...m, { role: "assistant", content: text }]);
+      setPoolReady({ href });
+    });
+  }
+
+  /**
+   * Run `post` once the search loader has been up for SEARCH_LOADER_MIN_MS.
+   * A fast search keeps its loader (and its phrases) for the full beat; a slow
+   * one posts the moment it is done.
+   */
+  function afterSearchLoader(post: () => void) {
+    const wait = loaderTimeLeft(loaderStartedAt.current, SEARCH_LOADER_MIN_MS);
+    if (wait === 0) {
+      post();
+      return;
+    }
+    const seq = loaderSeq.current;
+    setHoldLoader(true);
+    window.setTimeout(() => {
+      if (seq !== loaderSeq.current) return;
+      setHoldLoader(false);
+      post();
+    }, wait);
+  }
+
+  /**
+   * Open the Pool: its own loader for POOL_LOADER_MIN_MS, then the results.
+   * The loader stays until they are actually on screen: a new session's page
+   * replaces this one, and a refresh lands inside the same transition, so the
+   * desk never flashes an empty list on the way.
+   */
+  function openPool() {
+    const ready = poolReady;
+    if (!ready || openingPool) return;
+    setPoolReady(null);
+    setOpeningPool(true);
+    const seq = loaderSeq.current;
+    window.setTimeout(() => {
+      if (seq !== loaderSeq.current) return;
+      if (ready.href) {
+        router.replace(ready.href);
+        return;
+      }
+      if (persist) {
+        startTransition(() => {
+          router.refresh();
+          setSearched(true);
+          setOpeningPool(false);
+        });
+        return;
+      }
+      setSearched(true);
+      setOpeningPool(false);
+    }, POOL_LOADER_MIN_MS);
   }
 
   /** Persist the dialog spec and re-rank — never an agent turn. */
@@ -1123,7 +1253,11 @@ export function ScoutChat({
   const activeOptions =
     lastMsg?.role === "assistant" ? (lastMsg.options ?? []) : [];
   const askOpen =
-    lastMsg?.role === "assistant" && !pending && !openMatch && review == null;
+    lastMsg?.role === "assistant" &&
+    !pending &&
+    !openMatch &&
+    review == null &&
+    poolReady == null;
   // Same chips the conversation engine sent for this turn. Show me is
   // `action:search` and only lands when the brief is searchable — do not
   // invent extra pills here. An empty options list still gets the ladder so
@@ -1487,6 +1621,10 @@ export function ScoutChat({
     setLiveBrief(null);
     reviewSeq.current += 1;
     setReview(null);
+    setPoolReady(null);
+    loaderSeq.current += 1;
+    setHoldLoader(false);
+    setOpeningPool(false);
     setDetailsOpen(false);
     setFiltersOpen(false);
     setOpenMatch(null);
@@ -1941,6 +2079,13 @@ export function ScoutChat({
                   change it. "Edit filters" belongs here beside the criteria it
                   edits — as a loose button by the composer it read as an
                   unrelated floating link. */}
+              {/* The page's title: which search these results answer. */}
+              <header className="hire-results-head">
+                <p className="hire-results-head__eyebrow">Search results</p>
+                <h1 className="hire-results-head__title">
+                  {(persist && projectLabel.trim()) || spec.title?.trim() || "Your search"}
+                </h1>
+              </header>
               <p className="hire-found" role="status">
                 {foundReady ? (
                   foundCount != null && (
@@ -1968,6 +2113,11 @@ export function ScoutChat({
                   </>
                 )}
               </p>
+              {/* What the ranking uses, and what it never uses. True of
+                  score-candidate.ts: no name (ties break on an id hash), no
+                  gender, no college, no photo. Education only breaks exact ties,
+                  by whether it is filled in. */}
+              
               <div className="hire-filter-bar">
                 <p className="hire-filter-bar__title">Filters from this search</p>
                 <div className="hire-filter-bar__chips">
@@ -2124,6 +2274,16 @@ export function ScoutChat({
                       >
                         {m.content}
                       </p>
+                      {poolReady && !pending && i === lastIndex && m.role === "assistant" && (
+                        <button
+                          type="button"
+                          className="scout-pool-open"
+                          onClick={openPool}
+                        >
+                          Open the Pool
+                          <ArrowRight className="size-4" strokeWidth={1.75} aria-hidden="true" />
+                        </button>
+                      )}
                       {isLastAsk && (chips.length > 0 || talked) && (
                         <div className="scout-follow">
                           {chips.length > 0 && (
@@ -2175,9 +2335,7 @@ export function ScoutChat({
                   {review.status === "reading" ? (
                     <div className="scout-turn">
                       <ScoutLoader />
-                      <p className="scout-turn__text scout-loader__label">
-                        Looking through the pool…
-                      </p>
+                      <ScoutTypingLabel phrases={SEARCH_PHRASES} />
                     </div>
                   ) : (
                     <div className="scout-turn">
@@ -2197,12 +2355,15 @@ export function ScoutChat({
                 </>
               )}
 
-              {pending && (
+              {(pending || holdLoader || openingPool) && (
                 <div className="scout-turn">
                   <ScoutLoader />
-                  <p className="scout-turn__text scout-loader__label">
-                    Looking through verified work…
-                  </p>
+                  {/* Keyed by phrase set, so Open the Pool starts its own
+                      phrases from the top instead of mid-way through. */}
+                  <ScoutTypingLabel
+                    key={openingPool ? "pool" : "search"}
+                    phrases={openingPool ? POOL_PHRASES : SEARCH_PHRASES}
+                  />
                 </div>
               )}
               {/* The workspace is on screen before the backend has answered —
@@ -2305,8 +2466,17 @@ export function ScoutChat({
                     submitComposer();
                   }
                 }}
-                placeholder="Type here...."
-                disabled={pending || review?.status === "reading"}
+                placeholder={
+                  searched
+                    ? "Refine: add a skill, city, experience or budget"
+                    : "Describe the role: title, skills, experience, city or budget"
+                }
+                disabled={
+                  pending ||
+                  review?.status === "reading" ||
+                  holdLoader ||
+                  openingPool
+                }
                 maxLength={2000}
               />
             </div>
@@ -2315,6 +2485,8 @@ export function ScoutChat({
               disabled={
                 pending ||
                 review?.status === "reading" ||
+                holdLoader ||
+                openingPool ||
                 (persist && !requestId && !text.trim())
               }
               className="scout-send"

@@ -17,7 +17,7 @@ import "server-only";
  */
 import { errorFields, logger } from "@/lib/logger";
 import type { JobSpec } from "@/lib/validations/hire";
-import { assessRole, evaluateHardFilters } from "@/features/hire/score-candidate";
+import { computeSearchFacts } from "@/features/hire/search-facts";
 import { hasSearchCriteria, readPoolExtra } from "@/features/hire/pool-brief";
 import { enabledTracks, isKnownTrack } from "@/features/hire/track-registry";
 import {
@@ -80,13 +80,9 @@ export async function countMatchingCandidates(
     // Titles the role check reads; one query for the whole pool, as in search.
     const members = await attachRoleTitles(merged.members);
 
-    let count = 0;
-    for (const member of members) {
-      const { ok, missingMust } = evaluateHardFilters(member, spec);
-      if (!ok || missingMust.length > 0) continue;
-      if (assessRole(member, spec)?.mismatch) continue;
-      count += 1;
-    }
+    // The end of the same funnel Scout's search summary reads, so the summary
+    // and the "I have found N" line always give one number.
+    const count = computeSearchFacts(members, spec).matching;
 
     const data = { count, partial: merged.failedTracks.length > 0 };
     if (!data.partial) {

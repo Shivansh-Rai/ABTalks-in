@@ -377,6 +377,8 @@ export const runMatchSchema = z.object({
   requestId: z.string().cuid(),
   /** Plan 133. The search session to run; absent means a new session. */
   sessionId: z.string().cuid().optional(),
+  /** Write Scout's search summary (first search from the conversation). */
+  summary: z.boolean().optional(),
 });
 
 /** Plan 133. A new, named project — created before any search. */
@@ -400,6 +402,8 @@ export const applyHireFiltersSchema = z.object({
   /** Plan 133. Re-run this session; absent opens a new session from the spec. */
   sessionId: z.string().cuid().optional(),
   spec: jobSpecSchema,
+  /** Write Scout's search summary (first search from the conversation). */
+  summary: z.boolean().optional(),
 });
 
 export const guestScoutHistorySchema = z.object({
@@ -416,6 +420,8 @@ export const guestScoutMessageSchema = z.object({
 
 export const guestMatchSchema = z.object({
   spec: jobSpecSchema,
+  /** Write Scout's search summary (first search from the conversation). */
+  summary: z.boolean().optional(),
 });
 
 /** Persist a guest Scout transcript onto a TalentRequest after sign-in. */

@@ -128,6 +128,8 @@ export type RecruiterPublicIdentity = {
   yearsExperience: number | null;
   graduationYear: number | null;
   education: string | null;
+  /** The degree's specialisation ("Computer Science"), when the candidate gave one. */
+  educationField: string | null;
   university: string | null;
   skills: string[];
   hasLinkedin: boolean;
@@ -185,6 +187,7 @@ export async function loadRecruiterIdentities(
           take: 1,
           select: {
             degree: true,
+            fieldOfStudy: true,
             institutionName: true,
             graduationYear: true,
           },
@@ -229,6 +232,7 @@ export async function loadRecruiterIdentities(
       yearsExperience: months > 0 ? Math.round(months / 12) : null,
       graduationYear: edu?.graduationYear ?? null,
       education: edu?.degree ?? null,
+      educationField: edu?.fieldOfStudy?.trim() || null,
       university: edu?.institutionName ?? null,
       skills: p.skills.map((s) => s.skill.name).filter(Boolean),
       hasLinkedin: RECRUITER_FIELD_POLICY.linkedin && Boolean(p.linkedinUrl),

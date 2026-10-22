@@ -69,6 +69,7 @@ function identityFromLegacyProfile(p: {
     yearsExperience: p?.yearsExperience ?? null,
     graduationYear: p?.graduationYear ?? null,
     education: null,
+    educationField: null,
     university: p?.college ?? null,
     skills: p?.skills ?? [],
     hasLinkedin: RECRUITER_FIELD_POLICY.linkedin && Boolean(p?.linkedinUrl),

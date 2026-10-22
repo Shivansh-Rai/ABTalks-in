@@ -5,6 +5,7 @@ import type { JobSpec } from "@/lib/validations/hire";
 import { selectSearchResults } from "@/features/hire/score-candidate";
 import { hasSearchCriteria, readPoolExtra } from "@/features/hire/pool-brief";
 import { estimateCompensation } from "@/features/hire/compensation";
+import { computeSearchFacts, type SearchFacts } from "@/features/hire/search-facts";
 import { enabledTracks, isKnownTrack } from "@/features/hire/track-registry";
 import {
   EMPTY_COVERAGE,
@@ -59,6 +60,12 @@ export type SearchCandidatesResult =
          * single distinct score across the whole top 20.
          */
         rankedBy: "score" | "evidence";
+        /**
+         * The pool as a funnel (role, each filter, each skill), for Scout's
+         * search summary. Read from the members already in memory: no extra
+         * query.
+         */
+        facts: SearchFacts;
       };
     }
   | { ok: false; message: string };
@@ -190,6 +197,7 @@ export async function searchCandidates(
           coverage: EMPTY_COVERAGE,
           failedTracks: merged.failedTracks,
           rankedBy: "score",
+          facts: computeSearchFacts([], spec),
         },
       };
     }
@@ -239,6 +247,7 @@ export async function searchCandidates(
           matches.length > 1 && new Set(matches.map((m) => m.score)).size === 1
             ? "evidence"
             : "score",
+        facts: computeSearchFacts(scoreable, spec),
       },
     };
   } catch (error) {

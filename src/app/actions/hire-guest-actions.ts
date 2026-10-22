@@ -16,6 +16,7 @@ import {
   assertRateLimit,
   rateLimitSubjectFromHeaders,
 } from "@/lib/rate-limit";
+import { writeSearchSummary } from "@/features/hire/search-summary";
 
 type ActionResult<T> = { ok: true; data: T } | { ok: false; message: string };
 
@@ -86,7 +87,13 @@ export async function sendGuestScoutMessageAction(
 export async function runGuestMatchAction(
   input: unknown,
 ): Promise<
-  ActionResult<{ matches: MatchCardData[]; overallGap: string; matchCount: number }>
+  ActionResult<{
+    matches: MatchCardData[];
+    overallGap: string;
+    matchCount: number;
+    /** Scout's search summary, when asked for (a first search); else null. */
+    summary: string | null;
+  }>
 > {
   const limited = await guestSearchLimit();
   if (!limited.ok) return limited;
@@ -107,9 +114,16 @@ export async function runGuestMatchAction(
         stage: search.data.stage,
       },
     );
+    const summary = parsed.data.summary
+      ? await writeSearchSummary(search.data.facts, {
+          shown: explained.matches.length,
+          strong: explained.matches.filter((m) => m.tier === "STRONG").length,
+        })
+      : null;
     return {
       ok: true,
       data: {
+        summary,
         matches: explained.matches.map((m) =>
           toPublicMatch(m, {
             coverageNote: search.data.coverage.note,

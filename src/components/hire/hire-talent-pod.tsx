@@ -28,6 +28,12 @@ import { PodEmptyArt } from "@/components/hire/pod-empty-art";
 import type { MatchCardData } from "@/components/hire/match-card";
 import { cn } from "@/lib/utils";
 
+/**
+ * "Create assessment for Shortlisted" in the Shortlist header. Hidden for now;
+ * set to true to bring it back. The link and its project id are unchanged.
+ */
+const SHOW_CREATE_ASSESSMENT = false;
+
 function cartRowToMatch(row: CartRow): MatchCardData {
   return hydrateMatch({
     candidateRef: row.candidateRef,
@@ -221,6 +227,7 @@ export function HireTalentPod({
                 saved list that belongs to no project. */}
             {scopeLabel && <p className="text-sm text-muted-foreground">{scopeLabel}</p>}
           </div>
+          {SHOW_CREATE_ASSESSMENT && (
           <div className="hire-pod__header-actions">
             {rows.length === 0 ? (
               <button
@@ -246,6 +253,7 @@ export function HireTalentPod({
               </Link>
             )}
           </div>
+          )}
         </div>
       </header>
 
