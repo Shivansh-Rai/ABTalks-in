@@ -17492,3 +17492,222 @@ a.hire-credits:hover { border-color: var(--h-primary); }
   background: #dcfce7;
   color: #15803d;
 }
+
+/* Long-brief review card (/hire first search, 4+ parsed elements).
+   Two panels in Scout's turn: Filters with the match count, then Criteria,
+   then Reset / Run search. Chips reuse `.hire-filter-chip` from the results
+   filter bar so the card reads as the same filters the results will show. */
+.hire-review {
+  display: grid;
+  gap: 12px;
+  max-width: 760px;
+  animation: hire-results-in 320ms var(--ease) both;
+}
+
+.hire-review__panel {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding: 16px 20px;
+  border: 1px solid var(--h-border);
+  border-radius: 16px;
+  background: var(--h-surface);
+  animation: hire-results-in 320ms var(--ease) both;
+}
+
+.hire-review__panel + .hire-review__panel {
+  animation-delay: 80ms;
+}
+
+.hire-review__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+}
+
+.hire-review__lead {
+  flex: 1 1 260px;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--h-gray-700);
+}
+
+.hire-review__tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--h-primary);
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-review__tag,
+html.dark:not(:has(.theme-abtalks-light)) .hire-review__edit {
+  color: var(--h-toolbar);
+}
+
+.hire-review__icon {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.hire-review__count {
+  color: var(--h-gray-700);
+}
+
+.hire-review__count-skel {
+  display: inline-block;
+  width: 120px;
+  height: 14px;
+  margin-left: 10px;
+  vertical-align: -2px;
+  border-radius: 7px;
+  background: linear-gradient(90deg, #eeeeef 0%, #f7f7f8 50%, #eeeeef 100%);
+  background-size: 200% 100%;
+  animation: hire-skel-shimmer 1.4s linear infinite;
+}
+
+.hire-review__edit {
+  flex: none;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 600;
+  color: var(--h-primary);
+  cursor: pointer;
+}
+
+.hire-review__edit:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.hire-review__chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hire-review__word {
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  line-height: 20px;
+  color: var(--h-gray-700);
+}
+
+.hire-review__more {
+  border: 0;
+  cursor: pointer;
+}
+
+.hire-review__more:hover {
+  background: #d4ebec;
+}
+
+.hire-review__empty {
+  margin: 0;
+  font-size: 14px;
+  color: var(--h-gray-500);
+}
+
+.hire-review__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 4px;
+  animation: hire-results-in 320ms var(--ease) 140ms both;
+}
+
+.hire-review__reset,
+.hire-review__run {
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--ease),
+    transform 160ms var(--ease);
+}
+
+.hire-review__reset {
+  border: 0;
+  background: transparent;
+  color: var(--h-ink);
+}
+
+.hire-review__reset:hover:not(:disabled) {
+  background: var(--h-gray-100);
+}
+
+.hire-review__run {
+  border: 0;
+  background: var(--h-primary);
+  color: #ffffff;
+}
+
+.hire-review__run:hover:not(:disabled) {
+  background: var(--h-primary-hover);
+  transform: translateY(-1px);
+}
+
+.hire-review__reset:disabled,
+.hire-review__run:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.hire-review__edit:focus-visible,
+.hire-review__more:focus-visible,
+.hire-review__reset:focus-visible,
+.hire-review__run:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 2px;
+}
+
+@media (max-width: 640px) {
+  .hire-review__panel {
+    padding: 14px 16px;
+  }
+
+  .hire-review__lead,
+  .hire-review__word {
+    font-size: 14px;
+  }
+
+  .hire-review__actions {
+    flex-wrap: nowrap;
+  }
+
+  .hire-review__reset,
+  .hire-review__run {
+    flex: 1 1 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-review,
+  .hire-review__panel,
+  .hire-review__actions,
+  .hire-review__count-skel {
+    animation: none;
+  }
+
+  .hire-review__run:hover:not(:disabled) {
+    transform: none;
+  }
+}
