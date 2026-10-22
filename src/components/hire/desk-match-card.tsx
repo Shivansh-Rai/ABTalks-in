@@ -572,9 +572,10 @@ export function DeskMatchCard({
         )}
 
         <p className="desk-row__summary">
-          <span className="desk-row__summary-label">
-            <img src="/hire/ai-summary-sparkle.svg" alt="" width={13} height={13} />
-            AI summary
+          {/* The sparkle alone marks the AI summary; the words repeated on
+              every row were noise. Screen readers still hear the label. */}
+          <span className="desk-row__summary-label" title="AI summary">
+            <img src="/hire/ai-summary-sparkle.svg" alt="AI summary:" width={13} height={13} />
           </span>
           {summary}
         </p>

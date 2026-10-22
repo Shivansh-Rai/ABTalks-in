@@ -18029,15 +18029,13 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-found strong {
 .desk-row__summary-label {
   display: inline-flex;
   align-items: center;
-  gap: calc(4 * var(--u));
-  margin-right: calc(8 * var(--u));
-  font-weight: 600;
-  color: var(--h-primary);
+  margin-right: calc(6 * var(--u));
+  vertical-align: calc(-2 * var(--u));
 }
 
 .desk-row__summary-label img {
-  width: calc(13 * var(--u));
-  height: calc(13 * var(--u));
+  width: calc(15 * var(--u));
+  height: calc(15 * var(--u));
 }
 
 /* Rejected: still there to undo, but stepped back. */
