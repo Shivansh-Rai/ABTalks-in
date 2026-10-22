@@ -2176,7 +2176,7 @@ export function ScoutChat({
                     <div className="scout-turn">
                       <ScoutLoader />
                       <p className="scout-turn__text scout-loader__label">
-                        Looking through verified work…
+                        Looking through the pool…
                       </p>
                     </div>
                   ) : (
