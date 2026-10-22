@@ -1948,6 +1948,13 @@ export function ScoutChat({
                       I have found{" "}
                       <strong>{foundCount.toLocaleString("en-IN")}</strong>{" "}
                       matching {foundCount === 1 ? "candidate" : "candidates"}
+                      {/* The list is the ranked top slice of that pool. Say so,
+                          or "2,768 found" over a list of 60 reads as a bug. */}
+                      {foundCount > deskMatches.length && deskMatches.length > 0 && (
+                        <span className="hire-found__sub">
+                          Showing the top {deskMatches.length} candidates
+                        </span>
+                      )}
                     </>
                   )
                 ) : (
@@ -2022,6 +2029,7 @@ export function ScoutChat({
                 )}
                 <MatchResults
                   desk
+                  totalFound={foundCount}
                   matches={visibleDeskMatches}
                   samples={deskSamples}
                   sampleDemand={{

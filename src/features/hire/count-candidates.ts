@@ -4,20 +4,27 @@ import "server-only";
  * How many candidates a brief would reach, for the /hire review card.
  *
  * Loads the same pool `searchCandidates` loads, then counts the people who pass
- * the hard filters (`evaluateHardFilters`) AND hold every must-have skill. It
- * does not rank, persist matches or run any AI pass, so it is a read and never
- * changes what a later search returns.
+ * the hard filters (`evaluateHardFilters`), hold every must-have skill, AND are
+ * connected to the role (`assessRole`: a title that reads as it or a close
+ * neighbour, or one of its typical skills). It does not rank, persist matches
+ * or run any AI pass, so it is a read and never changes what a search returns.
  *
- * Experience and role are not counted against: in search they rank, they do
- * not exclude, and a count that disagreed with that would promise people the
- * search then shows.
+ * The role check is what keeps "AI engineer" from counting the whole pool:
+ * without it a role-only brief passed everyone, and the recruiter read
+ * "2,768 matching" over a list of 60.
+ *
+ * Experience is not counted against: in search it ranks, it does not exclude.
  */
 import { errorFields, logger } from "@/lib/logger";
 import type { JobSpec } from "@/lib/validations/hire";
-import { evaluateHardFilters } from "@/features/hire/score-candidate";
+import { assessRole, evaluateHardFilters } from "@/features/hire/score-candidate";
 import { hasSearchCriteria, readPoolExtra } from "@/features/hire/pool-brief";
 import { enabledTracks, isKnownTrack } from "@/features/hire/track-registry";
-import { loadTrack, mergeTrackLoads } from "@/features/hire/track-loaders";
+import {
+  attachRoleTitles,
+  loadTrack,
+  mergeTrackLoads,
+} from "@/features/hire/track-loaders";
 import { CHALLENGE_POOL_CAP } from "@/features/hire/search-candidates";
 
 export type CountCandidatesResult =
@@ -70,11 +77,15 @@ export async function countMatchingCandidates(
       ),
     );
     const merged = mergeTrackLoads(loads);
+    // Titles the role check reads; one query for the whole pool, as in search.
+    const members = await attachRoleTitles(merged.members);
 
     let count = 0;
-    for (const member of merged.members) {
+    for (const member of members) {
       const { ok, missingMust } = evaluateHardFilters(member, spec);
-      if (ok && missingMust.length === 0) count += 1;
+      if (!ok || missingMust.length > 0) continue;
+      if (assessRole(member, spec)?.mismatch) continue;
+      count += 1;
     }
 
     const data = { count, partial: merged.failedTracks.length > 0 };

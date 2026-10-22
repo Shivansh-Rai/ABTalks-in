@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Bookmark, BookmarkCheck } from "lucide-react";
 import {
   deskShortlistHas,
   itemFromMatch,
@@ -13,10 +14,13 @@ export function DeskShortlistButton({
   candidateRef,
   jobRole,
   match,
+  icon = false,
 }: {
   candidateRef: string;
   jobRole: string;
   match?: MatchCardData;
+  /** A bookmark icon instead of the labelled checkbox, for dense result rows. */
+  icon?: boolean;
 }) {
   const [on, setOn] = useState(false);
 
@@ -24,20 +28,40 @@ export function DeskShortlistButton({
     setOn(deskShortlistHas(candidateRef));
   }, [candidateRef]);
 
+  function toggle() {
+    setOn(
+      toggleDeskShortlist(
+        match ? itemFromMatch(match) : { candidateRef, jobRole },
+      ),
+    );
+  }
+
+  if (icon) {
+    const label = on ? "Saved for later" : "Save for later";
+    return (
+      <button
+        type="button"
+        className={cn("desk-save", on && "is-on")}
+        aria-pressed={on}
+        aria-label={label}
+        title={label}
+        onClick={toggle}
+      >
+        {on ? (
+          <BookmarkCheck className="size-4" aria-hidden="true" />
+        ) : (
+          <Bookmark className="size-4" aria-hidden="true" />
+        )}
+      </button>
+    );
+  }
+
   return (
     <button
       type="button"
       className={cn("desk-shortlist", on && "is-on")}
       aria-pressed={on}
-      onClick={() => {
-        setOn(
-          toggleDeskShortlist(
-            match
-              ? itemFromMatch(match)
-              : { candidateRef, jobRole },
-          ),
-        );
-      }}
+      onClick={toggle}
     >
       <span className="desk-shortlist__box" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">

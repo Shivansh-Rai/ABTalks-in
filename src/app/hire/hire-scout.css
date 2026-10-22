@@ -17646,3 +17646,475 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-found strong {
     line-height: 22px;
   }
 }
+
+/* --- Results as one divided panel -------------------------------------------
+   One white sheet with a row per candidate, divided by hairlines, the pager as
+   its footer. Replaces a stack of separate shadowed cards, which read as noise
+   at ten per page. Row content is unchanged from the card; only the layout is.
+
+   --u is one painted pixel. The results shell is zoomed on desktop
+   (zoom: var(--hire-zoom), 0.75 at 1440px), so there it is divided back out
+   and every size below paints at the value written; on phones there is no
+   zoom and it is a plain pixel. */
+.desk-list {
+  --u: 1px;
+  overflow: hidden;
+  border: 1px solid var(--h-border);
+  border-radius: calc(16 * var(--u));
+  background: var(--h-surface);
+}
+
+@media (min-width: 901px) {
+  .hire-app--results .desk-list {
+    --u: calc(1px / var(--hire-zoom, 1));
+  }
+}
+
+.desk-list:empty {
+  display: none;
+}
+
+.desk-list__rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-list__rows > li + li {
+  border-top: 1px solid var(--h-border);
+}
+
+.desk-list .scout-pager {
+  margin: 0;
+  padding: calc(12 * var(--u)) calc(20 * var(--u));
+  border-top: 1px solid var(--h-border);
+  background: var(--h-peach-wash);
+}
+
+.desk-list .scout-pager__n,
+.desk-list .scout-pager__step {
+  min-width: calc(32 * var(--u));
+  height: calc(32 * var(--u));
+  border-radius: calc(8 * var(--u));
+  font-size: calc(13 * var(--u));
+}
+
+.desk-list .scout-pager__count {
+  font-size: calc(13 * var(--u));
+}
+
+/* A row. Hover is a whisper of teal; the open candidate gets a tinted row and
+   a teal bar on its leading edge, so the list says who the panel is showing. */
+.desk-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: calc(40 * var(--u)) minmax(0, 1fr);
+  gap: calc(16 * var(--u));
+  padding: calc(18 * var(--u)) calc(22 * var(--u));
+  transition: background-color 150ms var(--ease);
+}
+
+.desk-row.is-clickable {
+  cursor: pointer;
+}
+
+.desk-row.is-clickable:hover {
+  background: #f7fbfb;
+}
+
+.desk-row.is-selected,
+.desk-row.is-selected:hover {
+  background: var(--h-peach-wash);
+}
+
+.desk-row.is-selected::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 3px;
+  background: var(--h-primary);
+}
+
+.desk-row__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(40 * var(--u));
+  height: calc(40 * var(--u));
+  border-radius: 50%;
+  background: #d4ebec;
+  color: #03535f;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: calc(16 * var(--u));
+  font-weight: 600;
+}
+
+.desk-row__main {
+  display: grid;
+  gap: calc(12 * var(--u));
+  min-width: 0;
+}
+
+.desk-row__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: calc(12 * var(--u)) calc(16 * var(--u));
+}
+
+.desk-row__who {
+  display: grid;
+  gap: calc(4 * var(--u));
+  min-width: 0;
+}
+
+.desk-row__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(6 * var(--u)) calc(8 * var(--u));
+  min-width: 0;
+}
+
+.desk-row__name {
+  margin: 0;
+  min-width: 0;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: calc(18 * var(--u));
+  line-height: calc(24 * var(--u));
+  font-weight: 600;
+  color: var(--h-ink);
+}
+
+.desk-row__open {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.desk-row__open:hover {
+  color: var(--h-primary);
+}
+
+.desk-row__open:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+.desk-row__badge {
+  display: inline-flex;
+  align-items: center;
+  height: calc(20 * var(--u));
+  padding: 0 calc(8 * var(--u));
+  border-radius: 999px;
+  background: var(--h-primary);
+  color: #ffffff;
+  font-size: calc(11 * var(--u));
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.desk-row .hire-open-to-work,
+.desk-row .desk-badge {
+  height: calc(20 * var(--u));
+  font-size: calc(11 * var(--u));
+}
+
+.desk-row__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: calc(13 * var(--u));
+  line-height: calc(18 * var(--u));
+  color: var(--h-gray-700);
+}
+
+.desk-row__meta li {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(5 * var(--u));
+}
+
+/* Facts read as one line, separated by a dot rather than wide gaps. */
+.desk-row__meta li + li::before {
+  content: "";
+  width: 3px;
+  height: 3px;
+  margin: 0 calc(10 * var(--u));
+  border-radius: 50%;
+  background: var(--h-gray-400);
+}
+
+.desk-row__meta svg {
+  width: calc(14 * var(--u));
+  height: calc(14 * var(--u));
+  color: var(--h-primary);
+  flex: none;
+}
+
+/* Actions: save (icon), reject (quiet), shortlist (the one primary). */
+.desk-row__actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: calc(6 * var(--u));
+}
+
+.desk-save {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(32 * var(--u));
+  height: calc(32 * var(--u));
+  padding: 0;
+  border: 1px solid var(--h-border);
+  border-radius: calc(8 * var(--u));
+  background: var(--h-surface);
+  color: var(--h-gray-700);
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    color 150ms var(--ease);
+}
+
+.desk-save svg {
+  width: calc(16 * var(--u));
+  height: calc(16 * var(--u));
+}
+
+.desk-save:hover {
+  border-color: var(--h-primary);
+  color: var(--h-primary);
+}
+
+.desk-save.is-on {
+  border-color: transparent;
+  background: var(--h-peach);
+  color: var(--h-primary);
+}
+
+.hire-app .desk-row__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(6 * var(--u));
+  width: auto;
+  min-width: 0;
+  height: calc(32 * var(--u));
+  min-height: 0;
+  padding: 0 calc(12 * var(--u));
+  border-radius: calc(8 * var(--u));
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13 * var(--u));
+  line-height: 1;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: none;
+  cursor: pointer;
+  transition:
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    color 150ms var(--ease);
+}
+
+.hire-app .desk-row__btn svg {
+  width: calc(14 * var(--u));
+  height: calc(14 * var(--u));
+}
+
+.hire-app .desk-row__btn--quiet {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--h-gray-700);
+}
+
+.hire-app .desk-row__btn--quiet:hover {
+  background: var(--h-gray-100);
+  color: var(--h-ink);
+}
+
+.hire-app .desk-row__btn--primary {
+  border: 1px solid var(--h-primary);
+  background: var(--h-primary);
+  color: #ffffff;
+}
+
+.hire-app .desk-row__btn--primary:hover:not(:disabled) {
+  border-color: var(--h-primary-hover);
+  background: var(--h-primary-hover);
+  color: #ffffff;
+}
+
+.hire-app .desk-row__btn--primary.is-on {
+  border-color: rgba(3, 83, 95, 0.28);
+  background: var(--h-peach);
+  color: var(--h-primary);
+}
+
+.hire-app .desk-row__btn--primary.is-on:hover:not(:disabled) {
+  background: #d4ebec;
+  color: var(--h-primary);
+}
+
+.desk-save:focus-visible,
+.hire-app .desk-row__btn:focus-visible {
+  outline: 2px solid var(--h-primary);
+  outline-offset: 2px;
+}
+
+/* Skills: the ones searched for lead, ticked, in teal. */
+.desk-row__skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(6 * var(--u));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.desk-row__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(4 * var(--u));
+  height: calc(26 * var(--u));
+  padding: 0 calc(10 * var(--u));
+  border: 1px solid var(--h-border);
+  border-radius: 999px;
+  background: var(--h-surface);
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(12.5 * var(--u));
+  font-weight: 500;
+  color: var(--h-pill-ink);
+}
+
+.desk-row__chip svg {
+  width: calc(12 * var(--u));
+  height: calc(12 * var(--u));
+}
+
+.desk-row__chip.is-hit {
+  border-color: rgba(3, 83, 95, 0.28);
+  background: var(--h-peach);
+  color: var(--h-primary);
+  font-weight: 600;
+}
+
+.desk-row__chip--more {
+  background: var(--h-pill);
+  color: var(--h-gray-700);
+}
+
+/* AI summary: a labelled line of prose, clamped to two lines in the list. */
+.desk-row__summary {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13.5 * var(--u));
+  line-height: calc(20 * var(--u));
+  color: var(--h-gray-700);
+}
+
+.desk-row__summary-label {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(4 * var(--u));
+  margin-right: calc(8 * var(--u));
+  font-weight: 600;
+  color: var(--h-primary);
+}
+
+.desk-row__summary-label img {
+  width: calc(13 * var(--u));
+  height: calc(13 * var(--u));
+}
+
+/* Rejected: still there to undo, but stepped back. */
+.desk-row.is-rejected .desk-row__avatar,
+.desk-row.is-rejected .desk-row__who,
+.desk-row.is-rejected .desk-row__skills,
+.desk-row.is-rejected .desk-row__summary {
+  opacity: 0.5;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row.is-clickable:hover {
+  background: #1d1f1f;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row__avatar {
+  background: #02434d;
+  color: #e7f2f3;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row__chip.is-hit,
+html.dark:not(:has(.theme-abtalks-light)) .desk-save.is-on,
+html.dark:not(:has(.theme-abtalks-light)) .hire-app .desk-row__btn--primary.is-on {
+  border-color: transparent;
+  background: #a6d2d5;
+  color: #000000;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row__summary-label,
+html.dark:not(:has(.theme-abtalks-light)) .desk-row__meta svg {
+  color: var(--h-toolbar);
+}
+
+/* Phones: actions move under the name as a full-width row, so the name keeps
+   the line and every button stays a comfortable target. */
+@media (max-width: 640px) {
+  .desk-row {
+    grid-template-columns: 36px minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .desk-row__avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 15px;
+  }
+
+  .desk-row__head {
+    flex-direction: column;
+  }
+
+  .desk-row__actions {
+    width: 100%;
+  }
+
+  .hire-app .desk-row__btn {
+    flex: 1 1 0;
+    height: 38px;
+  }
+
+  .desk-save {
+    width: 38px;
+    height: 38px;
+  }
+
+  .desk-list .scout-pager {
+    padding: 12px 16px;
+  }
+}
+
+/* "Showing the top 60" under the found line. */
+.hire-found__sub {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13px / var(--hire-zoom, 1));
+  line-height: calc(18px / var(--hire-zoom, 1));
+  font-weight: 400;
+  color: var(--h-gray-500);
+}
