@@ -21,6 +21,7 @@ import {
 } from "@/components/hire/match-pagination";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { skillHighlighted } from "@/features/hire/skill-highlight";
 import type { JobSpec } from "@/lib/validations/hire";
 
 /**
@@ -31,6 +32,45 @@ import type { JobSpec } from "@/lib/validations/hire";
  * result and scrolling past it.
  */
 const INITIAL_VISIBLE = 1;
+
+type SortKey = "best" | "skills" | "exp-desc" | "exp-asc";
+
+const SORTS: { value: SortKey; label: string }[] = [
+  { value: "best", label: "Best match" },
+  { value: "skills", label: "Most skills matched" },
+  { value: "exp-desc", label: "Experience: high to low" },
+  { value: "exp-asc", label: "Experience: low to high" },
+];
+
+/** How many of the searched skills a candidate holds. */
+function skillsMatched(m: MatchCardData): number {
+  const have = m.evidence?.skills ?? [];
+  return (m.highlightSkills ?? []).filter((n) =>
+    have.some((sk) => skillHighlighted(sk, [n])),
+  ).length;
+}
+
+/**
+ * The list in the order the recruiter picked. Best match is the ranking as it
+ * came back; the others re-order it, falling back to that ranking on a tie so
+ * the order never shuffles between renders.
+ */
+function sortMatches<T extends MatchCardData>(list: T[], key: SortKey): T[] {
+  if (key === "best") return list;
+  const years = (m: T) => m.evidence?.yearsExperience ?? -1;
+  return list
+    .map((m, i) => ({ m, i }))
+    .sort((a, b) => {
+      const d =
+        key === "skills"
+          ? skillsMatched(b.m) - skillsMatched(a.m)
+          : key === "exp-desc"
+            ? years(b.m) - years(a.m)
+            : years(a.m) - years(b.m);
+      return d !== 0 ? d : a.i - b.i;
+    })
+    .map(({ m }) => m);
+}
 
 export function MatchResults({
   matches,
@@ -104,10 +144,23 @@ export function MatchResults({
     [matches],
   );
   const [seenRefsKey, setSeenRefsKey] = useState(refsKey);
+  const [sort, setSort] = useState<SortKey>("best");
+  const [picked, setPicked] = useState<Set<string>>(() => new Set());
   if (seenRefsKey !== refsKey) {
     setSeenRefsKey(refsKey);
     setPage(1);
+    setPicked(new Set());
   }
+
+  // Desk only: the order the recruiter picked, and the best-match position of
+  // each candidate so "Top match" stays on the real top match under any sort.
+  const ordered = desk ? sortMatches(matches, sort) : matches;
+  const bestRankOf = useMemo(
+    () => new Map(matches.map((m, i) => [m.candidateRef, i + 1])),
+    [matches],
+  );
+  // Bulk actions write project decisions, so they exist only in a project.
+  const bulk = desk && Boolean(onDecision && requestId);
 
   // Paging applies to the FULL list only. The `viewAllHref` branch is a
   // different product decision — one card plus a link to the rest — and its
@@ -120,8 +173,43 @@ export function MatchResults({
   const visible = viewAllHref
     ? matches.slice(0, INITIAL_VISIBLE)
     : paged
-      ? matches.slice(start, start + MATCHES_PER_PAGE)
-      : matches;
+      ? ordered.slice(start, start + MATCHES_PER_PAGE)
+      : ordered;
+  const selectableOnPage = bulk
+    ? visible.filter((m) => Boolean(m.candidateUserId))
+    : [];
+  const pagePicked =
+    selectableOnPage.length > 0 &&
+    selectableOnPage.every((m) => picked.has(m.candidateRef));
+
+  function togglePick(ref: string, on: boolean) {
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(ref);
+      else next.delete(ref);
+      return next;
+    });
+  }
+
+  function togglePage(on: boolean) {
+    setPicked((prev) => {
+      const next = new Set(prev);
+      for (const m of selectableOnPage) {
+        if (on) next.add(m.candidateRef);
+        else next.delete(m.candidateRef);
+      }
+      return next;
+    });
+  }
+
+  /** Shortlist or reject every picked candidate, then clear the selection. */
+  function decideAll(decision: MatchDecision) {
+    if (!onDecision) return;
+    for (const m of matches) {
+      if (picked.has(m.candidateRef)) onDecision(m, decision);
+    }
+    setPicked(new Set());
+  }
   const hidden = viewAllHref ? matches.length - visible.length : 0;
   const showSamples = matches.length === 0 && (samples?.length ?? 0) > 0;
 
@@ -175,6 +263,73 @@ export function MatchResults({
       {/* Desk: one white panel, a row per candidate divided by hairlines, the
           pager as the panel's footer. Elsewhere: the separate cards as before. */}
       <div className={desk ? "desk-list" : "space-y-4"}>
+      {desk && visible.length > 0 && (
+        <div className={cn("desk-list__bar", picked.size > 0 && "is-bulk")}>
+          {bulk && selectableOnPage.length > 0 && (
+            <label className="desk-list__pick">
+              <input
+                type="checkbox"
+                checked={pagePicked}
+                onChange={(ev) => togglePage(ev.target.checked)}
+              />
+              <span className="sr-only">Select everyone on this page</span>
+            </label>
+          )}
+          {picked.size > 0 ? (
+            <div className="desk-list__bulk" role="group" aria-label="Bulk actions">
+              <span className="desk-list__count" aria-live="polite">
+                {picked.size} selected
+              </span>
+              <button
+                type="button"
+                className="desk-row__btn desk-row__btn--primary"
+                onClick={() => decideAll("SHORTLISTED")}
+              >
+                Shortlist {picked.size}
+              </button>
+              <button
+                type="button"
+                className="desk-row__btn desk-row__btn--ghost"
+                onClick={() => decideAll("REJECTED")}
+              >
+                Reject {picked.size}
+              </button>
+              <button
+                type="button"
+                className="desk-row__btn desk-row__btn--quiet"
+                onClick={() => setPicked(new Set())}
+              >
+                Clear
+              </button>
+            </div>
+          ) : (
+            <span className="desk-list__count">
+              Showing {start + 1}&ndash;{start + visible.length} of{" "}
+              {totalFound != null && totalFound > matches.length
+                ? `the top ${matches.length}`
+                : matches.length}
+            </span>
+          )}
+          {matches.length > 1 && (
+            <label className="desk-list__sort">
+              <span>Sort by</span>
+              <select
+                value={sort}
+                onChange={(ev) => {
+                  setSort(ev.target.value as SortKey);
+                  setPage(1);
+                }}
+              >
+                {SORTS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+        </div>
+      )}
       {visible.length > 0 && (
         <ul ref={listRef} className={desk ? "desk-list__rows" : "space-y-4"}>
           {visible.map((m, i) => (
@@ -183,6 +338,11 @@ export function MatchResults({
                 <DeskMatchCard
                   match={m}
                   rank={start + i + 1}
+                  bestRank={bestRankOf.get(m.candidateRef)}
+                  checked={picked.has(m.candidateRef)}
+                  onCheck={
+                    bulk ? (on) => togglePick(m.candidateRef, on) : undefined
+                  }
                   selected={selectedRef === m.candidateRef}
                   onOpen={() => onOpen?.(m)}
                   onDecision={

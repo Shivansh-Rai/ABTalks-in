@@ -44,7 +44,9 @@ export function DeskShortlistButton({
         className={cn("desk-save", on && "is-on")}
         aria-pressed={on}
         aria-label={label}
-        title={label}
+        // A styled tooltip (CSS, on hover and keyboard focus) rather than the
+        // browser's slow native one: an icon alone does not say "save for later".
+        data-tip={on ? "Saved for later. Click to remove" : "Save for later"}
         onClick={toggle}
       >
         {on ? (

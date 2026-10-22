@@ -102,6 +102,8 @@ export type CandidateDossier = {
   yearsExperience: Fact<number>;
   education: Fact<{
     level: string | null;
+    /** The specialisation ("Computer Science"). Only the PROFILE track has it. */
+    field?: string | null;
     university: string | null;
     gradYear: number | null;
   }>;

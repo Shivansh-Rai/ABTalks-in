@@ -94,6 +94,9 @@ export function pickPublicEvidence(raw: unknown): MatchCardData["evidence"] {
   if (typeof e.educationLevel === "string" && e.educationLevel.trim()) {
     out.educationLevel = e.educationLevel.trim();
   }
+  if (typeof e.educationField === "string" && e.educationField.trim()) {
+    out.educationField = e.educationField.trim().slice(0, 80);
+  }
   if (typeof e.workMode === "string" && e.workMode.trim()) {
     out.workMode = e.workMode.trim();
   }
@@ -229,6 +232,7 @@ export function toPublicMatch(
       quizAverage: ev?.quizAverage?.value ?? null,
       totalTrackDays: ev?.cohortProgress.value.ofDays ?? null,
       educationLevel: edu?.level?.trim() || null,
+      educationField: edu?.field?.trim().slice(0, 80) || null,
       workMode: workModeLabel(availability?.preferredWorkMode),
       githubConnected: links?.github ?? false,
       linkedinConnected: links?.linkedin ?? false,

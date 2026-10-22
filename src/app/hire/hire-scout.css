@@ -17852,7 +17852,8 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-row.is-selected .desk-row__name 
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  margin: 0;
+  gap: calc(6 * var(--u)) calc(18 * var(--u));
+  margin: calc(-4 * var(--u)) 0 0;
   padding: 0;
   list-style: none;
   font-size: calc(13 * var(--u));
@@ -17863,18 +17864,17 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-row.is-selected .desk-row__name 
 .desk-row__meta li {
   display: inline-flex;
   align-items: center;
-  gap: calc(5 * var(--u));
+  gap: calc(6 * var(--u));
+  min-width: 0;
+  max-width: 100%;
 }
 
-/* Facts read as one line, separated by a dot rather than wide gaps. */
-.desk-row__meta li + li::before {
-  content: "";
-  width: 3px;
-  height: 3px;
-  margin: 0 calc(10 * var(--u));
-  border-radius: 50%;
-  background: var(--h-gray-400);
+.desk-row__meta li > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
+
 
 .desk-row__meta svg {
   width: calc(14 * var(--u));
@@ -18036,32 +18036,6 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-row.is-selected .desk-row__name 
   color: var(--h-gray-700);
 }
 
-/* AI summary: a labelled line of prose, clamped to two lines in the list. */
-.desk-row__summary {
-  display: -webkit-box;
-  margin: 0;
-  overflow: hidden;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  font-family: var(--font-inter), sans-serif;
-  font-size: calc(13.5 * var(--u));
-  line-height: calc(20 * var(--u));
-  color: var(--h-gray-700);
-}
-
-.desk-row__summary-label {
-  display: inline-flex;
-  align-items: center;
-  margin-right: calc(6 * var(--u));
-  vertical-align: calc(-2 * var(--u));
-}
-
-.desk-row__summary-label svg {
-  width: calc(15 * var(--u));
-  height: calc(15 * var(--u));
-  color: var(--h-primary);
-}
-
 /* Rejected: still there to undo, but stepped back. */
 .desk-row.is-rejected .desk-row__avatar,
 .desk-row.is-rejected .desk-row__who,
@@ -18087,7 +18061,6 @@ html.dark:not(:has(.theme-abtalks-light)) .hire-app .desk-row__btn--primary.is-o
   color: #000000;
 }
 
-html.dark:not(:has(.theme-abtalks-light)) .desk-row__summary-label,
 html.dark:not(:has(.theme-abtalks-light)) .desk-row__meta svg {
   color: var(--h-toolbar);
 }
@@ -18265,4 +18238,429 @@ html.dark:not(:has(.theme-abtalks-light)) .scout-typing__caret {
   .scout-typing__caret {
     animation: none;
   }
+}
+
+/* --- Match pool: UX pass ----------------------------------------------------
+   Three colours, the same job in every row:
+     teal        (--pool-teal)  actions, links, matched skills, the reason panel
+     light green (--pool-green) strong match, open to work
+     light blue  (--pool-blue)  searched skills the candidate is missing
+   Everything else is neutral grey on white. Text pairs meet WCAG AA (4.5:1):
+   #03535f on #eef6f6 is 8.4:1, #17663a on #e3f6ec 6.1:1, #1d4f91 on #e8f1fd
+   7.2:1, and secondary grey #5c5c5c on white 6.7:1. */
+.hire-app {
+  --pool-teal: #03535f;
+  --pool-teal-tint: #eef6f6;
+  --pool-teal-line: #cfe5e7;
+  --pool-green: #17663a;
+  --pool-green-tint: #e3f6ec;
+  --pool-blue: #1d4f91;
+  --pool-blue-tint: #e8f1fd;
+  --pool-muted: #5c5c5c;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .hire-app {
+  --pool-teal: #a6d2d5;
+  --pool-teal-tint: #142a2c;
+  --pool-teal-line: #24474a;
+  --pool-green: #9be3b8;
+  --pool-green-tint: #143222;
+  --pool-blue: #a9c8f5;
+  --pool-blue-tint: #172a44;
+  --pool-muted: #bdbdbd;
+}
+
+/* Page title above the results. */
+.hire-results-head {
+  margin: 0 0 calc(4px / var(--hire-zoom, 1));
+}
+
+.hire-results-head__eyebrow {
+  margin: 0;
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(12px / var(--hire-zoom, 1));
+  line-height: calc(16px / var(--hire-zoom, 1));
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--pool-muted);
+}
+
+.hire-results-head__title {
+  margin: calc(2px / var(--hire-zoom, 1)) 0 0;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: calc(24px / var(--hire-zoom, 1));
+  line-height: calc(30px / var(--hire-zoom, 1));
+  font-weight: 600;
+  color: var(--h-ink);
+  overflow-wrap: anywhere;
+}
+
+/* Contrast: the grey sub-lines were #8f8f8f (3.2:1). */
+.hire-found__sub,
+.desk-list .scout-pager__count {
+  color: var(--pool-muted);
+}
+
+/* What the ranking uses and never uses. */
+.hire-criteria-note {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(8px / var(--hire-zoom, 1));
+  margin: 0 0 calc(14px / var(--hire-zoom, 1));
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13px / var(--hire-zoom, 1));
+  line-height: calc(19px / var(--hire-zoom, 1));
+  color: var(--pool-muted);
+}
+
+.hire-criteria-note svg {
+  flex: none;
+  width: calc(16px / var(--hire-zoom, 1));
+  height: calc(16px / var(--hire-zoom, 1));
+  margin-top: calc(1px / var(--hire-zoom, 1));
+  color: var(--pool-teal);
+}
+
+/* Room under the last row so the pager never sits tight on the search bar. */
+.hire-app--results .chat-output {
+  padding-bottom: 24px;
+}
+
+/* List toolbar: range or bulk actions on the left, sort on the right. */
+.desk-list__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(8 * var(--u)) calc(14 * var(--u));
+  min-height: calc(52 * var(--u));
+  padding: calc(10 * var(--u)) calc(22 * var(--u));
+  border-bottom: 1px solid var(--h-border);
+  background: var(--h-surface);
+}
+
+.desk-list__bar.is-bulk {
+  background: var(--pool-teal-tint);
+}
+
+.desk-list__pick,
+.desk-row__check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: calc(20 * var(--u));
+  height: calc(20 * var(--u));
+  cursor: pointer;
+}
+
+.desk-list__pick input,
+.desk-row__check input {
+  width: calc(16 * var(--u));
+  height: calc(16 * var(--u));
+  margin: 0;
+  accent-color: var(--pool-teal);
+  cursor: pointer;
+}
+
+.desk-list__count {
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13 * var(--u));
+  font-weight: 500;
+  color: var(--pool-muted);
+}
+
+.desk-list__bar.is-bulk .desk-list__count {
+  font-weight: 600;
+  color: var(--pool-teal);
+}
+
+.desk-list__bulk {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(8 * var(--u));
+}
+
+.desk-list__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(8 * var(--u));
+  margin-left: auto;
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13 * var(--u));
+  color: var(--pool-muted);
+}
+
+.desk-list__sort select {
+  height: calc(32 * var(--u));
+  padding: 0 calc(28 * var(--u)) 0 calc(10 * var(--u));
+  border: 1px solid var(--h-border-strong);
+  border-radius: calc(8 * var(--u));
+  background: var(--h-surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%235c5c5c' stroke-width='1.75' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m3 4.5 3 3 3-3'/%3E%3C/svg%3E")
+    no-repeat right calc(10 * var(--u)) center;
+  font: inherit;
+  font-weight: 500;
+  color: var(--h-ink);
+  appearance: none;
+  cursor: pointer;
+}
+
+/* Row: optional checkbox column, avatar, body. */
+.desk-row.is-selectable {
+  grid-template-columns: calc(20 * var(--u)) calc(40 * var(--u)) minmax(0, 1fr);
+}
+
+.desk-row__check {
+  margin-top: calc(10 * var(--u));
+}
+
+.desk-row.is-checked,
+.desk-row.is-checked:hover {
+  background: var(--pool-teal-tint);
+}
+
+/* Keyboard focus anywhere in a row lights the row, not just the control. */
+.desk-row:has(:focus-visible) {
+  box-shadow: inset 0 0 0 2px var(--pool-teal-line);
+}
+
+.desk-list__pick input:focus-visible,
+.desk-row__check input:focus-visible,
+.desk-list__sort select:focus-visible {
+  outline: 2px solid var(--pool-teal);
+  outline-offset: 2px;
+}
+
+/* Tags beside the name. Top match is the one solid badge. */
+.desk-row__badge {
+  background: var(--pool-teal);
+  color: #ffffff;
+}
+
+html.dark:not(:has(.theme-abtalks-light)) .desk-row__badge {
+  color: #000000;
+}
+
+.desk-row__tag,
+.desk-row .hire-open-to-work {
+  display: inline-flex;
+  align-items: center;
+  height: calc(20 * var(--u));
+  padding: 0 calc(8 * var(--u));
+  border-radius: 999px;
+  background: var(--h-gray-100);
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(11 * var(--u));
+  font-weight: 600;
+  line-height: 1;
+  color: var(--pool-muted);
+}
+
+.desk-row__tag--green,
+.desk-row .hire-open-to-work {
+  background: var(--pool-green-tint);
+  color: var(--pool-green);
+}
+
+.desk-row__tag--teal {
+  background: var(--pool-teal-tint);
+  color: var(--pool-teal);
+}
+
+.desk-row__name {
+  overflow-wrap: anywhere;
+}
+
+/* View profile: the visible way into the full profile. */
+.hire-app .desk-row__btn--ghost {
+  border: 1px solid var(--h-border-strong);
+  background: var(--h-surface);
+  color: var(--h-ink);
+}
+
+.hire-app .desk-row__btn--ghost:hover {
+  border-color: var(--pool-teal);
+  color: var(--pool-teal);
+}
+
+.desk-row__chip {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.desk-row__chip.is-hit {
+  border-color: var(--pool-teal-line);
+  background: var(--pool-teal-tint);
+  color: var(--pool-teal);
+}
+
+.desk-row__chip--more {
+  cursor: help;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Bookmark tooltip: on hover and on keyboard focus. */
+.desk-save[data-tip] {
+  position: relative;
+}
+
+.desk-save[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  z-index: 20;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: #1f2424;
+  color: #ffffff;
+  font-family: var(--font-inter), sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition:
+    opacity 120ms var(--ease),
+    transform 120ms var(--ease);
+}
+
+.desk-save[data-tip]:hover::after,
+.desk-save[data-tip]:focus-visible::after {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* Phones: checkbox and avatar share the left column's top, actions wrap. */
+@media (max-width: 640px) {
+  .desk-row.is-selectable {
+    grid-template-columns: 20px 36px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .desk-row__actions {
+    flex-wrap: wrap;
+  }
+
+  .desk-list__bar {
+    padding: 10px 16px;
+  }
+
+  .desk-list__sort {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .desk-list__sort select {
+    flex: 1 1 auto;
+  }
+
+  .desk-save[data-tip]::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .desk-save[data-tip]::after {
+    transition: none;
+  }
+}
+
+/* The row's summary: the sparkle marks it, two lines, the full text in the
+   profile panel. */
+.desk-row__summary {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: var(--font-inter), sans-serif;
+  font-size: calc(13.5 * var(--u));
+  line-height: calc(20 * var(--u));
+  color: var(--h-gray-700);
+  overflow-wrap: anywhere;
+}
+
+.desk-row__summary-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: calc(6 * var(--u));
+  vertical-align: calc(-2 * var(--u));
+  color: var(--pool-teal);
+}
+
+.desk-row__summary-icon svg {
+  width: calc(15 * var(--u));
+  height: calc(15 * var(--u));
+}
+
+/* Pool rows as separate cards again: tighter 8px corners (the old cards were
+   15px) and a small 8px gap between them. The toolbar and pager become the
+   same kind of card, so the stack reads as one system. */
+.desk-list {
+  display: grid;
+  gap: calc(8 * var(--u));
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.desk-list__rows {
+  display: grid;
+  gap: calc(8 * var(--u));
+}
+
+.desk-list__rows > li + li {
+  border-top: 0;
+}
+
+.desk-row,
+.desk-list__bar,
+.desk-list .scout-pager {
+  border: 1px solid var(--h-border);
+  border-radius: calc(8 * var(--u));
+  background: var(--h-surface);
+}
+
+.desk-row {
+  transition:
+    background-color 150ms var(--ease),
+    border-color 150ms var(--ease),
+    box-shadow 150ms var(--ease);
+}
+
+.desk-row.is-clickable:hover {
+  border-color: var(--pool-teal-line);
+  box-shadow: 0 2px 8px rgba(3, 83, 95, 0.06);
+}
+
+.desk-row.is-selected,
+.desk-row.is-selected:hover {
+  border-color: var(--pool-teal-line);
+}
+
+.desk-list__bar.is-bulk {
+  border-color: var(--pool-teal-line);
 }

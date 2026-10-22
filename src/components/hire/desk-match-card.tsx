@@ -35,6 +35,7 @@ import {
   useUpgradePrompt,
 } from "@/components/hire/locked-field";
 import { cn } from "@/lib/utils";
+import { canonicalSkillName } from "@/lib/skill-catalog";
 import type { JobSpec } from "@/lib/validations/hire";
 import { OpenToWorkBadge } from "@/components/hire/hire-card-facts";
 import {
@@ -48,20 +49,20 @@ import {
 } from "@/features/hire/candidate-summary-ai";
 
 /** Skill chips on a result card before the rest collapse into "+N". */
-const CARD_SKILLS = 8;
+const CARD_SKILLS = 6;
 
 /** Roughly three lines on the card, before the sentence-boundary trim below. */
 const SUMMARY_PREVIEW_CHARS = 280;
 
 /**
- * The card's share of the AI summary â€” a 3-line preview of the same prose the
+ * The card's share of the AI summary — a 3-line preview of the same prose the
  * View Details panel shows (session-cached Gemini when present, otherwise
  * `recruiterSummary`). Full text stays in the sidebar; cards never call Gemini.
  *
  * Cuts on a sentence end where there is one in range, so the preview reads as
  * a finished thought rather than a severed clause; falls back to a word
  * boundary otherwise. The CSS line-clamp behind this is a second safety net
- * for a single very long sentence, not the primary mechanism â€” clamping alone
+ * for a single very long sentence, not the primary mechanism — clamping alone
  * would still ship the whole string to the browser and still break mid-word.
  */
 export function summaryPreview(text: string): string {
@@ -69,7 +70,7 @@ export function summaryPreview(text: string): string {
   if (flat.length <= SUMMARY_PREVIEW_CHARS) return flat;
 
   const window = flat.slice(0, SUMMARY_PREVIEW_CHARS);
-  // A sentence end, but only if it lands in the back half â€” cutting at the
+  // A sentence end, but only if it lands in the back half — cutting at the
   // first full stop of a long paragraph would throw away most of the preview.
   const sentence = Math.max(
     window.lastIndexOf(". "),
@@ -80,7 +81,7 @@ export function summaryPreview(text: string): string {
     return flat.slice(0, sentence + 1);
   }
   const space = window.lastIndexOf(" ");
-  return `${flat.slice(0, space > 0 ? space : SUMMARY_PREVIEW_CHARS).trimEnd()}â€¦`;
+  return `${flat.slice(0, space > 0 ? space : SUMMARY_PREVIEW_CHARS).trimEnd()}…`;
 }
 
 const WORK_MODE: Record<string, string> = {
@@ -94,7 +95,7 @@ const WORK_MODE: Record<string, string> = {
  * A stable tint index for a skill name.
  *
  * Same hash the design mockup uses, so "React" is the same hue on every card,
- * in the inspector, and between sessions â€” the colour is information about the
+ * in the inspector, and between sessions — the colour is information about the
  * skill, not about where it happened to be rendered.
  */
 function skillTint(skill: string): string {
@@ -109,7 +110,7 @@ function skillTint(skill: string): string {
  * A stand-in surname of the same length as the real one.
  *
  * Deterministic from the name itself, so a candidate's block does not change
- * shape between renders, and never derived from the real letters â€” the point is
+ * shape between renders, and never derived from the real letters — the point is
  * that the actual surname is not written into the page at all. It is only ever
  * seen through a blur, so the letters carry no meaning; what matters is that the
  * word is the right length and has a name-like silhouette.
@@ -132,7 +133,7 @@ function decoySurname(seedText: string, length: number): string {
 /**
  * Given name in the clear, family name behind a blur.
  *
- * The blur is CSS, but the text under it is a decoy â€” the real surname is never
+ * The blur is CSS, but the text under it is a decoy — the real surname is never
  * put in the DOM, so this is not the "blur over real text" that `LockedField`
  * warns about. Reading the page source yields nothing.
  *
@@ -182,6 +183,24 @@ export function MaskedName({
   );
 }
 
+/**
+ * One label per skill: "SpringBoot", "Spring boot" and "springboot" are one
+ * chip, spelled the catalog's way ("Spring Boot"). Order is kept, so the
+ * searched-for skills `orderedSkills` hoisted stay at the front.
+ */
+function uniqueSkills(list: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of list) {
+    const name = canonicalSkillName(raw);
+    const key = name.toLowerCase();
+    if (!name || seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
 export function DeskMatchCard({
   match,
   rank,
@@ -192,16 +211,24 @@ export function DeskMatchCard({
   onDecision,
   requestId,
   searchSpec = null,
+  bestRank,
+  checked = false,
+  onCheck,
 }: {
   match: MatchCardData & Partial<MatchTriage>;
   rank?: number;
+  /** Position in the best-match order, whatever the list is sorted by. */
+  bestRank?: number;
+  /** Bulk selection: shown only in a project, where decisions persist. */
+  checked?: boolean;
+  onCheck?: (checked: boolean) => void;
   selected?: boolean;
   onOpen?: () => void;
   onCartToggle?: (inCart: boolean) => void;
   sampleDemand?: SampleDemand;
   onDecision?: (decision: MatchDecision) => void;
   requestId?: string | null;
-  /** Active desk search â€” used only to key the session Gemini cache. */
+  /** Active desk search — used only to key the session Gemini cache. */
   searchSpec?: JobSpec | null;
 }) {
   const sample = match.candidateRef.startsWith("SAMPLE:");
@@ -218,11 +245,11 @@ export function DeskMatchCard({
   const e = match.evidence ?? {};
   // The skills the recruiter actually asked for, hoisted to the front. The card
   // draws eight chips out of a list that is routinely fifteen or twenty long,
-  // and stored order is the order the candidate typed their stack in â€” so a
+  // and stored order is the order the candidate typed their stack in — so a
   // search for "snowflake" could return a card whose chips never say Snowflake.
   // To the reader that is a wrong result, not a truncated one.
   const needles = match.highlightSkills ?? [];
-  const skills = orderedSkills(e.skills ?? [], needles);
+  const skills = uniqueSkills(orderedSkills(e.skills ?? [], needles));
 
   const summaryInput = summaryInputFromMatch(match);
   // Same key the inspector uses so a Gemini summary written in View Details
@@ -254,8 +281,8 @@ export function DeskMatchCard({
   );
 
   // The card is the click target, not just the "View more details" link.
-  // Everything interactive inside it â€” the two shortlist buttons, the intro
-  // button, the locked-field reveals â€” must keep its own click, and a click that
+  // Everything interactive inside it — the two shortlist buttons, the intro
+  // button, the locked-field reveals — must keep its own click, and a click that
   // ends a text selection is a read, not a request to open the panel.
   function openFromCard(event: MouseEvent<HTMLElement>) {
     if (!onOpen) return;
@@ -291,7 +318,7 @@ export function DeskMatchCard({
               <p className="desk-card__ref">
                 {match.jobRole}
                 {typeof e.yearsExperience === "number" && e.yearsExperience > 0
-                  ? ` Â· ${e.yearsExperience}+ yrs`
+                  ? ` · ${e.yearsExperience}+ yrs`
                   : ""}
               </p>
               <p className="desk-card__stack">
@@ -300,7 +327,7 @@ export function DeskMatchCard({
                   label="Location"
                   onReveal={openUpgrade}
                 />
-                {" Â· "}
+                {" · "}
                 <LockedField
                   value={p.educationLine}
                   label="Education"
@@ -386,14 +413,15 @@ export function DeskMatchCard({
     );
   }
 
-  // The result card (Figma 1646:209). Score and evidence pills are not on it â€”
-  // the profile panel carries both; the card is who, where, which skills, and
-  // Scout's reason. A missing fact drops out of the meta row rather than
-  // printing a placeholder.
+  // The result row: who, where, which skills, and Scout's summary. A missing
+  // fact drops out rather than printing a placeholder.
   const years =
     typeof e.yearsExperience === "number" && e.yearsExperience > 0
       ? `${e.yearsExperience} yr${e.yearsExperience === 1 ? "" : "s"} experience`
       : null;
+  const education = [e.educationLevel?.trim(), e.educationField?.trim()]
+    .filter(Boolean)
+    .join(" · ");
   const meta = [
     { key: "location", Icon: MapPin, label: match.locationLabel },
     {
@@ -402,9 +430,14 @@ export function DeskMatchCard({
       label: e.workMode ? (WORK_MODE[e.workMode] ?? e.workMode) : null,
     },
     { key: "experience", Icon: Briefcase, label: years },
-    { key: "education", Icon: GraduationCap, label: e.educationLevel },
+    { key: "education", Icon: GraduationCap, label: education || null },
   ].filter((m) => Boolean(m.label));
   const shownSkills = skills.slice(0, CARD_SKILLS);
+  const hiddenSkills = skills.slice(CARD_SKILLS);
+
+  const strong = match.tier === "STRONG";
+  const isTop = (bestRank ?? rank) === 1;
+
   // The row's avatar: the candidate's initial, the same treatment as the
   // thread's avatars, instead of a stock silhouette photo.
   const initial =
@@ -419,22 +452,34 @@ export function DeskMatchCard({
     match.jobRole
   );
   const shortlisted = decision === "SHORTLISTED";
+  const selectable = showTriage && Boolean(onCheck);
 
-  // One row of the results panel (plan: results as one divided list). Same
-  // content as the card it replaced: who, where, which skills, Scout's reason.
-  // Clicking the row (or the name, for keyboards) opens the profile, so there
-  // is no separate View More Details button.
   return (
     <article
       className={cn(
         "desk-row",
-        rank === 1 && "desk-row--top",
+        isTop && "desk-row--top",
         selected && "is-selected",
+        checked && "is-checked",
         onOpen && "is-clickable",
         rejected && "is-rejected",
+        selectable && "is-selectable",
       )}
       onClick={openFromCard}
     >
+      {selectable && (
+        <label className="desk-row__check" onClick={(ev) => ev.stopPropagation()}>
+          <input
+            type="checkbox"
+            checked={checked}
+            onChange={(ev) => onCheck?.(ev.target.checked)}
+          />
+          <span className="sr-only">
+            Select {match.displayName?.split(/\s+/)[0] || match.jobRole}
+          </span>
+        </label>
+      )}
+
       <span className="desk-row__avatar" aria-hidden="true">
         {initial ?? <UserRound className="size-4" />}
       </span>
@@ -452,41 +497,39 @@ export function DeskMatchCard({
                   name
                 )}
               </h3>
+              {isTop && <span className="desk-row__badge">Top match</span>}
+              {strong && (
+                <span className="desk-row__tag desk-row__tag--green">Strong match</span>
+              )}
               <OpenToWorkBadge openToWork={match.openToWork} />
-              {rank === 1 && <span className="desk-row__badge">Top match</span>}
               {showTriage &&
                 (match.viewedAt ? (
-                  <span className="desk-badge desk-badge--viewed">Viewed</span>
+                  <span className="desk-row__tag">Viewed</span>
                 ) : match.isNew ? (
-                  <span className="desk-badge desk-badge--new">New</span>
+                  <span className="desk-row__tag desk-row__tag--teal">New</span>
                 ) : null)}
             </div>
-            {meta.length > 0 && (
-              <ul className="desk-row__meta">
-                {meta.map(({ key, Icon, label }) => (
-                  <li key={key}>
-                    <Icon
-                      size={14}
-                      strokeWidth={1.75}
-                      aria-hidden="true"
-                    />
-                    {label}
-                  </li>
-                ))}
-              </ul>
-            )}
           </div>
 
           <div className="desk-row__actions" onClick={(ev) => ev.stopPropagation()}>
-            {/* Save for later keeps its own name (as the icon's label): two
-                controls both called "Shortlist", writing to different stores,
-                is what TC-R-004 caught. */}
+            {/* Save for later keeps its own name (as the icon's tooltip and
+                label): two controls both called "Shortlist", writing to
+                different stores, is what TC-R-004 caught. */}
             <DeskShortlistButton
               icon
               candidateRef={match.candidateRef}
               jobRole={match.jobRole}
               match={match}
             />
+            {onOpen && (
+              <button
+                type="button"
+                className="desk-row__btn desk-row__btn--ghost"
+                onClick={onOpen}
+              >
+                View profile
+              </button>
+            )}
             {showTriage && (
               <button
                 type="button"
@@ -517,11 +560,7 @@ export function DeskMatchCard({
                 {shortlisted ? (
                   <Check className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
                 ) : (
-                  <UserCheck
-                    size={14}
-                    strokeWidth={1.75}
-                    aria-hidden="true"
-                  />
+                  <UserCheck size={14} strokeWidth={1.75} aria-hidden="true" />
                 )}
                 {shortlisted ? "Shortlisted" : "Shortlist"}
               </button>
@@ -551,31 +590,49 @@ export function DeskMatchCard({
           </div>
         </header>
 
+        {/* Its own full-width line, not squeezed beside the actions: in that
+            narrow column a long degree wrapped onto three lines. Each fact
+            stays on one line and truncates, with the full text on hover. */}
+        {meta.length > 0 && (
+          <ul className="desk-row__meta">
+            {meta.map(({ key, Icon, label }) => (
+              <li key={key} title={label ?? undefined}>
+                <Icon size={14} strokeWidth={1.75} aria-hidden="true" />
+                <span>{label}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+
         {skills.length > 0 && (
           <ul className="desk-row__skills" aria-label="Skills">
-            {shownSkills.map((s) => {
-              const hit = skillHighlighted(s, needles);
+            {shownSkills.map((sk) => {
+              const hit = skillHighlighted(sk, needles);
               return (
-                <li key={s} className={cn("desk-row__chip", hit && "is-hit")}>
+                <li key={sk} className={cn("desk-row__chip", hit && "is-hit")}>
                   {hit && <Check className="size-3" strokeWidth={1.75} aria-hidden="true" />}
-                  {s}
+                  {sk}
+                  {hit && <span className="sr-only"> (searched)</span>}
                 </li>
               );
             })}
-            {skills.length > shownSkills.length && (
-              <li className="desk-row__chip desk-row__chip--more">
-                +{skills.length - shownSkills.length}
+            {hiddenSkills.length > 0 && (
+              <li
+                className="desk-row__chip desk-row__chip--more"
+                title={hiddenSkills.join(", ")}
+                aria-label={`${hiddenSkills.length} more skills: ${hiddenSkills.join(", ")}`}
+              >
+                +{hiddenSkills.length}
               </li>
             )}
           </ul>
         )}
 
+        {/* The summary as before: the profile panel's AI text when it has
+            written one for this search, otherwise the built-in summary. No
+            model call from the list. The sparkle alone marks it. */}
         <p className="desk-row__summary">
-          {/* The sparkle alone marks the AI summary; the words repeated on
-              every row were noise. Screen readers still hear the label. */}
-          <span className="desk-row__summary-label" title="AI summary">
-            {/* A line icon rather than ai-summary-sparkle.svg: that file is
-                drawn at a 2px stroke on a 15px box and read as bold here. */}
+          <span className="desk-row__summary-icon" title="AI summary">
             <Sparkles size={15} strokeWidth={1.75} aria-hidden="true" />
             <span className="sr-only">AI summary:</span>
           </span>

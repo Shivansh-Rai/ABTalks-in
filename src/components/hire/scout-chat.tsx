@@ -9,7 +9,7 @@ import {
   useTransition,
 } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Search, User } from "lucide-react";
+import { ArrowRight, Search, ShieldCheck, User } from "lucide-react";
 import { suggestChips } from "@/features/hire/scout-chips";
 import { detectSpokenBrief } from "@/features/hire/spoken-brief";
 import {
@@ -2079,6 +2079,13 @@ export function ScoutChat({
                   change it. "Edit filters" belongs here beside the criteria it
                   edits — as a loose button by the composer it read as an
                   unrelated floating link. */}
+              {/* The page's title: which search these results answer. */}
+              <header className="hire-results-head">
+                <p className="hire-results-head__eyebrow">Search results</p>
+                <h1 className="hire-results-head__title">
+                  {(persist && projectLabel.trim()) || spec.title?.trim() || "Your search"}
+                </h1>
+              </header>
               <p className="hire-found" role="status">
                 {foundReady ? (
                   foundCount != null && (
@@ -2106,6 +2113,11 @@ export function ScoutChat({
                   </>
                 )}
               </p>
+              {/* What the ranking uses, and what it never uses. True of
+                  score-candidate.ts: no name (ties break on an id hash), no
+                  gender, no college, no photo. Education only breaks exact ties,
+                  by whether it is filled in. */}
+              
               <div className="hire-filter-bar">
                 <p className="hire-filter-bar__title">Filters from this search</p>
                 <div className="hire-filter-bar__chips">
@@ -2454,7 +2466,11 @@ export function ScoutChat({
                     submitComposer();
                   }
                 }}
-                placeholder="Type here...."
+                placeholder={
+                  searched
+                    ? "Refine: add a skill, city, experience or budget"
+                    : "Describe the role: title, skills, experience, city or budget"
+                }
                 disabled={
                   pending ||
                   review?.status === "reading" ||
