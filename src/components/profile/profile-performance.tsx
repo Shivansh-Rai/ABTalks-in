@@ -26,7 +26,7 @@ export function ProfilePerformance({
         <span id="pw-rvp-title" className="pw-rvp-title">
           Profile performance
         </span>
-        <span className="pw-rvp-caption">90 days</span>
+        <span className="pw-rvp-caption">Last 90 days</span>
         {/* <svg
           viewBox="0 0 24 24"
           className="pw-rvp-info"
