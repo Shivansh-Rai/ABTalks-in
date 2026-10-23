@@ -166,6 +166,48 @@ export async function listPassedChallengeDays(enrollmentId: string): Promise<num
   return [...days].sort((a, b) => a - b);
 }
 
+/**
+ * When a challenge enrollment first reached `minDays` distinct passed days:
+ * the submit time of the attempt that completed that day. Null when it never
+ * got there. Same pass rule as `listPassedChallengeDays` (the authoritative
+ * evaluation wins over the cached flag). Read by the badge award date.
+ */
+export async function findChallengeDayMilestoneAt(
+  enrollmentId: string,
+  minDays: number,
+): Promise<Date | null> {
+  const rows = await prisma.activityAttempt.findMany({
+    where: {
+      enrollmentId: peIdForEnrollment(enrollmentId),
+      id: { startsWith: "aa_sub_" },
+      activityId: { startsWith: "act_dt_" },
+    },
+    select: {
+      passed: true,
+      submittedAt: true,
+      createdAt: true,
+      activity: { select: { dayNumber: true } },
+      evaluations: {
+        where: { isAuthoritative: true },
+        select: { passed: true },
+        take: 1,
+      },
+    },
+  });
+  const ordered = rows
+    .map((row) => ({ ...row, at: row.submittedAt ?? row.createdAt }))
+    .sort((a, b) => a.at.getTime() - b.at.getTime());
+  const days = new Set<number>();
+  for (const row of ordered) {
+    const day = row.activity.dayNumber;
+    if (day == null || days.has(day)) continue;
+    if (!(row.evaluations[0]?.passed ?? row.passed)) continue;
+    days.add(day);
+    if (days.size === minDays) return row.at;
+  }
+  return null;
+}
+
 async function challengeCompletionFromAttempts(
   enrollmentId: string,
 ): Promise<{ daysCompleted: number; lastSubmittedDay: number | null }> {

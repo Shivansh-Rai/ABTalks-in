@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Trophy } from "lucide-react";
+import { Award, Trophy } from "lucide-react";
 import { auth } from "@/auth";
 import { getAchievements } from "@/features/certificate/get-achievements";
+import { getEarnedBadges } from "@/features/badges/get-earned-badges";
+import { BadgeTrigger } from "@/components/badges/badge-trigger";
 import { AchievementCard } from "@/components/certificate/achievement-card";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { prisma } from "@/lib/db";
@@ -33,6 +35,9 @@ export default async function AchievementsPage() {
   };
 
   const achievements = await getAchievements(userId);
+  // After getAchievements on purpose: it may issue the Claude certificate,
+  // which is what the Claude Challenge badge reads.
+  const badges = await getEarnedBadges(userId);
   const earnedCount = achievements.filter((a) => a.status !== "REVOKED").length;
 
   const headersList = await headers();
@@ -94,6 +99,63 @@ export default async function AchievementsPage() {
             ))}
           </ul>
         )}
+
+        {/* Earned badges, derived from the same records as the certificates
+            above. Quick Links on /profile links here. */}
+        <section id="badges" className="mt-12 scroll-mt-24" aria-labelledby="badges-title">
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2
+                id="badges-title"
+                className="font-display text-2xl font-bold tracking-tight text-black"
+              >
+                Badges
+              </h2>
+              <p className="mt-1 text-sm text-[#4B4B4B]">
+                Earned for finishing challenges and cohorts, and for showing up
+                day after day. Select a badge to see how it was earned.
+              </p>
+            </div>
+            {badges.ok && badges.badges.length > 0 ? (
+              <p className="flex shrink-0 items-baseline gap-2 text-[15px] text-[#4B4B4B]">
+                <span className="font-heading text-4xl font-bold text-black">
+                  {badges.badges.length}
+                </span>
+                {badges.badges.length === 1 ? "badge earned" : "badges earned"}
+              </p>
+            ) : null}
+          </div>
+
+          {!badges.ok ? (
+            <p className="mt-6 rounded-2xl border border-[#E0E0E0] bg-white px-5 py-6 text-center text-sm text-[#4B4B4B]">
+              Badges couldn&apos;t load right now. Refresh the page to try again.
+            </p>
+          ) : badges.badges.length === 0 ? (
+            <div className="mt-6 flex flex-col items-center rounded-3xl border-[1.5px] border-dashed border-[#D5DEDE] bg-white px-6 py-10 text-center">
+              <span
+                className="flex size-14 items-center justify-center rounded-full border-2 border-dashed border-[#C7D6D6] bg-[#EEF5F5] text-[#03535F]"
+                aria-hidden
+              >
+                <Award className="size-6" />
+              </span>
+              <h3 className="mt-3 font-display text-lg font-semibold text-black">
+                No badges yet
+              </h3>
+              <p className="mt-1 max-w-md text-sm text-[#4B4B4B]">
+                Finish a challenge or cohort, or submit work 30 days in a row,
+                to earn your first badge.
+              </p>
+            </div>
+          ) : (
+            <ul className="mt-6 grid grid-cols-2 gap-2 rounded-3xl border border-[#E0E0E0] bg-white p-3 shadow-[0_2px_8px_rgba(0,0,0,0.05)] sm:grid-cols-3 sm:p-4 lg:grid-cols-5">
+              {badges.badges.map((badge) => (
+                <li key={badge.key} className="flex min-w-0">
+                  <BadgeTrigger badge={badge} variant="tile" size={104} />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
       </main>
     </DashboardShell>
   );

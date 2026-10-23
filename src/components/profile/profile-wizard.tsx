@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import "./profile-wizard.css";
 import type { ProfileReview } from "@/features/profile/build-review";
+import type { BadgesState } from "@/features/badges/types";
 import { ProfileCard } from "./profile-card";
 import { ProfileReviewCard } from "./profile-review";
 import { IdentityMedia } from "./identity-media";
@@ -54,6 +55,7 @@ export function ProfileWizard({
   review,
   avatarUploadEnabled,
   performance,
+  badges,
 }: {
   steps: WizardStep[];
   initialIndex: number;
@@ -63,6 +65,8 @@ export function ProfileWizard({
   review: ProfileReview;
   avatarUploadEnabled: boolean;
   performance: { searchAppearances: number; recruiterActions: number };
+  /** Earned badges, derived on the server. Feeds Quick Links and the review. */
+  badges: BadgesState;
 }) {
   const [index, setIndex] = useState(initialIndex);
   const [open, setOpen] = useState(false);
@@ -312,6 +316,7 @@ export function ProfileWizard({
           // sheet, which reads as stuck.
           activeIndex={open ? index : -1}
           onJump={jump}
+          badges={badges}
           blocked={dirty && open}
         />
 
@@ -319,6 +324,7 @@ export function ProfileWizard({
           review={review}
           onOpen={jump}
           performance={performance}
+          badges={badges}
           media={
             <IdentityMedia
               score={score}

@@ -254,6 +254,8 @@
 /src/features/career-guidance/                      @Shivansh-Rai
 /src/features/assessment-attempts/                  @Shivansh-Rai
 /src/features/platform-assessments/                 @Shivansh-Rai
+/src/features/badges/                               @Shivansh-Rai
+/src/components/badges/                             @Shivansh-Rai
 
 # ------------------------------------------------------------------------------
 # 12. Admin member lists / hackathon track (owner: @byteninjaa0, plan 190)

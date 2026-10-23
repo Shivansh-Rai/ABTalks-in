@@ -1,0 +1,117 @@
+/* Achievement badges: medallion polish + the tiles that present them.
+   Colours follow the profile design system (teal #03535F, #E0E0E0 borders). */
+
+.bdg-medallion {
+  display: block;
+  flex: none;
+  overflow: visible;
+  filter: drop-shadow(0 3px 6px rgba(3, 83, 95, 0.18));
+}
+.bdg-glow-gold {
+  filter: drop-shadow(0 0 6px rgba(255, 196, 64, 0.55))
+    drop-shadow(0 3px 6px rgba(90, 58, 0, 0.25));
+}
+
+/* The highlight sweeps once across the medal on hover/focus. */
+.bdg-shine {
+  transform-box: view-box;
+  transform-origin: 50px 50px;
+  transform: rotate(22deg) translateX(-30px);
+  transition: none;
+  opacity: 0;
+}
+.bdg-trigger:hover .bdg-shine,
+.bdg-trigger:focus-visible .bdg-shine {
+  animation: bdg-sweep 0.9s ease-out;
+}
+@keyframes bdg-sweep {
+  0% {
+    opacity: 0;
+    transform: rotate(22deg) translateX(-30px);
+  }
+  20% {
+    opacity: 0.38;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(22deg) translateX(150px);
+  }
+}
+
+/* ---- shared trigger ---- */
+.bdg-trigger {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: center;
+}
+.bdg-trigger:focus-visible {
+  outline: 2px solid #03535f;
+  outline-offset: 3px;
+  border-radius: 14px;
+}
+.bdg-trigger .bdg-medallion {
+  transition: transform 0.2s ease;
+}
+.bdg-trigger:hover .bdg-medallion {
+  transform: translateY(-2px) scale(1.04);
+}
+
+/* Tile: medallion with name + context underneath. */
+.bdg-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 14px 10px 12px;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  transition: background-color 0.18s ease, border-color 0.18s ease;
+}
+.bdg-tile:hover {
+  background: #eef6f6;
+  border-color: #d4ebec;
+}
+.bdg-tile-name {
+  display: block;
+  font-size: 13px;
+  line-height: 17px;
+  font-weight: 600;
+  color: #000000;
+}
+.bdg-tile-context {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 16px;
+  color: #626262;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Icon only, for the Quick Links preview. */
+.bdg-icon {
+  display: inline-flex;
+  border-radius: 10px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bdg-trigger:hover .bdg-shine,
+  .bdg-trigger:focus-visible .bdg-shine {
+    animation: none;
+  }
+  .bdg-trigger .bdg-medallion,
+  .bdg-tile {
+    transition: none;
+  }
+  .bdg-trigger:hover .bdg-medallion {
+    transform: none;
+  }
+}

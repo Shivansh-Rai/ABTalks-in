@@ -501,6 +501,193 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   }
 }
 
+/* ---- Earned Badges (Quick Links box) ----
+   Sits where Profile performance used to: the same tinted box under the
+   Quick Links hairline, with a compact row of medallions. */
+.pw-badges-box {
+  flex: none;
+  margin: 12px 16px 0;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--pw-primary-tint);
+}
+.pw-badges-box-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.pw-badges-box-title {
+  font-size: 14.5px;
+  line-height: 18px;
+  font-weight: 700;
+  color: #000000;
+}
+.pw-badges-box-count {
+  min-width: 22px;
+  height: 20px;
+  padding: 0 7px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--pw-primary-light);
+  color: var(--pw-primary);
+  font-size: 12px;
+  font-weight: 700;
+}
+.pw-badges-box-note {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  line-height: 17px;
+  color: #4b4b4b;
+}
+.pw-badges-box-row {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.pw-badges-box-more {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 1px solid var(--pw-border);
+  color: var(--pw-primary);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+.pw-badges-box-more:hover {
+  border-color: #a6d2d5;
+}
+.pw-badges-box-link {
+  margin-top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pw-primary);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: color 0.18s ease;
+}
+.pw-badges-box-link svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.18s ease;
+}
+.pw-badges-box-link:hover {
+  color: var(--pw-primary-hover);
+}
+.pw-badges-box-link:hover svg {
+  transform: translateX(2px);
+}
+.pw-badges-box-link:focus-visible,
+.pw-badges-box-more:focus-visible,
+.pw-badges-card-link:focus-visible {
+  outline: 2px solid var(--pw-primary);
+  outline-offset: 2px;
+}
+/* Same reason Profile performance stepped aside: the pinned card stays short
+   while a section sheet is open. */
+.pw-root.pw-sheet-open .pw-badges-box {
+  display: none;
+}
+
+/* ---- Achievements & Badges (report card section) ---- */
+.pw-badges-card {
+  scroll-margin-top: 80px;
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: var(--pw-shadow-card);
+}
+.pw-badges-card .pw-rv-card-head {
+  margin-bottom: 8px;
+}
+.pw-badges-card-link {
+  flex: none;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 600;
+  color: var(--pw-primary);
+  text-decoration: none;
+  padding: 0 4px;
+  border-radius: 4px;
+}
+.pw-badges-card-link:hover {
+  opacity: 0.7;
+}
+.pw-badges-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 4px;
+}
+.pw-badges-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1.5px dashed #d5dede;
+  border-radius: 12px;
+}
+.pw-badges-empty-ico {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1.5px dashed #c7d6d6;
+  background: #eef5f5;
+  color: var(--pw-primary);
+}
+.pw-badges-empty-ico svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.pw-badges-empty-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #000000;
+}
+.pw-badges-empty-sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  line-height: 18px;
+  color: #626262;
+}
+@media (max-width: 600px) {
+  .pw-badges-card {
+    padding: 16px;
+  }
+  .pw-badges-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ============================================================
    REPORT CARD — the profile as a recruiter sees it
    ============================================================ */

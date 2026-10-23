@@ -11,6 +11,7 @@ import { computeCompleteness } from "@/features/profile/completeness";
 import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
 import { getVerifiedSkills } from "@/features/profile/get-verified-skills";
 import { getProfilePerformance } from "@/features/profile/get-profile-performance";
+import { getEarnedBadges } from "@/features/badges/get-earned-badges";
 import { buildProfileReview } from "@/features/profile/build-review";
 import { getSkillsByNames } from "@/features/skill/search-skills";
 import { PROFILE_QUICK_SKILLS } from "@/lib/skill-catalog";
@@ -109,6 +110,7 @@ export default async function ProfilePage({
     verifiedAccomplishments,
     verifiedSkills,
     performance,
+    badges,
   ] = await Promise.all([
     // Only the quick-add chips are pre-resolved. Matching the whole catalog
     // meant a few hundred case-insensitive name comparisons on every profile
@@ -169,6 +171,10 @@ export default async function ProfilePage({
       });
       return { searchAppearances: 0, recruiterActions: 0 };
     }),
+    // Earned badges, derived read-only from certificates, cohort completions
+    // and submission days. Never writes. Returns { ok: false } on failure so
+    // the UI can say "couldn't load" instead of "no badges".
+    getEarnedBadges(userId),
   ]);
 
   const mockInterviews = mockInterviewHistory.ok
@@ -503,6 +509,7 @@ export default async function ProfilePage({
         review={review}
         avatarUploadEnabled={isAvatarStorageConfigured()}
         performance={performance}
+        badges={badges}
       />
       {/* Password & sign-in and Delete account live in Account Settings
           (/settings), reached from the sidebar account menu and Quick Links. */}

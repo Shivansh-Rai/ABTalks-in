@@ -1,23 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import type { BadgesState } from "@/features/badges/types";
 import type { WizardStep } from "./profile-wizard";
+import { QuickLinksBadges } from "./profile-badges";
 
 /**
- * The left card: Quick Links into the profile, plus the way to Account
- * settings. Profile performance lives in the report card hero. Hidden entirely
- * on mobile (≤1024px), where the section cards replace it.
+ * The left card: Quick Links into the profile, the way to Account settings,
+ * and the Earned Badges preview. Profile performance lives in the report card
+ * hero. Hidden entirely on mobile (≤1024px), where the section cards and the
+ * Achievements & Badges card replace it.
  */
 export function ProfileCard({
   steps,
   activeIndex,
   onJump,
+  badges,
   blocked,
 }: {
   steps: Pick<WizardStep, "title" | "complete" | "attention" | "optional">[];
   /** -1 when no sheet is open, so no tab is left looking selected. */
   activeIndex: number;
   onJump: (index: number) => void;
+  badges: BadgesState;
   /** An open sheet holds unsaved edits — navigating away would lose them. */
   blocked: boolean;
 }) {
@@ -89,6 +94,8 @@ export function ProfileCard({
           </Link>
         )}
       </div>
+
+      <QuickLinksBadges badges={badges} />
     </section>
   );
 }

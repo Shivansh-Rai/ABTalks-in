@@ -8,6 +8,8 @@ import type {
   ReviewIconKey,
 } from "@/features/profile/build-review";
 import { ProfilePerformance } from "./profile-performance";
+import { ProfileBadgesCard } from "./profile-badges";
+import type { BadgesState } from "@/features/badges/types";
 
 /**
  * The report card — the profile as a recruiter sees it.
@@ -268,12 +270,14 @@ export function ProfileReviewCard({
   media,
   onOpen,
   performance,
+  badges,
 }: {
   review: ProfileReview;
   /** The ring / avatar / photo editor, rendered into the hero. */
   media: ReactNode;
   onOpen: (stepIndex: number) => void;
   performance: { searchAppearances: number; recruiterActions: number };
+  badges: BadgesState;
 }) {
   const filled = review.cards.filter((c) => c.filled);
   const empty = review.cards.filter((c) => !c.filled);
@@ -446,6 +450,10 @@ export function ProfileReviewCard({
             <Card card={card} key={`m-${card.title}`} onOpen={onOpen} />
           ))}
         </div>
+
+        {/* One mount for every breakpoint: badges are read-only, so they need
+            neither the desktop filled/empty split nor the mobile row form. */}
+        <ProfileBadgesCard badges={badges} />
       </div>
     </section>
   );

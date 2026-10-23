@@ -100,6 +100,7 @@
     "test:synergy-cap": "NODE_OPTIONS=--conditions=react-server tsx src/features/synergy/synergy-cap.test.ts",
     "test:profile-readiness": "NODE_OPTIONS=--conditions=react-server tsx src/features/dashboard/profile-readiness.test.ts",
     "test:profile": "NODE_OPTIONS=--conditions=react-server tsx src/features/profile/profile.test.ts",
+    "test:badges": "cross-env NODE_OPTIONS=--conditions=react-server tsx src/features/badges/badges.test.ts",
     "test:career-guidance": "tsx src/features/career-guidance/career-guidance.test.ts",
     "build:resume-fixture": "tsx scripts/build-resume-fixture.ts",
     "build:resume-fixture:record": "cross-env NODE_OPTIONS=--conditions=react-server tsx scripts/capture-resume-fixture.ts",
