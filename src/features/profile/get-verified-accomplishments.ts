@@ -38,6 +38,11 @@ export type VerifiedAccomplishment = {
   outcomeLabel: string;
   /** Null when the source row carries no meaningful date. */
   occurredAt: Date | null;
+  /**
+   * Public verify page for the backing certificate (`/verify/<id>`), shown as
+   * a "Credential" link. Optional: only rows backed by a certificate set it.
+   */
+  verifyPath?: string;
 };
 
 /**
@@ -173,6 +178,7 @@ export async function getVerifiedAccomplishments(
           : `Claude AI Mastery Track · ${days} days completed`,
       outcomeLabel: "Completed",
       occurredAt: claude.issuedAt,
+      verifyPath: `/verify/${claude.credentialId}`,
     });
   }
 

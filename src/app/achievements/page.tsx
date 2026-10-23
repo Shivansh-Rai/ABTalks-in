@@ -5,15 +5,6 @@ import { auth } from "@/auth";
 import { getAchievements } from "@/features/certificate/get-achievements";
 import { AchievementCard } from "@/components/certificate/achievement-card";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
-import { buttonVariants } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
 import { prisma } from "@/lib/db";
 import { headers } from "next/headers";
 
@@ -42,6 +33,7 @@ export default async function AchievementsPage() {
   };
 
   const achievements = await getAchievements(userId);
+  const earnedCount = achievements.filter((a) => a.status !== "REVOKED").length;
 
   const headersList = await headers();
   const host = headersList.get("host") ?? "abtalks.in";
@@ -54,47 +46,53 @@ export default async function AchievementsPage() {
       isAdmin={session.user.isAdmin ?? false}
       showSectionNav={false}
     >
-      <main className="mx-auto w-full min-w-0 max-w-3xl flex-1 space-y-5 px-4 py-5 sm:space-y-8 sm:py-8">
-        <div>
-          <h1 className="font-display text-xl font-semibold tracking-tight sm:text-2xl">
-            Your Achievements
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Certificates and milestones you&apos;ve earned on Klymb AI.
-          </p>
-        </div>
+      <main className="mx-auto w-full min-w-0 max-w-[1280px] flex-1 px-4 py-8 sm:px-6">
+        <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="font-heading text-[13px] font-semibold uppercase tracking-[0.08em] text-[#03535F]">
+              Achievements
+            </p>
+            <h1 className="mt-2 font-display text-3xl font-bold tracking-tight text-black sm:text-[40px] sm:leading-[48px]">
+              Your certificates
+            </h1>
+            
+          </div>
+          
+        </header>
 
         {achievements.length === 0 ? (
-          <Card className="min-w-0">
-            <CardHeader className="items-center pb-3 text-center sm:pb-4">
-              <div className="mb-2 flex size-12 items-center justify-center rounded-full bg-primary/10">
-                <Trophy className="size-6 text-primary" aria-hidden />
-              </div>
-              <CardTitle>No achievements yet</CardTitle>
-              <CardDescription>
-                Finish a challenge, hackathon or cohort and your certificate will
-                show up here.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center p-4 sm:p-6">
-              <Link
-                href="/dashboard"
-                className={cn(buttonVariants({ variant: "default" }))}
-              >
-                Back to dashboard
-              </Link>
-            </CardContent>
-          </Card>
+          <section className="mt-8 flex flex-col items-center rounded-3xl border-[1.5px] border-dashed border-[#D5DEDE] bg-white px-6 py-12 text-center">
+            <span
+              className="flex size-16 items-center justify-center rounded-full border-2 border-dashed border-[#C7D6D6] bg-[#EEF5F5] text-[#03535F]"
+              aria-hidden
+            >
+              <Trophy className="size-7" />
+            </span>
+            <h2 className="mt-4 font-display text-xl font-semibold text-black">
+              No certificates yet
+            </h2>
+            <p className="mt-1 max-w-md text-sm text-[#4B4B4B]">
+              Finish a challenge, hackathon or cohort and your certificate will
+              show up here.
+            </p>
+            <Link
+              href="/dashboard"
+              className="mt-6 inline-flex h-10 items-center justify-center rounded-xl bg-[#03535F] px-5 text-sm font-semibold text-white shadow-[inset_0_-5px_14px_rgba(0,0,0,0.34)] transition-colors hover:bg-[#076573]"
+            >
+              Back to dashboard
+            </Link>
+          </section>
         ) : (
-          <div className="space-y-4">
+          <ul className="mt-8 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {achievements.map((achievement) => (
-              <AchievementCard
-                key={achievement.key}
-                achievement={achievement}
-                verifyBaseUrl={verifyBaseUrl}
-              />
+              <li key={achievement.key} className="flex min-w-0">
+                <AchievementCard
+                  achievement={achievement}
+                  verifyBaseUrl={verifyBaseUrl}
+                />
+              </li>
             ))}
-          </div>
+          </ul>
         )}
       </main>
     </DashboardShell>
