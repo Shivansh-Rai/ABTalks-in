@@ -97,7 +97,7 @@ export function ProfileBadgesCard({ badges }: { badges: BadgesState }) {
           <AwardIcon />
         </span>
         <div className="pw-rv-card-copy">
-          <h3 id="pw-badges-card-title">Achievements &amp; Badges</h3>
+          <h3 id="pw-badges-card-title">Earned Badges</h3>
         </div>
         {list.length > 0 ? <span className="pw-rv-count">{list.length}</span> : null}
         <Link href="/achievements#badges" className="pw-badges-card-link">
