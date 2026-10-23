@@ -1,10 +1,6 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
-import {
-  EVENT_TYPE_REGISTRY,
-  EVENT_TYPES,
-} from "@/features/notification/event-types";
+import { getEmailNotificationPreferences } from "@/features/notification/email-preferences";
 import { NotificationPreferencesForm } from "@/components/settings/notification-preferences-form";
 
 export default async function NotificationSettingsPage() {
@@ -13,27 +9,7 @@ export default async function NotificationSettingsPage() {
     redirect("/login");
   }
 
-  const rows = await prisma.notificationPreference.findMany({
-    where: { userId: session.user.id },
-    select: { eventType: true, channel: true, enabled: true },
-  });
-
-  const prefMap = new Map(
-    rows.map((r) => [`${r.eventType}:${r.channel}`, r.enabled]),
-  );
-
-  const preferences = EVENT_TYPES.filter(
-    (et) => EVENT_TYPE_REGISTRY[et].priority === "important",
-  ).map((et) => {
-    const config = EVENT_TYPE_REGISTRY[et];
-    return {
-      eventType: et,
-      label: config.label,
-      channel: "email" as const,
-      enabled: prefMap.get(`${et}:email`) ?? config.defaultEmailEnabled,
-      canDisable: !config.emailExempt,
-    };
-  });
+  const preferences = await getEmailNotificationPreferences(session.user.id);
 
   return (
     <main className="mx-auto max-w-2xl px-4 py-12">

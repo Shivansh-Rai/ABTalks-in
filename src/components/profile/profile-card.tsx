@@ -17,7 +17,6 @@ export function ProfileCard({
   activeIndex,
   onJump,
   performance,
-  emailLoginEnabled,
   blocked,
 }: {
   steps: Pick<WizardStep, "title" | "complete" | "attention" | "optional">[];
@@ -25,8 +24,6 @@ export function ProfileCard({
   activeIndex: number;
   onJump: (index: number) => void;
   performance: { searchAppearances: number; recruiterActions: number };
-  /** Plan 154 (ENABLE_EMAIL_LOGIN). Off: the account has no password to manage. */
-  emailLoginEnabled: boolean;
   /** An open sheet holds unsaved edits — navigating away would lose them. */
   blocked: boolean;
 }) {
@@ -81,23 +78,23 @@ export function ProfileCard({
         })}
       </ul>
 
-      {emailLoginEnabled ? (
-        <div className="pw-check-account">
-          {blocked ? (
-            <span
-              className="pw-check-link"
-              aria-disabled="true"
-              title="Save or discard your changes first."
-            >
-              Password &amp; sign-in
-            </span>
-          ) : (
-            <Link href="/settings/security" className="pw-check-link">
-              Password &amp; sign-in
-            </Link>
-          )}
-        </div>
-      ) : null}
+      {/* Password, notifications and account deletion live in Account
+          Settings now; this is the way there from the profile. */}
+      <div className="pw-check-account">
+        {blocked ? (
+          <span
+            className="pw-check-link"
+            aria-disabled="true"
+            title="Save or discard your changes first."
+          >
+            Account settings
+          </span>
+        ) : (
+          <Link href="/settings" className="pw-check-link">
+            Account settings
+          </Link>
+        )}
+      </div>
 
       <ProfilePerformance
         searchAppearances={performance.searchAppearances}

@@ -8,11 +8,13 @@ import {
   Award,
   Bot,
   Briefcase,
+  ChevronsUpDown,
   ClipboardCheck,
   Grid3X3,
   LogIn,
   LogOut,
   Presentation,
+  Settings,
   Shield,
   Store,
   User,
@@ -20,6 +22,12 @@ import {
 } from "lucide-react";
 import { signOutAction } from "@/app/actions/auth-actions";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   NAV_ITEMS,
   SIDEBAR_BRAND_ROW_CLASS,
@@ -204,36 +212,73 @@ export function DashboardSidebar({
             : SIDEBAR_FOOTER_ROW_CLASS,
         )}
       >
-        <div
-          className={cn(
-            "flex items-center",
-            compact ? "justify-center" : "gap-3",
-          )}
-        >
-          {user.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={user.image}
-              alt=""
-              className="size-9 rounded-full object-cover"
-            />
-          ) : (
-            <span
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#E9E9E9] text-xs font-semibold text-[#353535]"
-              aria-hidden
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            type="button"
+            aria-label="Open account menu"
+            title={compact ? displayName : undefined}
+            className={cn(
+              "group flex items-center rounded-xl text-left outline-none",
+              "transition-[background-color,box-shadow] duration-200 ease-[var(--ease-spark)] motion-reduce:transition-none",
+              "hover:bg-[#03535F]/[0.06] focus-visible:ring-2 focus-visible:ring-[#03535F]/40",
+              "data-[popup-open]:bg-[#03535F]/[0.08]",
+              compact ? "justify-center p-1" : "-mx-2 w-[calc(100%+1rem)] gap-3 px-2 py-1.5",
+            )}
+          >
+            {user.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={user.image}
+                alt=""
+                className="size-9 shrink-0 rounded-full object-cover ring-2 ring-transparent transition-[box-shadow,transform] duration-200 group-hover:scale-[1.04] group-hover:ring-[#03535F]/25 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+              />
+            ) : (
+              <span
+                className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#E9E9E9] text-xs font-semibold text-[#353535] ring-2 ring-transparent transition-[box-shadow,transform] duration-200 group-hover:scale-[1.04] group-hover:ring-[#03535F]/25 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
+                aria-hidden
+              >
+                {initials(displayName)}
+              </span>
+            )}
+            {!compact ? (
+              <>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-medium text-black">
+                    {displayName}
+                  </span>
+                  <span className="block truncate text-xs text-[#4B4B4B]">
+                    {user.email}
+                  </span>
+                </span>
+                <ChevronsUpDown
+                  className="size-4 shrink-0 text-[#03535F] opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-0 group-hover:opacity-100 group-focus-visible:opacity-100 group-data-[popup-open]:opacity-100 motion-reduce:transition-none -translate-x-1"
+                  aria-hidden
+                />
+              </>
+            ) : null}
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            side={compact ? "right" : "top"}
+            align={compact ? "end" : "start"}
+            sideOffset={8}
+            className="w-56 min-w-56 rounded-xl p-1.5"
+          >
+            <DropdownMenuItem
+              render={<Link href="/profile" onClick={onNavigate} />}
+              className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm"
             >
-              {initials(displayName)}
-            </span>
-          )}
-          {!compact ? (
-            <div className="min-w-0 flex-1">
-              <p className="truncate text-sm font-medium text-black">
-                {displayName}
-              </p>
-              <p className="truncate text-xs text-[#4B4B4B]">{user.email}</p>
-            </div>
-          ) : null}
-        </div>
+              <User className="size-4" aria-hidden />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              render={<Link href="/settings" onClick={onNavigate} />}
+              className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm"
+            >
+              <Settings className="size-4" aria-hidden />
+              Account Settings
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <form action={signOutAction} className={cn(!compact && "mt-3")}>
           <button
             type="submit"

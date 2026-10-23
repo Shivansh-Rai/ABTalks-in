@@ -54,7 +54,6 @@ export function ProfileWizard({
   review,
   avatarUploadEnabled,
   performance,
-  emailLoginEnabled,
 }: {
   steps: WizardStep[];
   initialIndex: number;
@@ -64,8 +63,6 @@ export function ProfileWizard({
   review: ProfileReview;
   avatarUploadEnabled: boolean;
   performance: { searchAppearances: number; recruiterActions: number };
-  /** Plan 154. Server-evaluated flag, same shape as avatarUploadEnabled. */
-  emailLoginEnabled: boolean;
 }) {
   const [index, setIndex] = useState(initialIndex);
   const [open, setOpen] = useState(false);
@@ -316,7 +313,6 @@ export function ProfileWizard({
           activeIndex={open ? index : -1}
           onJump={jump}
           performance={performance}
-          emailLoginEnabled={emailLoginEnabled}
           blocked={dirty && open}
         />
 

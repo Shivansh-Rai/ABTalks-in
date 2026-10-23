@@ -44,8 +44,10 @@ export default async function SecuritySettingsPage() {
   const googleOnly = await isGoogleOnlyAccount(user.email, user);
   // Back to where the link to this page lives: the profile for a candidate,
   // Hire settings for a recruiter.
-  const backHref = user.recruiterProfile ? "/hire/settings" : "/profile";
-  const backLabel = user.recruiterProfile ? "Back to settings" : "Back to profile";
+  const backHref = user.recruiterProfile ? "/hire/settings" : "/settings";
+  const backLabel = user.recruiterProfile
+    ? "Back to settings"
+    : "Back to account settings";
 
   return (
     <main className="mx-auto max-w-lg px-4 py-12">

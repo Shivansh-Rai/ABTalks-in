@@ -247,6 +247,9 @@
 /src/app/profile/                                   @Shivansh-Rai
 /src/components/profile/                            @Shivansh-Rai
 /src/app/actions/candidate-profile-actions.ts       @Shivansh-Rai
+/src/app/settings/page.tsx                          @Shivansh-Rai
+/src/components/settings/account-settings.tsx       @Shivansh-Rai
+/src/components/settings/account-settings.css       @Shivansh-Rai
 /src/features/skill/                                @Shivansh-Rai
 /src/features/career-guidance/                      @Shivansh-Rai
 /src/features/assessment-attempts/                  @Shivansh-Rai

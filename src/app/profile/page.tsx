@@ -17,7 +17,6 @@ import { PROFILE_QUICK_SKILLS } from "@/lib/skill-catalog";
 import { getActiveAttempt, getHistory } from "@/features/interview/platform/service";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { ProfileWizard, type WizardStep } from "@/components/profile/profile-wizard";
-import { DeleteOwnAccountDialog } from "@/components/profile/delete-own-account-dialog";
 import { BasicInfoSection } from "@/components/profile/basic-info-section";
 import { ExperienceSection } from "@/components/profile/experience-section";
 import { EducationSection } from "@/components/profile/education-section";
@@ -31,7 +30,7 @@ import { PreferencesSection } from "@/components/profile/preferences-section";
 import { buttonVariants } from "@/components/ui/button";
 import { PERSONA_LABELS } from "@/lib/candidate-vocab";
 import { asCtcCurrency } from "@/lib/validations/candidate-profile";
-import { isEmailLoginEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
+import { isOtpVerificationRequired } from "@/lib/feature-flags";
 import { isAvatarStorageConfigured } from "@/features/profile/avatar-storage";
 
 /**
@@ -504,33 +503,9 @@ export default async function ProfilePage({
         review={review}
         avatarUploadEnabled={isAvatarStorageConfigured()}
         performance={performance}
-        emailLoginEnabled={isEmailLoginEnabled()}
       />
-      {isEmailLoginEnabled() ? (
-        <div className="border-t px-4 py-6">
-          <h2 className="font-display text-base font-semibold">
-            Password &amp; sign-in
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Set or change a password to sign in with your email.
-          </p>
-          <Link
-            href="/settings/security"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-3")}
-          >
-            Manage password
-          </Link>
-        </div>
-      ) : null}
-      <div className="border-t px-4 py-6">
-        <h2 className="font-display text-base font-semibold">Delete account</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          This removes your data from Klymb AI and cannot be undone.
-        </p>
-        <div className="mt-3">
-          <DeleteOwnAccountDialog />
-        </div>
-      </div>
+      {/* Password & sign-in and Delete account live in Account Settings
+          (/settings), reached from the sidebar account menu and Quick Links. */}
     </DashboardShell>
   );
 }
