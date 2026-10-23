@@ -34,11 +34,13 @@ export function QuickLinksBadges({ badges }: { badges: BadgesState }) {
         <span id="pw-badges-box-title" className="pw-badges-box-title">
           Earned Badges
         </span>
-        {badges.ok ? (
-          <span className="pw-badges-box-count" aria-label={`${list.length} earned`}>
-            {list.length}
-          </span>
-        ) : null}
+        <Link href="/achievements#badges" className="pw-badges-box-link">
+          View all
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14" />
+            <path d="m13 6 6 6-6 6" />
+          </svg>
+        </Link>
       </div>
 
       {!badges.ok ? (
@@ -51,7 +53,7 @@ export function QuickLinksBadges({ badges }: { badges: BadgesState }) {
         <ul className="pw-badges-box-row">
           {list.slice(0, PREVIEW_LIMIT).map((badge) => (
             <li key={badge.key}>
-              <BadgeTrigger badge={badge} variant="icon" size={34} />
+              <BadgeTrigger badge={badge} variant="icon" size={42} />
             </li>
           ))}
           {extra > 0 ? (
@@ -67,14 +69,6 @@ export function QuickLinksBadges({ badges }: { badges: BadgesState }) {
           ) : null}
         </ul>
       )}
-
-      <Link href="/achievements#badges" className="pw-badges-box-link">
-        {list.length > 0 ? "View all badges" : "How to earn badges"}
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M5 12h14" />
-          <path d="m13 6 6 6-6 6" />
-        </svg>
-      </Link>
     </section>
   );
 }

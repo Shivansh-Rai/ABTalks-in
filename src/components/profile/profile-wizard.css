@@ -523,18 +523,6 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   font-weight: 700;
   color: #000000;
 }
-.pw-badges-box-count {
-  min-width: 22px;
-  height: 20px;
-  padding: 0 7px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: 999px;
-  background: var(--pw-primary-light);
-  color: var(--pw-primary);
-  font-size: 12px;
-  font-weight: 700;
-}
 .pw-badges-box-note {
   margin: 6px 0 0;
   font-size: 12.5px;
@@ -553,8 +541,8 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
 .pw-badges-box-more {
   display: inline-grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   background: #ffffff;
   border: 1px solid var(--pw-border);
@@ -567,7 +555,7 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   border-color: #a6d2d5;
 }
 .pw-badges-box-link {
-  margin-top: 10px;
+  flex: none;
   display: inline-flex;
   align-items: center;
   gap: 5px;
