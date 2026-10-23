@@ -11,13 +11,13 @@ import { computeCompleteness } from "@/features/profile/completeness";
 import { getVerifiedAccomplishments } from "@/features/profile/get-verified-accomplishments";
 import { getVerifiedSkills } from "@/features/profile/get-verified-skills";
 import { getProfilePerformance } from "@/features/profile/get-profile-performance";
+import { getEarnedBadges } from "@/features/badges/get-earned-badges";
 import { buildProfileReview } from "@/features/profile/build-review";
 import { getSkillsByNames } from "@/features/skill/search-skills";
 import { PROFILE_QUICK_SKILLS } from "@/lib/skill-catalog";
 import { getActiveAttempt, getHistory } from "@/features/interview/platform/service";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { ProfileWizard, type WizardStep } from "@/components/profile/profile-wizard";
-import { DeleteOwnAccountDialog } from "@/components/profile/delete-own-account-dialog";
 import { BasicInfoSection } from "@/components/profile/basic-info-section";
 import { ExperienceSection } from "@/components/profile/experience-section";
 import { EducationSection } from "@/components/profile/education-section";
@@ -31,7 +31,7 @@ import { PreferencesSection } from "@/components/profile/preferences-section";
 import { buttonVariants } from "@/components/ui/button";
 import { PERSONA_LABELS } from "@/lib/candidate-vocab";
 import { asCtcCurrency } from "@/lib/validations/candidate-profile";
-import { isEmailLoginEnabled, isOtpVerificationRequired } from "@/lib/feature-flags";
+import { isOtpVerificationRequired } from "@/lib/feature-flags";
 import { isAvatarStorageConfigured } from "@/features/profile/avatar-storage";
 
 /**
@@ -110,6 +110,7 @@ export default async function ProfilePage({
     verifiedAccomplishments,
     verifiedSkills,
     performance,
+    badges,
   ] = await Promise.all([
     // Only the quick-add chips are pre-resolved. Matching the whole catalog
     // meant a few hundred case-insensitive name comparisons on every profile
@@ -170,6 +171,10 @@ export default async function ProfilePage({
       });
       return { searchAppearances: 0, recruiterActions: 0 };
     }),
+    // Earned badges, derived read-only from certificates, cohort completions
+    // and submission days. Never writes. Returns { ok: false } on failure so
+    // the UI can say "couldn't load" instead of "no badges".
+    getEarnedBadges(userId),
   ]);
 
   const mockInterviews = mockInterviewHistory.ok
@@ -504,33 +509,10 @@ export default async function ProfilePage({
         review={review}
         avatarUploadEnabled={isAvatarStorageConfigured()}
         performance={performance}
-        emailLoginEnabled={isEmailLoginEnabled()}
+        badges={badges}
       />
-      {isEmailLoginEnabled() ? (
-        <div className="border-t px-4 py-6">
-          <h2 className="font-display text-base font-semibold">
-            Password &amp; sign-in
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Set or change a password to sign in with your email.
-          </p>
-          <Link
-            href="/settings/security"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }), "mt-3")}
-          >
-            Manage password
-          </Link>
-        </div>
-      ) : null}
-      <div className="border-t px-4 py-6">
-        <h2 className="font-display text-base font-semibold">Delete account</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          This removes your data from Klymb AI and cannot be undone.
-        </p>
-        <div className="mt-3">
-          <DeleteOwnAccountDialog />
-        </div>
-      </div>
+      {/* Password & sign-in and Delete account live in Account Settings
+          (/settings), reached from the sidebar account menu and Quick Links. */}
     </DashboardShell>
   );
 }

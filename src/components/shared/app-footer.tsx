@@ -156,6 +156,10 @@ export function AppFooter() {
   if (isWorkshop) return null;
 
   if (pathname === "/dashboard" || pathname === "/profile") return null;
+  // Account Settings renders inside DashboardShell, which has its own footer.
+  // Only the exact path: /settings/security and /settings/notifications are
+  // standalone pages that still need this one.
+  if (pathname === "/settings") return null;
   // Full-viewport sign-in interstitial — do not stack the generic footer under it.
   if (pathname === "/welcome") return null;
   if (pathname === "/admin/students" || pathname.startsWith("/admin/students/")) {

@@ -1,32 +1,28 @@
 "use client";
 
 import Link from "next/link";
+import type { BadgesState } from "@/features/badges/types";
 import type { WizardStep } from "./profile-wizard";
-import { ProfilePerformance } from "./profile-performance";
+import { QuickLinksBadges } from "./profile-badges";
 
 /**
- * The left card: Quick Links into the profile, plus Profile performance.
- *
- * The identity block lives in the report card hero, so this card is navigation
- * plus the candidate's own recruiter-activity numbers (plan 120). Hidden
- * entirely on mobile (≤1024px) — section cards and the review-bottom
- * performance block replace it.
+ * The left card: Quick Links into the profile, the way to Account settings,
+ * and the Earned Badges preview. Profile performance lives in the report card
+ * hero. Hidden entirely on mobile (≤1024px), where the section cards and the
+ * Achievements & Badges card replace it.
  */
 export function ProfileCard({
   steps,
   activeIndex,
   onJump,
-  performance,
-  emailLoginEnabled,
+  badges,
   blocked,
 }: {
   steps: Pick<WizardStep, "title" | "complete" | "attention" | "optional">[];
   /** -1 when no sheet is open, so no tab is left looking selected. */
   activeIndex: number;
   onJump: (index: number) => void;
-  performance: { searchAppearances: number; recruiterActions: number };
-  /** Plan 154 (ENABLE_EMAIL_LOGIN). Off: the account has no password to manage. */
-  emailLoginEnabled: boolean;
+  badges: BadgesState;
   /** An open sheet holds unsaved edits — navigating away would lose them. */
   blocked: boolean;
 }) {
@@ -81,28 +77,25 @@ export function ProfileCard({
         })}
       </ul>
 
-      {emailLoginEnabled ? (
-        <div className="pw-check-account">
-          {blocked ? (
-            <span
-              className="pw-check-link"
-              aria-disabled="true"
-              title="Save or discard your changes first."
-            >
-              Password &amp; sign-in
-            </span>
-          ) : (
-            <Link href="/settings/security" className="pw-check-link">
-              Password &amp; sign-in
-            </Link>
-          )}
-        </div>
-      ) : null}
+      {/* Password, notifications and account deletion live in Account
+          Settings now; this is the way there from the profile. */}
+      <div className="pw-check-account">
+        {blocked ? (
+          <span
+            className="pw-check-link"
+            aria-disabled="true"
+            title="Save or discard your changes first."
+          >
+            Account settings
+          </span>
+        ) : (
+          <Link href="/settings" className="pw-check-link">
+            Account settings
+          </Link>
+        )}
+      </div>
 
-      <ProfilePerformance
-        searchAppearances={performance.searchAppearances}
-        recruiterActions={performance.recruiterActions}
-      />
+      <QuickLinksBadges badges={badges} />
     </section>
   );
 }

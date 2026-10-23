@@ -346,6 +346,7 @@ export function buildProfileReview({
     title: string;
     detail: string | null;
     outcomeLabel: string;
+    verifyPath?: string;
   }[];
   /** Derived from curriculum + completion; shown beside the claimed skills. */
   verifiedSkills: readonly { skillId: string; name: string }[];
@@ -492,7 +493,7 @@ export function buildProfileReview({
         meta: v.outcomeLabel,
         body: null,
         chips: [],
-        links: [],
+        links: v.verifyPath ? [{ label: "Credential", url: v.verifyPath }] : [],
       })),
     });
   }

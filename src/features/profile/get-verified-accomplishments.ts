@@ -38,6 +38,11 @@ export type VerifiedAccomplishment = {
   outcomeLabel: string;
   /** Null when the source row carries no meaningful date. */
   occurredAt: Date | null;
+  /**
+   * Public verify page for the backing certificate (`/verify/<id>`), shown as
+   * a "Credential" link. Optional: only rows backed by a certificate set it.
+   */
+  verifyPath?: string;
 };
 
 /**
@@ -173,6 +178,7 @@ export async function getVerifiedAccomplishments(
           : `Claude AI Mastery Track · ${days} days completed`,
       outcomeLabel: "Completed",
       occurredAt: claude.issuedAt,
+      verifyPath: `/verify/${claude.credentialId}`,
     });
   }
 
@@ -222,6 +228,16 @@ export async function getVerifiedAccomplishments(
     : hackathonRows.length > 0 || hasSubmission;
   if (showHackathon) {
     const anchor = hackathonRows[0];
+    // The Credential link opens the certificate that earned the label shown:
+    // the best placement's certificate, else any (participation) certificate.
+    const linked =
+      (best &&
+        hackathonRows.find(
+          (row) =>
+            parseHackathonVariant(metaRecord(row.metadata).hackathonVariant) ===
+            best,
+        )) ||
+      anchor;
     const teamName = participant?.team.teamName ?? null;
     out.push({
       key: anchor ? `hackathon-${anchor.credentialId}` : `hackathon-${participant?.id}`,
@@ -237,6 +253,8 @@ export async function getVerifiedAccomplishments(
         participant?.team.submission?.createdAt ??
         participant?.createdAt ??
         null,
+      // A submission without a certificate yet has nothing to verify.
+      ...(linked ? { verifyPath: `/verify/${linked.credentialId}` } : {}),
     });
   }
 
