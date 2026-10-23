@@ -177,6 +177,22 @@ suite("nothing in the browser can award a badge", () => {
   }
 });
 
+/* ─── Rendering ──────────────────────────────────────────────────────────── */
+
+suite("every medallion owns its gradient ids", () => {
+  // Shared ids let a copy inside a display:none container (Quick Links below
+  // 1024px) own the gradients, and every visible copy then painted blank.
+  const art = code("src/components/badges/badge-medallion.tsx");
+  assert(art.includes("useId()"), "ids come from useId");
+  assert(!art.includes("gid(badge.key"), "never from the badge key");
+});
+
+suite("tiny medallions drop the small print", () => {
+  const art = code("src/components/badges/badge-medallion.tsx");
+  assert(art.includes("const COMPACT_BELOW = 48"), "a compact threshold exists");
+  assert(art.includes("compact: size < COMPACT_BELOW"), "and is applied by size");
+});
+
 /* ─── Display sync ───────────────────────────────────────────────────────── */
 
 suite("Quick Links and the profile card share one badge list", () => {

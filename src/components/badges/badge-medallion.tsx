@@ -1,4 +1,6 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useId, type ReactNode } from "react";
 import {
   BarChart3,
   Braces,
@@ -20,9 +22,12 @@ import { cn } from "@/lib/utils";
  *   consistency → shield with a flame; bronze 30 → silver 60 → gold 100,
  *                 each tier adding rings, rays and stars
  *
- * Pure markup, no hooks: renders in Server and Client components alike.
- * Gradient ids are derived from the badge key; duplicates on one page define
- * identical gradients, so whichever one the browser resolves is correct.
+ * Gradient and clip ids come from `useId`, so they are unique per rendered
+ * medallion. They must be: the same badge renders in several places (Quick
+ * Links, the profile card, the detail dialog), and when ids were shared, a
+ * copy inside a hidden container (Quick Links is display:none below 1024px)
+ * owned the definition. Browsers do not paint gradients defined inside a
+ * display:none SVG, so every other copy rendered with no fill.
  */
 
 type Accent = { light: string; mid: string; deep: string; ink: string };
@@ -57,8 +62,22 @@ const SHIELD =
 const SHIELD_INNER =
   "M50 12 L81 21.5 V47 C81 67 67 80 50 88 C33 80 19 67 19 47 V21.5 Z";
 
-function gid(key: string, part: string) {
-  return `bdg-${key.replace(/[^a-z0-9]/gi, "-")}-${part}`;
+type ArtProps = {
+  badge: EarnedBadge;
+  uid: string;
+  /**
+   * Below COMPACT_BELOW px the small print (the "DAYS" labels) is noise, not
+   * information: it is dropped and the main mark is enlarged instead. Shape,
+   * colour, logo, ribbon and the consistency number stay.
+   */
+  compact: boolean;
+};
+
+/** Rendered size under which a medallion switches to its compact drawing. */
+const COMPACT_BELOW = 48;
+
+function gid(uid: string, part: string) {
+  return `bdg-${uid}-${part}`;
 }
 
 /** A lucide glyph placed inside the 100×100 artboard. */
@@ -118,16 +137,16 @@ function Shine({ clip }: { clip: string }) {
   );
 }
 
-function ChallengeArt({ badge }: { badge: EarnedBadge }) {
+function ChallengeArt({ badge, uid, compact }: ArtProps) {
   const mark = (["claude", "ai", "ds", "se"] as const).includes(
     badge.mark as "claude",
   )
     ? (badge.mark as "claude" | "ai" | "ds" | "se")
     : "ai";
   const a = CHALLENGE_ACCENT[mark];
-  const frame = gid(badge.key, "frame");
-  const face = gid(badge.key, "face");
-  const clip = gid(badge.key, "clip");
+  const frame = gid(uid, "frame");
+  const face = gid(uid, "face");
+  const clip = gid(uid, "clip");
   const icon: Record<"ai" | "ds" | "se", typeof Flame> = {
     ai: BrainCircuit,
     ds: BarChart3,
@@ -161,26 +180,40 @@ function ChallengeArt({ badge }: { badge: EarnedBadge }) {
       {/* facet highlight on the upper-left planes */}
       <path d="M50 12 L17.1 31 L17.1 50 L50 50 Z" fill="#FFFFFF" opacity="0.08" />
       {mark === "claude" ? (
-        <ClaudeGlyph color={a.ink} />
+        <g
+          transform={
+            compact ? "translate(50 50) scale(1.25) translate(-50 -50)" : undefined
+          }
+        >
+          <ClaudeGlyph color={a.ink} />
+        </g>
       ) : (
-        <Glyph icon={icon[mark]} x={50} y={47} size={30} color={a.ink} />
+        <Glyph
+          icon={icon[mark]}
+          x={50}
+          y={compact ? 50 : 46}
+          size={compact ? 38 : 30}
+          color={a.ink}
+        />
       )}
       <Shine clip={clip} />
-      <g>
-        <rect x="31" y="74" width="38" height="13" rx="6.5" fill="#FFFFFF" />
-        <text
-          x="50"
-          y="83.4"
-          textAnchor="middle"
-          fontSize="8"
-          fontWeight="800"
-          letterSpacing="0.6"
-          fill={a.deep}
-          fontFamily="var(--font-inter), system-ui, sans-serif"
-        >
-          {badge.figure} DAYS
-        </text>
-      </g>
+      {compact ? null : (
+        <g>
+          <rect x="26" y="72.5" width="48" height="14" rx="7" fill="#FFFFFF" />
+          <text
+            x="50"
+            y="82.2"
+            textAnchor="middle"
+            fontSize="7.6"
+            fontWeight="800"
+            letterSpacing="0.4"
+            fill={a.deep}
+            fontFamily="var(--font-inter), system-ui, sans-serif"
+          >
+            {badge.figure} DAYS
+          </text>
+        </g>
+      )}
     </>
   );
 }
@@ -216,11 +249,11 @@ function CohortLogo({ mark, color }: { mark: BadgeMark; color: string }) {
   return <Glyph icon={icon[mark] ?? Sparkles} x={50} y={43} size={30} color={color} />;
 }
 
-function CohortArt({ badge }: { badge: EarnedBadge }) {
+function CohortArt({ badge, uid, compact }: ArtProps) {
   const brand = COHORT_BRAND[badge.mark] ?? COHORT_BRAND["ai-cohort"]!;
-  const ring = gid(badge.key, "ring");
-  const disc = gid(badge.key, "disc");
-  const clip = gid(badge.key, "clip");
+  const ring = gid(uid, "ring");
+  const disc = gid(uid, "disc");
+  const clip = gid(uid, "clip");
   return (
     <>
       <defs>
@@ -270,30 +303,32 @@ function CohortArt({ badge }: { badge: EarnedBadge }) {
           />
           <path d="M14 77 L20 84 V88 Z" fill="#000000" opacity="0.25" />
           <path d="M86 77 L80 84 V88 Z" fill="#000000" opacity="0.25" />
-          <text
-            x="50"
-            y="80.6"
-            textAnchor="middle"
-            fontSize="9"
-            fontWeight="800"
-            letterSpacing="0.6"
-            fill={brand.text}
-            fontFamily="var(--font-inter), system-ui, sans-serif"
-          >
-            {badge.figure} DAYS
-          </text>
+          {compact ? null : (
+            <text
+              x="50"
+              y="80.6"
+              textAnchor="middle"
+              fontSize="9"
+              fontWeight="800"
+              letterSpacing="0.6"
+              fill={brand.text}
+              fontFamily="var(--font-inter), system-ui, sans-serif"
+            >
+              {badge.figure} DAYS
+            </text>
+          )}
         </g>
       ) : null}
     </>
   );
 }
 
-function ConsistencyArt({ badge }: { badge: EarnedBadge }) {
+function ConsistencyArt({ badge, uid, compact }: ArtProps) {
   const tier = badge.tier ?? 1;
   const a = STREAK_TIER[tier];
-  const metal = gid(badge.key, "metal");
-  const face = gid(badge.key, "face");
-  const clip = gid(badge.key, "clip");
+  const metal = gid(uid, "metal");
+  const face = gid(uid, "face");
+  const clip = gid(uid, "clip");
   return (
     <>
       <defs>
@@ -339,31 +374,37 @@ function ConsistencyArt({ badge }: { badge: EarnedBadge }) {
           transform="translate(50 50) scale(0.9) translate(-50 -50)"
         />
       ) : null}
-      <Glyph icon={Flame} x={50} y={36} size={22} color={a.ink} />
+      <Glyph icon={Flame} x={50} y={compact ? 32 : 36} size={compact ? 20 : 22} color={a.ink} />
       <text
         x="50"
-        y="66"
+        y={compact ? 71 : 66}
         textAnchor="middle"
-        fontSize={badge.figure.length > 2 ? 21 : 24}
+        fontSize={
+          compact
+            ? badge.figure.length > 2 ? 27 : 32
+            : badge.figure.length > 2 ? 21 : 24
+        }
         fontWeight="900"
         fill={a.ink}
         fontFamily="var(--font-outfit), var(--font-inter), system-ui, sans-serif"
       >
         {badge.figure}
       </text>
-      <text
-        x="50"
-        y="77"
-        textAnchor="middle"
-        fontSize="6.5"
-        fontWeight="800"
-        letterSpacing="1.2"
-        fill={a.ink}
-        opacity="0.85"
-        fontFamily="var(--font-inter), system-ui, sans-serif"
-      >
-        DAYS
-      </text>
+      {compact ? null : (
+        <text
+          x="50"
+          y="77"
+          textAnchor="middle"
+          fontSize="6.5"
+          fontWeight="800"
+          letterSpacing="1.2"
+          fill={a.ink}
+          opacity="0.85"
+          fontFamily="var(--font-inter), system-ui, sans-serif"
+        >
+          DAYS
+        </text>
+      )}
       {tier === 3 ? (
         <g fill={a.glow}>
           <path d="M22 22 l1.6 3.6 3.6 1.6 -3.6 1.6 -1.6 3.6 -1.6 -3.6 -3.6 -1.6 3.6 -1.6Z" />
@@ -385,10 +426,13 @@ export function BadgeMedallion({
   size?: number;
   className?: string;
 }) {
+  // ":r1:" style ids are not valid in url(#…) references; keep [A-Za-z0-9_-].
+  const uid = useId().replace(/[^A-Za-z0-9_-]/g, "");
+  const props: ArtProps = { badge, uid, compact: size < COMPACT_BELOW };
   let art: ReactNode;
-  if (badge.family === "challenge") art = <ChallengeArt badge={badge} />;
-  else if (badge.family === "cohort") art = <CohortArt badge={badge} />;
-  else art = <ConsistencyArt badge={badge} />;
+  if (badge.family === "challenge") art = <ChallengeArt {...props} />;
+  else if (badge.family === "cohort") art = <CohortArt {...props} />;
+  else art = <ConsistencyArt {...props} />;
 
   return (
     <svg
