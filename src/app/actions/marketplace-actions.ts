@@ -3,11 +3,21 @@
 import { auth } from "@/auth";
 import { redeemItemSchema } from "@/lib/validations/marketplace";
 import { redeemItem } from "@/features/marketplace/redeem-item";
+import { isMarketplaceOpen } from "@/features/marketplace/status";
 
 export async function redeemItemAction(formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) {
     return { ok: false as const, reason: "auth", message: "Sign in required" };
+  }
+  // The page hides the catalog when closed; this stops a stale tab or a
+  // direct call from spending points anyway.
+  if (!isMarketplaceOpen()) {
+    return {
+      ok: false as const,
+      reason: "closed" as const,
+      message: "The marketplace is closed right now. Your points are safe.",
+    };
   }
   const parsed = redeemItemSchema.safeParse({
     itemId: formData.get("itemId"),

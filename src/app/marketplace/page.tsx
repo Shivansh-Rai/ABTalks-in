@@ -7,6 +7,9 @@ import { getCatalog } from "@/features/marketplace/get-catalog";
 import { getMySynergy } from "@/features/synergy/get-my-synergy";
 import { getCandidateProfile } from "@/repositories/candidate";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+import { isMarketplaceOpen } from "@/features/marketplace/status";
+import { MarketplaceClosed } from "@/components/marketplace/marketplace-closed";
 
 export default async function MarketplacePage() {
   const session = await auth();
@@ -15,6 +18,33 @@ export default async function MarketplacePage() {
   }
 
   const userId = session.user.id;
+
+  // Closed by the code switch in features/marketplace/status.ts: no catalog,
+  // just the closed page with the balance the user is keeping for later.
+  if (!isMarketplaceOpen()) {
+    const [balance, candidate] = await Promise.all([
+      getMySynergy(userId).catch((e: unknown) => {
+        logger.warn("[marketplace] balance unavailable", {
+          message: e instanceof Error ? e.message : String(e),
+        });
+        return null;
+      }),
+      getCandidateProfile(userId),
+    ]);
+    return (
+      <DashboardShell
+        user={{
+          name: candidate?.fullName?.trim() || session.user.name || "",
+          email: session.user.email ?? "",
+          image: session.user.image ?? null,
+        }}
+        isAdmin={session.user.isAdmin ?? false}
+        showSectionNav={false}
+      >
+        <MarketplaceClosed balance={balance} />
+      </DashboardShell>
+    );
+  }
 
   const [items, balance, candidate, contact] = await Promise.all([
     getCatalog(),
