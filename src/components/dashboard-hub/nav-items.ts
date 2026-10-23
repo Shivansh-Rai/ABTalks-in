@@ -13,6 +13,11 @@ export type NavItem = {
   label: string;
   href: string;
   icon: NavIconKey;
+  /**
+   * Kept out of the sidebar but still a page site search can find. The route
+   * itself is untouched; it is reached from another surface instead.
+   */
+  hidden?: boolean;
 };
 
 export const HUB_PRIMARY = "#03535F";
@@ -77,11 +82,14 @@ export const SIDEBAR_FOOTER_ROW_CLASS =
 
 export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: "grid" },
-  { label: "Events And Workshops", href: "/workshop", icon: "presentation" },
+  // Reached from the dashboard's Events section.
+  { label: "Events And Workshops", href: "/workshop", icon: "presentation", hidden: true },
   { label: "Marketplace", href: "/marketplace", icon: "store" },
   { label: "Jobs", href: "/jobs", icon: "briefcase" },
-  { label: "Assessments", href: "/assessments", icon: "clipboard" },
-  { label: "Achievements", href: "/achievements", icon: "award" },
-  { label: "Hackathon", href: "/hackathon", icon: "zap" },
+  // Reached from the dashboard's Test skills stage (and the Jobs page).
+  { label: "Assessments", href: "/assessments", icon: "clipboard", hidden: true },
+  { label: "Achievements", href: "/achievements", icon: "award", hidden: true },
+  // Reached from the Hackathon milestone on the dashboard's Test skills stage.
+  { label: "Hackathon", href: "/hackathon", icon: "zap", hidden: true },
   { label: "Profile", href: "/profile", icon: "user" },
 ];

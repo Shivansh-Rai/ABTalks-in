@@ -130,7 +130,7 @@ export function DashboardSidebar({
         className={cn("flex-1 space-y-1 py-4", compact ? "px-2" : "px-4")}
         aria-label="Main"
       >
-        {NAV_ITEMS.map(({ label, href, icon }) => {
+        {NAV_ITEMS.filter((item) => !item.hidden).map(({ label, href, icon }) => {
           const Icon = ICON_MAP[icon];
           const active =
             href === "/dashboard"

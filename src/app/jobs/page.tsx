@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { DashboardShell } from "@/components/dashboard-hub/dashboard-shell";
 import { JobsBrowser } from "@/components/jobs/jobs-browser";
+import { listCandidateAttempts } from "@/features/assessment-attempts/service";
+import { prismaAttemptStore } from "@/features/assessment-attempts/prisma-store";
 import {
   formatExperienceLabel,
   formatPostedLabel,
@@ -39,11 +41,19 @@ export default async function JobsPage({ searchParams }: PageProps) {
     jobs: prismaJobStore(),
     applications: prismaApplicationStore(),
   };
-  const [browsed, mine, myAlerts] = await Promise.all([
+  const [browsed, mine, myAlerts, attempts] = await Promise.all([
     browsePublishedJobs(deps),
     listMyApplications(deps, { userId: session.user.id }),
     listMyJobAlertsAction(),
+    // Only feeds the count on the Assessments tab; a failure shows 0 rather
+    // than failing the jobs page.
+    listCandidateAttempts(prismaAttemptStore(), session.user.id).catch(
+      () => ({ ok: false as const, message: "unavailable" }),
+    ),
   ]);
+  const pendingAssessments = attempts.ok
+    ? attempts.data.filter((a) => a.status !== "SUBMITTED").length
+    : 0;
   const alerts = myAlerts.ok ? myAlerts.data.alerts : [];
 
   const applications = mine.ok ? mine.data : [];
@@ -95,6 +105,7 @@ export default async function JobsPage({ searchParams }: PageProps) {
         applications={applicationRows}
         alerts={alerts}
         maxAlerts={MAX_ALERTS_PER_CANDIDATE}
+        pendingAssessments={pendingAssessments}
         initialTab={
           tab === "applications" || tab === "saved" || tab === "alerts"
             ? tab

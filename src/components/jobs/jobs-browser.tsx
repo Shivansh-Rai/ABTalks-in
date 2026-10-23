@@ -14,6 +14,7 @@ import {
   Briefcase,
   Check,
   ChevronDown,
+  ClipboardCheck,
   Heart,
   MapPin,
   Search,
@@ -174,6 +175,8 @@ type Props = {
   /** The candidate's job alerts, for the Job alerts tab. */
   alerts: JobAlertRow[];
   maxAlerts: number;
+  /** Recruiter assessments not yet submitted, for the Assessments link-tab. */
+  pendingAssessments: number;
   /** `?tab=` on the URL — lets the detail page link straight to the tracker. */
   initialTab?: Tab;
 };
@@ -183,6 +186,7 @@ export function JobsBrowser({
   applications,
   alerts,
   maxAlerts,
+  pendingAssessments,
   initialTab = "jobs",
 }: Props) {
   const [tab, setTab] = useState<Tab>(initialTab);
@@ -347,6 +351,26 @@ export function JobsBrowser({
             icon={<Bell aria-hidden className="size-3.5" />}
           />
         </div>
+        {/* Styled as a tab, but it is a link out to /assessments (it left the
+            sidebar), so it sits outside the tablist. */}
+        <Link
+          href="/assessments"
+          className="inline-flex h-[46px] shrink-0 items-center gap-1.5 border-b-2 border-transparent px-4 text-sm font-semibold text-[#4B4B4B] transition-colors hover:bg-[#EEF6F6] hover:text-[#03535F]"
+        >
+          <ClipboardCheck aria-hidden className="size-3.5" />
+          Assessments
+          <span
+            className={cn(
+              "ml-1 inline-grid h-5 min-w-[22px] place-items-center rounded-full px-1.5 text-[11px]",
+              pendingAssessments > 0
+                ? "bg-[#D4EBEC] text-[#03535F]"
+                : "bg-[#F4F4F4] text-[#4B4B4B]",
+            )}
+          >
+            {pendingAssessments}
+            <span className="sr-only"> pending</span>
+          </span>
+        </Link>
       </div>
 
       {/* Kept mounted once the page loads: the alerts screen holds its own
