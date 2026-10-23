@@ -317,7 +317,6 @@ export function ProfileWizard({
           activeIndex={open ? index : -1}
           onJump={jump}
           badges={badges}
-          blocked={dirty && open}
         />
 
         <ProfileReviewCard

@@ -134,7 +134,7 @@ suite("badges are derived server-side and never written", () => {
 suite("each badge can appear only once per user", () => {
   assert(derive.includes("new Map<string, EarnedBadge>()"), "deduped by key");
   assert(derive.includes("unique.has(badge.key)"), "first one wins");
-  assert(derive.includes("key: `cohort:${row.cohort.slug}`"), "cohort keys are per cohort");
+  assert(derive.includes("key: `cohort:${slug}`"), "cohort keys are per cohort");
   assert(derive.includes("key: `consistency:${milestone}`"), "consistency keys are per milestone");
 });
 
@@ -151,7 +151,28 @@ suite("AI / DS / SE need 50 passed days and a real award date", () => {
 suite("cohorts are earned only on a recorded completion", () => {
   assert(derive.includes("EnrollmentStatusV2.COMPLETED"), "COMPLETED status");
   assert(derive.includes("completedAt: { not: null }"), "or a completedAt");
-  assert(derive.includes("if (!config) continue;"), "unknown cohorts earn nothing");
+  assert(derive.includes("if (!config) return null;"), "unknown cohorts earn nothing");
+  assert(derive.includes("if (badge) out.push(badge);"), "and are skipped");
+});
+
+suite("showcase accounts are exactly the two requested emails", () => {
+  const at = derive.indexOf("BADGE_SHOWCASE_EMAILS");
+  const list = derive.slice(at, derive.indexOf("]);", at));
+  const emails = list.match(/"[^"]+@[^"]+"/g) ?? [];
+  assert(emails.length === 2, `expected 2 emails, got ${emails.length}`);
+  assert(list.includes('"shivanshrai2316@gmail.com"'), "Shivansh");
+  assert(list.includes('"sksohailswaraj@gmail.com"'), "Sohail");
+  assert(derive.includes("user.email.toLowerCase()"), "compared case-insensitively");
+});
+
+suite("showcase fills in, never overrides a real award", () => {
+  const real = derive.indexOf("for (const badge of groups.flat())");
+  const fill = derive.indexOf("for (const badge of await allBadges(");
+  assert(real !== -1 && fill !== -1 && real < fill, "real awards are added first");
+  assert(
+    derive.slice(fill, fill + 200).includes("if (!unique.has(badge.key))"),
+    "showcase skips keys already earned",
+  );
 });
 
 suite("consistency reads the same activity as the dashboard streak", () => {

@@ -84,7 +84,8 @@ export const NAV_ITEMS: NavItem[] = [
   { label: "Dashboard", href: "/dashboard", icon: "grid" },
   // Reached from the dashboard's Events section.
   { label: "Events And Workshops", href: "/workshop", icon: "presentation", hidden: true },
-  { label: "Marketplace", href: "/marketplace", icon: "store" },
+  // Out of the sidebar whether open or closed; see features/marketplace/status.
+  { label: "Marketplace", href: "/marketplace", icon: "store", hidden: true },
   { label: "Jobs", href: "/jobs", icon: "briefcase" },
   // Reached from the dashboard's Test skills stage (and the Jobs page).
   { label: "Assessments", href: "/assessments", icon: "clipboard", hidden: true },
