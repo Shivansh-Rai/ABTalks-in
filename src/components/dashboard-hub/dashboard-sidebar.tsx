@@ -264,13 +264,6 @@ export function DashboardSidebar({
             className="w-56 min-w-56 rounded-xl p-1.5"
           >
             <DropdownMenuItem
-              render={<Link href="/profile" onClick={onNavigate} />}
-              className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm"
-            >
-              <User className="size-4" aria-hidden />
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem
               render={<Link href="/settings" onClick={onNavigate} />}
               className="cursor-pointer gap-2.5 rounded-lg px-2.5 py-2 text-sm"
             >
