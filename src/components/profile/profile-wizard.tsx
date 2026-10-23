@@ -312,7 +312,6 @@ export function ProfileWizard({
           // sheet, which reads as stuck.
           activeIndex={open ? index : -1}
           onJump={jump}
-          performance={performance}
           blocked={dirty && open}
         />
 

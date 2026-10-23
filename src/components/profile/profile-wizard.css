@@ -376,77 +376,130 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   cursor: not-allowed;
 }
 
-/* ---- Profile performance (plan 120) ---- */
-.pw-performance-section {
-  margin: 12px 16px 0;
-  background: #eef6f6;
-  border-radius: 18px;
-  padding: 12px;
+/* ---- Profile performance (plan 120) ----
+   A compact light-blue panel in the report card hero, between the name and
+   Edit. Below 1180px it drops to its own full-width row under the hero copy. */
+.pw-rv-performance {
   flex: none;
+  align-self: center;
+  width: 252px;
+  padding: 10px 14px 10px;
+  border-radius: 14px;
+  background: #eaf4fd;
+  border: 1px solid #cfe4f7;
 }
-.pw-performance-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-.pw-performance-section .pw-section-title {
-  font-weight: 700;
-  color: #000000;
-  font-size: 14.5px;
-  line-height: 18px;
-}
-.pw-performance-caption {
-  margin: 4px 0 0;
-  font-size: 11.5px;
-  line-height: 14px;
-  color: #8f8f8f;
-  font-weight: 400;
-}
-/* Outranks `.pw-root svg.pw-ico` (0,2,1), which would otherwise force 20px. */
-.pw-root .pw-performance-header svg.pw-info {
-  width: 15px;
-  height: 15px;
-  color: #787878;
-  stroke-width: 1.7;
-  margin-top: 1px;
-  flex: none;
-  cursor: help;
-}
-.pw-performance-grid {
-  display: grid;
-  grid-template-columns: 1fr 1px 1fr;
-  column-gap: 16px;
-  margin-top: 10px;
-  align-items: start;
-}
-.pw-grid-divider {
-  background: #e9e9e9;
-  width: 1px;
-  height: 100%;
-  border-radius: 1px;
-  align-self: stretch;
-}
-.pw-col-label {
-  font-size: 12.5px;
-  line-height: 17px;
-  color: #4b4b4b;
-  white-space: nowrap;
-}
-.pw-col-value {
-  margin-top: 2px;
-  font-size: 22px;
-  line-height: 26px;
-  font-weight: 800;
-  color: var(--pw-primary);
+.pw-rvp-head {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
-  white-space: nowrap;
-  letter-spacing: -0.01em;
+  gap: 6px;
 }
-/* The dot + chevron that used to trail the number are gone: the chevron read
-   as a control, and nothing opens. See profile-card.tsx. */
+.pw-rvp-title {
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 700;
+  color: #0f3554;
+}
+.pw-rvp-caption {
+  font-size: 10.5px;
+  line-height: 14px;
+  font-weight: 600;
+  color: #4a6a86;
+  background: #ffffff;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.pw-root svg.pw-rvp-info {
+  margin-left: auto;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  fill: none;
+  stroke: #5f7f9b;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  cursor: help;
+}
+.pw-rvp-stats {
+  margin: 8px 0 0;
+  display: grid;
+  grid-template-columns: 1fr 1px 1fr;
+  column-gap: 12px;
+  align-items: stretch;
+}
+.pw-rvp-stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+/* The number reads first; <dt> stays first in the markup for screen readers. */
+.pw-rvp-stat dd {
+  order: -1;
+  margin: 0;
+  font-size: 20px;
+  line-height: 24px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--pw-primary);
+}
+.pw-rvp-stat dt {
+  font-size: 11.5px;
+  line-height: 15px;
+  color: #4b5d6e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pw-rvp-divider {
+  width: 1px;
+  background: #cfe4f7;
+  border-radius: 1px;
+}
+.pw-rvp-link {
+  margin-top: 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 16px;
+  font-weight: 600;
+  color: var(--pw-primary);
+  text-decoration: none;
+  border-radius: 4px;
+  transition: color 0.18s ease;
+}
+.pw-rvp-link svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 0.18s ease;
+}
+.pw-rvp-link:hover {
+  color: var(--pw-primary-hover);
+}
+.pw-rvp-link:hover svg {
+  transform: translateX(2px);
+}
+.pw-rvp-link:focus-visible {
+  outline: 2px solid var(--pw-primary);
+  outline-offset: 2px;
+}
+@media (max-width: 1180px) {
+  .pw-rv-hero-top {
+    flex-wrap: wrap;
+  }
+  .pw-rv-hero-copy {
+    flex-basis: 0;
+  }
+  .pw-rv-performance {
+    order: 3;
+    width: 100%;
+  }
+}
 
 /* ============================================================
    REPORT CARD — the profile as a recruiter sees it
@@ -940,10 +993,6 @@ body.pw-profile-page.pw-scrolling .abt-content-scroll::-webkit-scrollbar-thumb {
   display: none;
 }
 .pw-rv-complete {
-  display: none;
-}
-/* Mobile-only performance mount under the section list. */
-.pw-rv-performance {
   display: none;
 }
 .pw-rv-count {
@@ -1477,12 +1526,6 @@ body.pw-sheet-open button[aria-label="Open chat"] {
   }
 }
 
-/* Profile performance is something you read about a finished profile, not
-   while you are editing one. It goes away with the sheet open — which also
-   keeps the pinned card short enough to never need a scrollbar. */
-.pw-root.pw-sheet-open .pw-performance-section {
-  display: none;
-}
 
 .pw-form-close {
   position: absolute;
@@ -3468,10 +3511,6 @@ body.pw-sheet-open button[aria-label="Open chat"] {
     margin-left: 20px;
     margin-right: 20px;
   }
-  .pw-performance-section {
-    margin-left: 12px;
-    margin-right: 12px;
-  }
   .pw-quick-head {
     padding-left: 20px;
   }
@@ -3698,12 +3737,6 @@ body.pw-sheet-open button[aria-label="Open chat"] {
   .pw-rv-card-hit:focus-visible {
     outline: 2px solid var(--pw-primary);
     outline-offset: 2px;
-  }
-
-  /* Performance under the section list */
-  .pw-rv-performance {
-    display: block;
-    margin: 8px 0 0;
   }
 }
 

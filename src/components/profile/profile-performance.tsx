@@ -6,42 +6,30 @@ const PERFORMANCE_TOOLTIP =
   "How often recruiters opened your details and unlocked your resume on Hire, over the last 90 days.";
 
 /**
- * One half of the Profile performance panel.
+ * Recruiter-activity numbers for the last 90 days, as a compact light-blue
+ * panel in the report card hero (beside the name, before Edit). On narrow
+ * screens it drops to its own row under the hero copy.
  *
- * The number is the whole content. It carried a chevron in the design, which
- * read as "opens a breakdown" — there is nothing to open, so it is gone rather
- * than left as a promise the panel cannot keep.
- */
-function PerfColumn({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="pw-perf-column">
-      <div className="pw-col-label">{label}</div>
-      <div className="pw-col-value">{value}</div>
-    </div>
-  );
-}
-
-/**
- * Recruiter-activity numbers for the last 90 days. Rendered under Quick Links
- * on desktop and under the section list on mobile (CSS toggles which mount
- * is visible).
+ * The numbers are the whole content: nothing opens from them, so they carry
+ * no chevron. The link says what recruiters saw (plan 155).
  */
 export function ProfilePerformance({
   searchAppearances,
   recruiterActions,
-  className,
 }: {
   searchAppearances: number;
   recruiterActions: number;
-  className?: string;
 }) {
   return (
-    <div className={className ?? "pw-performance-section"}>
-      <div className="pw-performance-header">
-        <span className="pw-section-title">Profile performance</span>
-        <svg
+    <section className="pw-rv-performance" aria-labelledby="pw-rvp-title">
+      <div className="pw-rvp-head">
+        <span id="pw-rvp-title" className="pw-rvp-title">
+          Profile performance
+        </span>
+        <span className="pw-rvp-caption">90 days</span>
+        {/* <svg
           viewBox="0 0 24 24"
-          className="pw-ico pw-info"
+          className="pw-rvp-info"
           role="img"
           aria-label={PERFORMANCE_TOOLTIP}
         >
@@ -49,35 +37,26 @@ export function ProfilePerformance({
           <circle cx="12" cy="12" r="10" />
           <path d="M12 8v4" />
           <path d="M12 16h.01" />
-        </svg>
+        </svg> */}
       </div>
-      <p className="pw-performance-caption">Last 90 days</p>
-      <div className="pw-performance-grid">
-        <PerfColumn label="Search appearances" value={searchAppearances} />
-        <div className="pw-grid-divider" aria-hidden />
-        <PerfColumn label="Recruiter actions" value={recruiterActions} />
-      </div>
-      {/* Plan 155. The numbers above say how often recruiters looked; this says
-          what they saw. Deliberately here rather than in the page chrome — this
-          panel is already the one place on /profile that is about recruiters.
-          Utility classes rather than a new `pw-*` rule, so profile-wizard.css is
-          untouched. */}
-      <Link
-        href="/profile/recruiter-view"
-        className="group mt-3 inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#03535f] transition-colors duration-200 hover:text-[#076573]"
-      >
+      <dl className="pw-rvp-stats">
+        <div className="pw-rvp-stat">
+          <dt>Search appearances</dt>
+          <dd>{searchAppearances}</dd>
+        </div>
+        <span className="pw-rvp-divider" aria-hidden />
+        <div className="pw-rvp-stat">
+          <dt>Recruiter actions</dt>
+          <dd>{recruiterActions}</dd>
+        </div>
+      </dl>
+      <Link href="/profile/recruiter-view" className="pw-rvp-link">
         See how recruiters see you
-        <svg
-          viewBox="0 0 24 24"
-          className="size-3.5 fill-none stroke-current stroke-[2.2] transition-transform duration-200 motion-safe:group-hover:translate-x-0.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          aria-hidden="true"
-        >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="M5 12h14" />
           <path d="m13 6 6 6-6 6" />
         </svg>
       </Link>
-    </div>
+    </section>
   );
 }

@@ -2,28 +2,22 @@
 
 import Link from "next/link";
 import type { WizardStep } from "./profile-wizard";
-import { ProfilePerformance } from "./profile-performance";
 
 /**
- * The left card: Quick Links into the profile, plus Profile performance.
- *
- * The identity block lives in the report card hero, so this card is navigation
- * plus the candidate's own recruiter-activity numbers (plan 120). Hidden
- * entirely on mobile (≤1024px) — section cards and the review-bottom
- * performance block replace it.
+ * The left card: Quick Links into the profile, plus the way to Account
+ * settings. Profile performance lives in the report card hero. Hidden entirely
+ * on mobile (≤1024px), where the section cards replace it.
  */
 export function ProfileCard({
   steps,
   activeIndex,
   onJump,
-  performance,
   blocked,
 }: {
   steps: Pick<WizardStep, "title" | "complete" | "attention" | "optional">[];
   /** -1 when no sheet is open, so no tab is left looking selected. */
   activeIndex: number;
   onJump: (index: number) => void;
-  performance: { searchAppearances: number; recruiterActions: number };
   /** An open sheet holds unsaved edits — navigating away would lose them. */
   blocked: boolean;
 }) {
@@ -95,11 +89,6 @@ export function ProfileCard({
           </Link>
         )}
       </div>
-
-      <ProfilePerformance
-        searchAppearances={performance.searchAppearances}
-        recruiterActions={performance.recruiterActions}
-      />
     </section>
   );
 }

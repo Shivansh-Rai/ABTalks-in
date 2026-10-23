@@ -228,6 +228,16 @@ export async function getVerifiedAccomplishments(
     : hackathonRows.length > 0 || hasSubmission;
   if (showHackathon) {
     const anchor = hackathonRows[0];
+    // The Credential link opens the certificate that earned the label shown:
+    // the best placement's certificate, else any (participation) certificate.
+    const linked =
+      (best &&
+        hackathonRows.find(
+          (row) =>
+            parseHackathonVariant(metaRecord(row.metadata).hackathonVariant) ===
+            best,
+        )) ||
+      anchor;
     const teamName = participant?.team.teamName ?? null;
     out.push({
       key: anchor ? `hackathon-${anchor.credentialId}` : `hackathon-${participant?.id}`,
@@ -243,6 +253,8 @@ export async function getVerifiedAccomplishments(
         participant?.team.submission?.createdAt ??
         participant?.createdAt ??
         null,
+      // A submission without a certificate yet has nothing to verify.
+      ...(linked ? { verifyPath: `/verify/${linked.credentialId}` } : {}),
     });
   }
 

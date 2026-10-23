@@ -325,6 +325,10 @@ export function ProfileReviewCard({
                 ) : null}
               </div>
             </div>
+            <ProfilePerformance
+              searchAppearances={performance.searchAppearances}
+              recruiterActions={performance.recruiterActions}
+            />
             <button
               type="button"
               className="pw-rv-add"
@@ -442,12 +446,6 @@ export function ProfileReviewCard({
             <Card card={card} key={`m-${card.title}`} onOpen={onOpen} />
           ))}
         </div>
-
-        <ProfilePerformance
-          className="pw-performance-section pw-rv-performance"
-          searchAppearances={performance.searchAppearances}
-          recruiterActions={performance.recruiterActions}
-        />
       </div>
     </section>
   );

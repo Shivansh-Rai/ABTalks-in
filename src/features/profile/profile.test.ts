@@ -2160,13 +2160,25 @@ suite("an open sheet leaves Quick Links pinned where it was", () => {
   assert(card.includes("position: sticky"), "the card is sticky to begin with");
 });
 
-suite("Profile performance steps aside while a section is open", () => {
-  const css = source("src/components/profile/profile-wizard.css");
-  const at = css.indexOf(".pw-root.pw-sheet-open .pw-performance-section");
-  assert(at !== -1, "performance is addressed for the open state");
+suite("Profile performance sits in the report card hero", () => {
+  const card = code("src/components/profile/profile-card.tsx");
   assert(
-    css.slice(at, css.indexOf("}", at)).includes("display: none"),
-    "and is hidden while editing",
+    !card.includes("ProfilePerformance"),
+    "Quick Links no longer carries the performance panel",
+  );
+  const review = code("src/components/profile/profile-review.tsx");
+  const hero = review.slice(
+    review.indexOf('className="pw-rv-hero-top"'),
+    review.indexOf('className="pw-rv-progress"'),
+  );
+  assert(hero.includes("<ProfilePerformance"), "it renders inside the hero row");
+  assert(
+    hero.indexOf("<ProfilePerformance") < hero.indexOf('className="pw-rv-add"'),
+    "before the hero's Edit button",
+  );
+  assert(
+    review.split("<ProfilePerformance").length === 2,
+    "and is mounted once, for every breakpoint",
   );
 });
 
@@ -2194,7 +2206,7 @@ suite("mobile profile overview hides Quick Links and uses preview cards", () => 
     "Quick Links is hidden at the mobile breakpoint",
   );
   assert(css.includes(".pw-rv-complete"), "Complete your profile CTA is styled");
-  assert(css.includes(".pw-rv-performance"), "review-bottom performance is styled");
+  assert(css.includes(".pw-rv-performance"), "hero performance panel is styled");
   assert(css.includes(".pw-rv-preview"), "section previews are styled");
   assert(css.includes(".pw-rv-card-hit"), "whole-card tap target exists");
   assert(
