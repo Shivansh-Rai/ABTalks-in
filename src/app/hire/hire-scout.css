@@ -18677,3 +18677,131 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-row__badge {
     padding-top: 12px;
   }
 }
+
+/* Card proportions of the original result card: roomier padding and rhythm,
+   a larger avatar and name, and the actions in a footer row (Reject left,
+   View profile + Shortlist right) with the bookmark top right. */
+.desk-row {
+  grid-template-columns: calc(52 * var(--u)) minmax(0, 1fr);
+  gap: calc(18 * var(--u));
+  padding: calc(22 * var(--u)) calc(24 * var(--u)) calc(18 * var(--u));
+}
+
+.desk-row.is-selectable {
+  grid-template-columns: calc(20 * var(--u)) calc(52 * var(--u)) minmax(0, 1fr);
+}
+
+.desk-row__check {
+  margin-top: calc(16 * var(--u));
+}
+
+.desk-row__avatar {
+  width: calc(52 * var(--u));
+  height: calc(52 * var(--u));
+  font-size: calc(19 * var(--u));
+}
+
+.desk-row__main {
+  gap: calc(14 * var(--u));
+}
+
+.desk-row__name {
+  font-size: calc(20 * var(--u));
+  line-height: calc(26 * var(--u));
+}
+
+.desk-row__meta {
+  margin-top: calc(-8 * var(--u));
+}
+
+.desk-row__summary {
+  padding: calc(10 * var(--u)) calc(12 * var(--u));
+  border-radius: calc(8 * var(--u));
+  background: var(--pool-teal-tint);
+}
+
+.desk-row__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: calc(10 * var(--u));
+  margin-top: calc(4 * var(--u));
+}
+
+.desk-row__foot-start,
+.desk-row__foot-end {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+}
+
+.desk-row__foot-end {
+  margin-left: auto;
+}
+
+.hire-app .desk-row__foot .desk-row__btn {
+  height: calc(38 * var(--u));
+  padding: 0 calc(16 * var(--u));
+  font-size: calc(14 * var(--u));
+}
+
+@media (max-width: 640px) {
+  .desk-row {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .desk-row.is-selectable {
+    grid-template-columns: 20px 40px minmax(0, 1fr);
+  }
+
+  .desk-row__avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .desk-row__name {
+    font-size: 17px;
+    line-height: 22px;
+  }
+
+  /* Phones: the footer buttons share the width, Reject included. */
+  .desk-row__foot,
+  .desk-row__foot-start,
+  .desk-row__foot-end {
+    width: 100%;
+  }
+
+  .desk-row__foot-start:empty {
+    display: none;
+  }
+
+  .hire-app .desk-row__foot .desk-row__btn {
+    flex: 1 1 0;
+    height: 40px;
+  }
+
+  .desk-row__head {
+    flex-direction: row;
+  }
+}
+
+@media (max-width: 640px) {
+  /* Only the bookmark is up there now; it stays beside the name. */
+  .desk-row__actions {
+    width: auto;
+  }
+}
+
+/* The summary shows in full. A 2-line clamp on a padded panel clipped the
+   third line half-way, so "skills" peeked under the edge. The text is already
+   trimmed to a finished sentence (summaryPreview, ~280 characters) before it
+   reaches the card, so it stays a sensible length without a clamp. */
+.desk-row__summary {
+  display: block;
+  overflow: visible;
+  -webkit-line-clamp: unset;
+}

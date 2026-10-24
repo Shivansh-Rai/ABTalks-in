@@ -521,72 +521,6 @@ export function DeskMatchCard({
               jobRole={match.jobRole}
               match={match}
             />
-            {onOpen && (
-              <button
-                type="button"
-                className="desk-row__btn desk-row__btn--ghost"
-                onClick={onOpen}
-              >
-                View profile
-              </button>
-            )}
-            {showTriage && (
-              <button
-                type="button"
-                className="desk-row__btn desk-row__btn--quiet"
-                onClick={() => pickDecision("REJECTED")}
-              >
-                {rejected ? "Undo" : "Reject"}
-              </button>
-            )}
-            {showTriage ? (
-              // PROJECT CONTEXT (T-149). Writes TalentRequestMatch.decision via
-              // setMatchDecisionAction, keyed on requestId + candidateUserId, so
-              // it works for every track. `decision` is read back from the
-              // persisted row and survives reload. The legacy cart button is
-              // deliberately not rendered here: it would be a second,
-              // differently-persisted shortlist on the same row.
-              <button
-                type="button"
-                aria-pressed={shortlisted}
-                aria-label={shortlisted ? "In shortlist" : "Add to shortlist"}
-                title={shortlisted ? "In shortlist" : "Add to shortlist"}
-                onClick={() => pickDecision("SHORTLISTED")}
-                className={cn(
-                  "desk-row__btn desk-row__btn--primary",
-                  shortlisted && "is-on",
-                )}
-              >
-                {shortlisted ? (
-                  <Check className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
-                ) : (
-                  <UserCheck size={14} strokeWidth={1.75} aria-hidden="true" />
-                )}
-                {shortlisted ? "Shortlisted" : "Shortlist"}
-              </button>
-            ) : (
-              // No project = no TalentRequestMatch row to decide on, so the desk
-              // keeps its existing device/cart behaviour untouched.
-              <ShortlistButton
-                candidateRef={match.candidateRef}
-                programMemberId={match.programMemberId}
-                initialShortlisted={match.shortlisted ?? false}
-                jobRole={match.jobRole}
-                totalScore={match.score}
-                displayName={match.displayName}
-                skills={e.skills ?? []}
-                snapshot={match}
-                onToggle={onCartToggle}
-                className={cn(
-                  "desk-row__btn desk-row__btn--primary",
-                  match.shortlisted && "is-on",
-                )}
-                podLabel
-              />
-            )}
-            {/* "Request an intro" stays off the desk row on purpose: the
-                recruiter reads the profile before asking for an introduction.
-                `RequestIntroButton` still renders in `MatchCard`. */}
           </div>
         </header>
 
@@ -638,6 +572,81 @@ export function DeskMatchCard({
           </span>
           {summary}
         </p>
+
+        {/* Footer, as on the original card: the quiet decision on the left,
+            the profile and the primary decision on the right. */}
+        <footer className="desk-row__foot" onClick={(ev) => ev.stopPropagation()}>
+          <div className="desk-row__foot-start">
+            {showTriage && (
+              <button
+                type="button"
+                className="desk-row__btn desk-row__btn--ghost"
+                onClick={() => pickDecision("REJECTED")}
+              >
+                {rejected ? "Undo" : "Reject"}
+              </button>
+            )}
+          </div>
+          <div className="desk-row__foot-end">
+                {onOpen && (
+                  <button
+                    type="button"
+                    className="desk-row__btn desk-row__btn--ghost"
+                    onClick={onOpen}
+                  >
+                    View profile
+                  </button>
+                )}
+                {showTriage ? (
+                  // PROJECT CONTEXT (T-149). Writes TalentRequestMatch.decision via
+                  // setMatchDecisionAction, keyed on requestId + candidateUserId, so
+                  // it works for every track. `decision` is read back from the
+                  // persisted row and survives reload. The legacy cart button is
+                  // deliberately not rendered here: it would be a second,
+                  // differently-persisted shortlist on the same row.
+                  <button
+                    type="button"
+                    aria-pressed={shortlisted}
+                    aria-label={shortlisted ? "In shortlist" : "Add to shortlist"}
+                    title={shortlisted ? "In shortlist" : "Add to shortlist"}
+                    onClick={() => pickDecision("SHORTLISTED")}
+                    className={cn(
+                      "desk-row__btn desk-row__btn--primary",
+                      shortlisted && "is-on",
+                    )}
+                  >
+                    {shortlisted ? (
+                      <Check className="size-3.5" strokeWidth={1.75} aria-hidden="true" />
+                    ) : (
+                      <UserCheck size={14} strokeWidth={1.75} aria-hidden="true" />
+                    )}
+                    {shortlisted ? "Shortlisted" : "Shortlist"}
+                  </button>
+                ) : (
+                  // No project = no TalentRequestMatch row to decide on, so the desk
+                  // keeps its existing device/cart behaviour untouched.
+                  <ShortlistButton
+                    candidateRef={match.candidateRef}
+                    programMemberId={match.programMemberId}
+                    initialShortlisted={match.shortlisted ?? false}
+                    jobRole={match.jobRole}
+                    totalScore={match.score}
+                    displayName={match.displayName}
+                    skills={e.skills ?? []}
+                    snapshot={match}
+                    onToggle={onCartToggle}
+                    className={cn(
+                      "desk-row__btn desk-row__btn--primary",
+                      match.shortlisted && "is-on",
+                    )}
+                    podLabel
+                  />
+                )}
+                {/* "Request an intro" stays off the desk row on purpose: the
+                    recruiter reads the profile before asking for an introduction.
+                    `RequestIntroButton` still renders in `MatchCard`. */}
+          </div>
+        </footer>
       </div>
     </article>
   );
