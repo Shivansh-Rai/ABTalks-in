@@ -271,6 +271,8 @@ async function consistencyBadges(userId: string): Promise<EarnedBadge[]> {
 export const BADGE_SHOWCASE_EMAILS: ReadonlySet<string> = new Set([
   "shivanshrai2316@gmail.com",
   "sksohail.swaraj@gmail.com",
+  "contactsuyashgupta@gmail.com",
+  "sarthakgupta.ksj@gmail.com",
 ]);
 
 /** Names for cohort badges whose cohort row does not exist in this database. */
