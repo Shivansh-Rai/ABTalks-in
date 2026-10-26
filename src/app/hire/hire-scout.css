@@ -18805,3 +18805,140 @@ html.dark:not(:has(.theme-abtalks-light)) .desk-row__badge {
   overflow: visible;
   -webkit-line-clamp: unset;
 }
+
+/* The original clay card, restored on the pool rows: no border, a soft inner
+   shadow along the bottom-right edge with a faint drop shadow, 15px corners.
+   Values are the old card's own (`.desk-card--result`), unscaled, so they sit
+   under the desk zoom exactly as the original did. */
+.desk-row,
+.desk-row.is-clickable:hover,
+.desk-row.is-selected,
+.desk-row.is-selected:hover {
+  border: 0;
+  border-radius: 15px;
+  background: #ffffff;
+}
+
+.desk-row {
+  box-shadow:
+    inset -5px -4px 10px rgba(0, 0, 0, 0.15),
+    0 5px 4px rgba(228, 228, 231, 0.3);
+}
+
+.desk-row.is-clickable:hover {
+  box-shadow:
+    inset -5px -4px 10px rgba(0, 0, 0, 0.15),
+    0 8px 22px rgba(3, 83, 95, 0.12);
+}
+
+/* The open candidate: the original 2px teal ring, plus the solid avatar. */
+.desk-row.is-selected,
+.desk-row.is-selected:hover {
+  box-shadow:
+    inset -5px -4px 10px rgba(0, 0, 0, 0.15),
+    0 0 0 2px #03535f;
+}
+
+.desk-row.is-checked,
+.desk-row.is-checked:hover {
+  background: #f7fcfd;
+}
+
+/* Keyboard focus keeps the clay edge and adds a soft ring. */
+.desk-row:has(:focus-visible) {
+  box-shadow:
+    inset -5px -4px 10px rgba(0, 0, 0, 0.15),
+    0 0 0 2px rgba(3, 83, 95, 0.35);
+}
+
+/* Room for the clay drop shadow between cards. */
+.desk-list__rows {
+  gap: 12px;
+}
+
+/* Summary: the original AI summary panel. */
+.desk-row__summary {
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #f7fcfd;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+  font-size: 14px;
+  line-height: 22px;
+  color: #4b4b4b;
+}
+
+/* Buttons: the original clay ghost and pod. */
+.hire-app .desk-row__foot .desk-row__btn--ghost,
+.desk-save {
+  border: 1px solid #e0e4e6;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #18181b;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.04),
+    0 2px 5px rgba(0, 0, 0, 0.04);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hire-app .desk-row__foot .desk-row__btn--ghost:hover,
+.desk-save:hover {
+  border-color: #cbd3d6;
+  background: #fafbfc;
+  color: #18181b;
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.04),
+    0 4px 10px rgba(0, 0, 0, 0.07);
+}
+
+.desk-save.is-on {
+  border-color: #03535f;
+  background: #eef6f6;
+  color: #03535f;
+  box-shadow: inset 0 1px 3px rgba(3, 83, 95, 0.14);
+}
+
+.hire-app .desk-row__foot .desk-row__btn--primary {
+  border: 0;
+  border-radius: 10px;
+  background: #03535f;
+  color: #ffffff;
+  box-shadow:
+    inset 0 -3px 6px rgba(0, 0, 0, 0.32),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2),
+    0 4px 12px rgba(3, 83, 95, 0.18);
+  transition: all 180ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hire-app .desk-row__foot .desk-row__btn--primary:hover:not(:disabled) {
+  background: #076573;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 -3px 6px rgba(0, 0, 0, 0.32),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22),
+    0 6px 16px rgba(3, 83, 95, 0.26);
+}
+
+.hire-app .desk-row__foot .desk-row__btn--primary.is-on,
+.hire-app .desk-row__foot .desk-row__btn--primary.is-on:hover:not(:disabled) {
+  border: 1.5px solid #03535f;
+  background: #eef6f6;
+  color: #03535f;
+  transform: none;
+  box-shadow: inset 0 1px 3px rgba(3, 83, 95, 0.14);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hire-app .desk-row__foot .desk-row__btn,
+  .desk-save {
+    transition: none;
+  }
+
+  .hire-app .desk-row__foot .desk-row__btn:hover,
+  .desk-save:hover {
+    transform: none;
+  }
+}
